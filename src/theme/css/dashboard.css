@@ -1,0 +1,28 @@
+body{
+    background: red;
+}
+
+.header-desarrollo{
+    background: green;
+    height: 50px;
+}
+.container-desarrollo{
+    background: black;
+    display: flex;
+    height: calc(100vh - 100px);
+}
+.nav-desarrollo{
+    background: blue;
+    width: 20%;
+}
+.body-desarrollo{
+    background: yellow;
+    width: 80%;
+}
+.footer-desarrollo{
+    height: 30px;
+    min-height: 30px !important;
+    max-height: 30px !important;
+    padding: 0px 20px !important;
+    line-height: 30px !important;
+}
