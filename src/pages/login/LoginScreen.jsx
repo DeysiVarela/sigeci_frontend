@@ -1,8 +1,7 @@
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import InputEmail from "../../components/inputs/InputEmail";
-import InputText from "../../components/inputs/InputText";
+import InputPassword from "../../components/inputs/InputPassword";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import HandlerApp from "../../utils/HandlerApp";
 
@@ -13,21 +12,19 @@ const LoginScreen = () => {
 
     const {control, handleSubmit, formState: { errors }} = useForm();
 
-
     const submitData = (data)=>{
         handlerApp.setLoader(true);
         console.log("simulando envio de datos", data);
 
         setTimeout((nav)=>{
             console.log("recibi datos de backend")
-            nav("/home");
+            nav("/");
             handlerApp.setLoader(false);
         }, 2000, nav)
 
         console.log("esto se ejecuta en paralelo");
     }
     
-
     return (
         <div className="login-page bg-body-secondary">
             <main className="login-box">
@@ -46,28 +43,14 @@ const LoginScreen = () => {
                                 errors={errors.email}
                                 required={true}
                             />
-                            <InputText
+                            <InputPassword
                                 control={control}
-                                label="edad"
-                                name="edad"
-                                rules={{min: 18, max: 100}}
-                                errors={errors.edad}
+                                label="Password"
+                                name="pass"
+                                placeholder="Password"
+                                errors={errors.pass}
                                 required={true}
                             />
-
-                            <label className="visually-hidden" htmlFor="loginPassword">Password</label>
-                            <div className="input-group mb-3">
-                                <input
-                                    id="loginPassword"
-                                    type="password"
-                                    className="form-control"
-                                    placeholder="Password"
-                                    name="pass"
-                                />
-                                <div className="input-group-text">
-                                    <span className="bi bi-lock-fill"></span>
-                                </div>
-                            </div>
 
                             <div className="row mb-3">
                                 <div className="col-8">

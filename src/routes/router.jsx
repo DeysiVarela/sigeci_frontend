@@ -5,6 +5,8 @@ import ComponentsScreen from "../pages/components/ComponentsScreen";
 import Dashboard from "../theme/containers/Dashboard";
 import ArticleScreen from "../pages/article/ArticleScreen";
 import ArticleViewScreen from "../pages/article/ArticleViewScreen";
+import ArticleEditScreen from "../pages/article/ArticleEditScreen";
+import UserScreen from "../pages/users/UserScreen";
 import Container from "../theme/containers/Container";
 
 const router = createBrowserRouter([
@@ -41,6 +43,14 @@ const router = createBrowserRouter([
             {
                 path: "/article/:id",
                 element: <ArticleViewScreen/>
+            },
+            {
+                path: "/article/edit/:id",
+                element: <ArticleEditScreen/>
+            },
+            {
+                path: "/users",
+                element: <UserScreen/>
             },
         ]
     }

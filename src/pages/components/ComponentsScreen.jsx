@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import DataTable from "react-data-table-component";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import ButtonSecondary from "../../components/buttons/ButtonSecondary";
 import ButtonLink from "../../components/buttons/ButtonLink";
@@ -9,12 +10,17 @@ import Modal from "../../components/modals/Modal";
 import InputText from "../../components/inputs/InputText";
 import InputEmail from "../../components/inputs/InputEmail";
 import InputNumber from "../../components/inputs/InputNumber";
+import InputPassword from "../../components/inputs/InputPassword";
 import HandlerApp from "../../utils/HandlerApp";
+import { useTranslation } from "react-i18next";
 
 const ComponentsScreen = () => {
-    const { control, handleSubmit, formState: { errors } } = useForm();
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const { t } = useTranslation();
     const handlerApp = HandlerApp();
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    
+    const { control, handleSubmit, formState: { errors } } = useForm();
 
     const onSubmitDemo = (data) => {
         alert("Formulario válido enviado:\n" + JSON.stringify(data, null, 2));
@@ -29,14 +35,91 @@ const ComponentsScreen = () => {
         }, 2000, handlerApp);
     };
 
+    const mockData = [
+        { id: 1, name: "Aria Chen", role: "Engineering Lead", email: "aria.chen@example.com", salary: 155000, status: "Activo" },
+        { id: 2, name: "Marcus Webb", role: "Product Manager", email: "marcus.webb@example.com", salary: 132000, status: "Activo" },
+        { id: 3, name: "Sofía Gómez", role: "UI/UX Designer", email: "sofia.gomez@example.com", salary: 98000, status: "Inactivo" },
+        { id: 4, name: "Carlos Mendoza", role: "Backend Developer", email: "carlos.mendoza@example.com", salary: 110000, status: "Activo" },
+        { id: 5, name: "Elena Rostova", role: "QA Engineer", email: "elena.rostova@example.com", salary: 89000, status: "Pendiente" },
+    ];
+
+    const handleView = (row) => {
+        alert(`Ver detalles:\nID: ${row.id}\nNombre: ${row.name}\nRol: ${row.role}\nEmail: ${row.email}`);
+    };
+
+    const handleEdit = (row) => {
+        alert(`Editar usuario: ${row.name} (ID: ${row.id})`);
+    };
+
+    const handleDelete = (row) => {
+        alert(`Eliminar usuario: ${row.name} (ID: ${row.id})`);
+    };
+
+    const columns = [
+        {
+            name: "ID",
+            selector: row => row.id,
+            sortable: true,
+            width: "70px",
+        },
+        {
+            name: "Nombre",
+            selector: row => row.name,
+            sortable: true,
+        },
+        {
+            name: "Rol / Puesto",
+            selector: row => row.role,
+            sortable: true,
+        },
+        {
+            name: "Email",
+            selector: row => row.email,
+            sortable: true,
+        },
+        {
+            name: "Salario (USD)",
+            selector: row => row.salary,
+            sortable: true,
+            right: true,
+            format: row => `$${row.salary.toLocaleString()}`,
+        },
+        {
+            name: "Acciones",
+            cell: row => (
+                <div className="d-flex align-items-center gap-2 py-1">
+                    <ButtonSecondary
+                        label="Ver"
+                        className="btn-sm py-1 px-2"
+                        onClick={() => handleView(row)}
+                    />
+                    <ButtonPrimary
+                        label="Editar"
+                        className="btn-sm py-1 px-2"
+                        onClick={() => handleEdit(row)}
+                    />
+                    <ButtonLink
+                        label="Eliminar"
+                        className="text-danger fw-semibold small"
+                        onClick={() => handleDelete(row)}
+                    />
+                </div>
+            ),
+            ignoreRowClick: true,
+            allowOverflow: true,
+            button: true,
+            minWidth: "220px",
+        },
+    ];
+
     return (
         <div className="container-fluid p-4">
             {/* Header / Intro */}
             <div className="d-flex align-items-center justify-content-between mb-4 border-bottom pb-3">
                 <div>
-                    <h2 className="fw-bold mb-1">Catálogo de Componentes UI</h2>
+                    <h2 className="fw-bold mb-1">{t('catalog.title')}</h2>
                     <p className="text-secondary mb-0">
-                        Galería interactiva para desarrolladores. Visualiza, prueba y reutiliza la librería de componentes del sistema.
+                        {t('catalog.description')}
                     </p>
                 </div>
                 <div>
@@ -127,6 +210,15 @@ const ComponentsScreen = () => {
                                 errors={errors.demoEdad}
                             />
 
+                            <InputPassword
+                                control={control}
+                                name="demoPassword"
+                                label="Contraseña Segura (InputPassword)"
+                                placeholder="Ingresa contraseña"
+                                required
+                                errors={errors.demoPassword}
+                            />
+
                             <div className="d-flex gap-2 mt-3">
                                 <ButtonPrimary label="Validar y Enviar Formulario" type="submit" />
                                 <ButtonSecondary label="Limpiar" type="reset" />
@@ -165,6 +257,23 @@ const ComponentsScreen = () => {
                                 onClick={() => setIsModalOpen(true)}
                             />
                         </div>
+                    </Card>
+                </div>
+
+                {/* 5. SECCIÓN REACT DATA TABLE */}
+                <div className="col-12">
+                    <Card title="Tabla de Datos (React Data Table Component)" outline outlineColor="primary">
+                        <p className="text-muted small">
+                            Tabla interactiva con ordenación de campos (sortable), paginación y columna de acciones con botones de ver, editar y eliminar.
+                        </p>
+                        <DataTable
+                            columns={columns}
+                            data={mockData}
+                            pagination
+                            responsive
+                            highlightOnHover
+                            striped
+                        />
                     </Card>
                 </div>
             </div>
