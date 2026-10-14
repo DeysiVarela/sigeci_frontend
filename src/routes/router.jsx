@@ -1,5 +1,7 @@
 import { createBrowserRouter } from "react-router";
 import LoginScreen from "../pages/login/LoginScreen";
+import ForgotPasswordScreen from "../pages/auth/ForgotPasswordScreen";
+import ResetPinScreen from "../pages/auth/ResetPinScreen";
 import DashboardScreen from "../pages/dashboard/DashboardScreen";
 import ComponentsScreen from "../pages/components/ComponentsScreen";
 import Dashboard from "../theme/containers/Dashboard";
@@ -17,6 +19,26 @@ const router = createBrowserRouter([
             {
                 index: true,
                 element: <LoginScreen />,
+            }
+        ]
+    },
+    {
+        path: "/forgot-password",
+        element: <Container />,
+        children: [
+            {
+                index: true,
+                element: <ForgotPasswordScreen />,
+            }
+        ]
+    },
+    {
+        path: "/reset-pin",
+        element: <Container />,
+        children: [
+            {
+                index: true,
+                element: <ResetPinScreen />,
             }
         ]
     },
@@ -56,4 +78,4 @@ const router = createBrowserRouter([
     }
 ]);
 
-export default router
+export default router;
