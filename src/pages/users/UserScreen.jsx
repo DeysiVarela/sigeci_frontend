@@ -82,7 +82,7 @@ const UserScreen = () => {
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
     // Formulario para edición
-    const { control, handleSubmit, setValue, reset, formState: { errors } } = useForm();
+    const { control, handleSubmit, setValue, formState: { errors } } = useForm();
 
     const triggerAlert = (type, message, title = "Operación exitosa") => {
         setAlertNotification({ type, title, message });

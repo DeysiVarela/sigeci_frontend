@@ -1,5 +1,6 @@
-import { Controller } from "react-hook-form";
 
+
+import { Controller } from "react-hook-form";
 
 const InputText = ({control, label, name, onChange, rules={}, errors={}, placeholder=null, required=false}) => {
     return (
