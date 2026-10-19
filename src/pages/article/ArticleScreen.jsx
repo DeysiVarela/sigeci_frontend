@@ -394,7 +394,7 @@ const ArticleScreen = () => {
                         </div>
                         <h5 className="fw-bold text-dark">¿Deseas eliminar este artículo permanentemente?</h5>
                         <p className="text-muted px-2 mb-2">
-                            Estás a punto de remover <strong>"{selectedArticle.title}"</strong> de la base de datos de publicaciones.
+                            Estás a punto de remover <strong>&quot;{selectedArticle.title}&quot;</strong> de la base de datos de publicaciones.
                         </p>
                         <div className="alert alert-warning py-2 small mb-0">
                             <i className="bi bi-info-circle me-1"></i> Autor: {selectedArticle.author} · Categoría: {selectedArticle.category}
