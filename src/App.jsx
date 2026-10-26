@@ -2,23 +2,18 @@ import { useMemo, useState } from 'react'
 import {
   ArrowDownRight,
   ArrowUpRight,
-  Bell,
-  BookOpenText,
   CalendarDays,
   Check,
-  ChevronDown,
-  CircleHelp,
   Clock3,
   FilePlus2,
   FileText,
-  LayoutDashboard,
-  Menu,
   MoreHorizontal,
-  Search,
-  Settings2,
   UsersRound,
   X,
 } from 'lucide-react'
+import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom'
+import { isDashboardRoute, secondaryRoutes } from './config/routes.js'
+import AdminLayout from './components/layout/AdminLayout.jsx'
 import './App.css'
 
 const initialSubmissions = [
@@ -83,22 +78,38 @@ const chartData = [
   { label: '23', value: 91 },
 ]
 
-const navigation = [
-  { label: 'Resumen', icon: LayoutDashboard },
-  { label: 'Artículos', icon: FileText, count: '24' },
-  { label: 'Agenda', icon: CalendarDays },
-  { label: 'Participantes', icon: UsersRound },
-]
+function RouteView() {
+  const { pathname } = useLocation()
+  const route = secondaryRoutes[pathname]
+  const knownRoute = route || navigation.find((item) => item.path === pathname)
 
-function App() {
+  if (!knownRoute) {
+    return (
+      <section className="route-view panel">
+        <span className="section-kicker">ERROR 404</span>
+        <h1>Página no encontrada</h1>
+        <p>La ruta que buscas no existe dentro de SIGECI.</p>
+        <Link className="primary-button" to="/dashboard">Volver al resumen</Link>
+      </section>
+    )
+  }
+
+  return (
+    <section className="route-view panel">
+      <span className="section-kicker">SIGECI</span>
+      <h1>{route?.title || knownRoute.label}</h1>
+      <p>{route?.description || 'Esta pantalla está lista para la siguiente historia del sistema.'}</p>
+    </section>
+  )
+}
+
+function DashboardShell() {
+  const { pathname } = useLocation()
+  const navigate = useNavigate()
   const [submissions, setSubmissions] = useState(initialSubmissions)
-  const [activeNav, setActiveNav] = useState('Resumen')
   const [period, setPeriod] = useState('30 días')
   const [query, setQuery] = useState('')
-  const [showNotifications, setShowNotifications] = useState(false)
   const [showForm, setShowForm] = useState(false)
-  const [mobileNavOpen, setMobileNavOpen] = useState(false)
-
   const filteredSubmissions = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase('es')
     if (!normalizedQuery) return submissions
@@ -142,104 +153,8 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
-      <aside className={`sidebar ${mobileNavOpen ? 'sidebar-open' : ''}`}>
-        <a className="brand" href="#inicio" aria-label="SIGECI, inicio">
-          <span className="brand-mark"><BookOpenText size={21} strokeWidth={1.8} /></span>
-          <span className="brand-copy"><strong>SIGECI</strong><small>Gestión científica</small></span>
-        </a>
-
-        <div className="conference-picker">
-          <span className="conference-kicker">CONFERENCIA ACTIVA</span>
-          <button className="conference-select" type="button">
-            <span><strong>Encuentro 2026</strong><small>Universidad del Valle</small></span>
-            <ChevronDown size={16} />
-          </button>
-        </div>
-
-        <nav className="primary-nav" aria-label="Navegación principal">
-          <span className="nav-label">ESPACIO DE TRABAJO</span>
-          {navigation.map(({ label, icon: Icon, count }) => (
-            <button
-              className={`nav-link ${activeNav === label ? 'nav-link-active' : ''}`}
-              key={label}
-              onClick={() => {
-                setActiveNav(label)
-                setMobileNavOpen(false)
-              }}
-              type="button"
-            >
-              <Icon size={18} strokeWidth={1.8} />
-              <span>{label}</span>
-              {count && <span className="nav-count">{count}</span>}
-            </button>
-          ))}
-        </nav>
-
-        <div className="sidebar-bottom">
-          <div className="sidebar-note">
-            <span className="note-icon"><Clock3 size={16} /></span>
-            <div><strong>Convocatoria abierta</strong><small>Cierra el 18 de octubre</small></div>
-          </div>
-          <button className="nav-link" type="button" onClick={() => setActiveNav('Configuración')}>
-            <Settings2 size={18} strokeWidth={1.8} /><span>Configuración</span>
-          </button>
-          <button className="nav-link" type="button" onClick={() => setActiveNav('Ayuda')}>
-            <CircleHelp size={18} strokeWidth={1.8} /><span>Centro de ayuda</span>
-          </button>
-          <div className="profile-row">
-            <span className="profile-avatar">DV</span>
-            <span className="profile-copy"><strong>Deisy Varela</strong><small>Coordinación</small></span>
-            <MoreHorizontal size={19} />
-          </div>
-        </div>
-      </aside>
-
-      <main className="main-area">
-        <header className="topbar">
-          <button
-            className="icon-button menu-button"
-            type="button"
-            aria-label="Abrir navegación"
-            onClick={() => setMobileNavOpen((open) => !open)}
-          >
-            <Menu size={20} />
-          </button>
-          <div className="breadcrumbs"><span>Encuentro 2026</span><span className="crumb-divider">/</span><strong>{activeNav}</strong></div>
-          <div className="topbar-actions">
-            <label className="search-box">
-              <Search size={17} />
-              <input
-                aria-label="Buscar artículos"
-                placeholder="Buscar artículos..."
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-              />
-              <kbd>⌘ K</kbd>
-            </label>
-            <div className="notification-wrap">
-              <button
-                className="icon-button notification-button"
-                type="button"
-                aria-label="Notificaciones"
-                aria-expanded={showNotifications}
-                onClick={() => setShowNotifications((show) => !show)}
-              >
-                <Bell size={19} /><span className="notification-dot" />
-              </button>
-              {showNotifications && (
-                <div className="notification-popover">
-                  <div className="popover-title"><strong>Notificaciones</strong><span>2 nuevas</span></div>
-                  <p><span className="notification-marker" /> Hay 8 artículos pendientes de asignación.</p>
-                  <p><span className="notification-marker marker-yellow" /> La convocatoria cierra en 20 días.</p>
-                </div>
-              )}
-            </div>
-            <span className="topbar-avatar" aria-label="Perfil de Deisy Varela">DV</span>
-          </div>
-        </header>
-
-        <div className="page-content">
+    <AdminLayout query={query} onQueryChange={setQuery}>
+      {isDashboardRoute(pathname) ? <div className="page-content">
           <section className="welcome-row">
             <div>
               <div className="eyebrow"><span className="live-dot" /> PANEL DE CONTROL <span className="eyebrow-line" /></div>
@@ -307,14 +222,14 @@ function App() {
                 <button type="button" className="focus-item"><span className="focus-icon focus-yellow"><Clock3 size={16} /></span><span className="focus-text"><strong>Revisiones por vencer</strong><small>Vencen en las próximas 48 h</small></span><span className="focus-count count-warn">04</span></button>
                 <button type="button" className="focus-item"><span className="focus-icon focus-blue"><Check size={16} /></span><span className="focus-text"><strong>Decisiones pendientes</strong><small>Esperan aprobación final</small></span><span className="focus-count">02</span></button>
               </div>
-              <button className="text-action" type="button" onClick={() => setActiveNav('Artículos')}>Ver todas las tareas <ArrowUpRight size={14} /></button>
+              <button className="text-action" type="button" onClick={() => navigate('/articulos')}>Ver todas las tareas <ArrowUpRight size={14} /></button>
             </article>
           </section>
 
           <section className="panel submissions-panel">
             <div className="panel-heading submissions-heading">
               <div><span className="section-kicker">BANDEJA DE ENTRADA</span><h2>Artículos recientes <span className="heading-count">{filteredSubmissions.length}</span></h2></div>
-              <button className="secondary-button" type="button" onClick={() => setActiveNav('Artículos')}>Ver todos <ArrowUpRight size={14} /></button>
+              <button className="secondary-button" type="button" onClick={() => navigate('/articulos')}>Ver todos <ArrowUpRight size={14} /></button>
             </div>
             <div className="table-wrap">
               <table>
@@ -333,14 +248,11 @@ function App() {
               </table>
               {filteredSubmissions.length === 0 && <div className="empty-state">No encontramos artículos que coincidan con “{query}”.</div>}
             </div>
-            <div className="table-footer"><span>Mostrando <strong>{filteredSubmissions.length}</strong> de <strong>{submissions.length}</strong> artículos recientes</span><button type="button" onClick={() => setActiveNav('Artículos')}>Ir a artículos <ArrowUpRight size={13} /></button></div>
+            <div className="table-footer"><span>Mostrando <strong>{filteredSubmissions.length}</strong> de <strong>{submissions.length}</strong> artículos recientes</span><button type="button" onClick={() => navigate('/articulos')}>Ir a artículos <ArrowUpRight size={13} /></button></div>
           </section>
 
           <footer className="page-footer"><span>SIGECI <i /> Universidad del Valle</span><span>Datos de demostración <i /> Sin conexión al backend</span></footer>
-        </div>
-      </main>
-
-      {mobileNavOpen && <button className="mobile-scrim" type="button" aria-label="Cerrar navegación" onClick={() => setMobileNavOpen(false)} />}
+        </div> : <div className="page-content"><RouteView /></div>}
 
       {showForm && (
         <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowForm(false) }}>
@@ -357,7 +269,17 @@ function App() {
           </section>
         </div>
       )}
-    </div>
+    </AdminLayout>
+  )
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="*" element={<DashboardShell />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
