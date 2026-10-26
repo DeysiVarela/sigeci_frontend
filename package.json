@@ -2,6 +2,9 @@
   "name": "frontend",
   "private": true,
   "version": "0.0.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +13,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@popperjs/core": "^2.11.8",
+    "admin-lte": "^4.10.0",
+    "bootstrap": "^5.3.8",
     "i18next": "^26.4.4",
+    "lucide-react": "^1.48.0",
+    "prop-types": "^15.8.1",
     "react": "^19.2.8",
     "react-data-table-component": "^8.12.0",
     "react-dom": "^19.2.8",
