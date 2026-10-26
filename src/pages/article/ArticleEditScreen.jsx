@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router";
-import { useState, useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import Card from "../../components/cards/Card";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
@@ -10,7 +10,11 @@ import { MOCK_ARTICLES } from "./mockArticles";
 const ArticleEditScreen = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [article, setArticle] = useState(null);
+    const article = useMemo(() => {
+        const stored = localStorage.getItem("sigeci_articles");
+        const list = stored ? JSON.parse(stored) : MOCK_ARTICLES;
+        return list.find(a => String(a.id) === String(id)) || null;
+    }, [id]);
 
     const {
         control,
@@ -26,7 +30,6 @@ const ArticleEditScreen = () => {
         const found = list.find(a => String(a.id) === String(id));
 
         if (found) {
-            setArticle(found);
             setValue("title", found.title);
             setValue("author", found.author);
             setValue("category", found.category);

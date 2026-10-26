@@ -8,7 +8,7 @@ import { LoaderContextProvider } from '../../context/LoaderContext';
 import Loader from '../../components/loaders/Loader';
 
 const Dashboard = () => {
-	const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+	const [, setSidebarCollapsed] = useState(false);
 
 	useEffect(() => {
 		// Sincronizar clases requeridas por AdminLTE en el body

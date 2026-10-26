@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router";
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import Card from "../../components/cards/Card";
 import Badge from "../../components/badges/Badge";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
@@ -9,13 +9,10 @@ import { MOCK_ARTICLES } from "./mockArticles";
 const ArticleViewScreen = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [article, setArticle] = useState(null);
-
-    useEffect(() => {
+    const article = useMemo(() => {
         const stored = localStorage.getItem("sigeci_articles");
         const list = stored ? JSON.parse(stored) : MOCK_ARTICLES;
-        const found = list.find(a => String(a.id) === String(id));
-        setArticle(found || null);
+        return list.find(a => String(a.id) === String(id)) || null;
     }, [id]);
 
     const getStatusBadge = (status) => {
