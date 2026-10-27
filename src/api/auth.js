@@ -1,7 +1,18 @@
 import { request, session } from "./http";
 
-export const login = async (email, password) => {
-    const data = await request("/api/auth/login/", { method: "POST", body: { email, password }, auth: false });
+/**
+ * Única función de login del frontend.
+ * POST /api/auth/login  { identifier, password, captchaToken }
+ *  - 200 -> { access, refresh, user }  (guarda la sesión y devuelve el usuario)
+ *  - 400 -> CAPTCHA inválido o faltante
+ *  - 401 -> credenciales inválidas
+ */
+export const login = async ({ identifier, password, captchaToken = "" }) => {
+    const data = await request("/api/auth/login", {
+        method: "POST",
+        body: { identifier, password, captchaToken },
+        auth: false,
+    });
     session.save(data);
     return data.user;
 };
