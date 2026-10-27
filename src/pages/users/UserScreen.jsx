@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router"; 
 import DataTable from "react-data-table-component";
 import { useForm } from "react-hook-form";
 import Card from "../../components/cards/Card";
@@ -68,6 +69,7 @@ const INITIAL_USERS = [
 ];
 
 const UserScreen = () => {
+    const navigate = useNavigate();
     const [users, setUsers] = useState(INITIAL_USERS);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("TODOS");
@@ -275,7 +277,7 @@ const UserScreen = () => {
                 <div className="d-flex gap-2">
                     <button
                         className="btn btn-primary shadow-sm d-flex align-items-center gap-2"
-                        onClick={() => alert("Función para registrar nuevo usuario en desarrollo")}
+                        onClick={() => navigate("/users/create")}
                     >
                         <i className="bi bi-person-plus-fill"></i>
                         <span>Nuevo Usuario</span>

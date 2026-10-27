@@ -7,7 +7,7 @@ import InputSelect from "../../components/inputs/InputSelect";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import Card from "../../components/cards/Card";
 import HandlerApp from "../../utils/HandlerApp";
-import Swal from "sweetalert2"; // <--- IMPORTAMOS SWEETALERT
+import Swal from "sweetalert2"; 
 
 const CreateUserScreen = () => {
     const nav = useNavigate();
@@ -19,12 +19,12 @@ const CreateUserScreen = () => {
 
     const submitData = (data) => {
         handlerApp.setLoader(true);
-        console.log("Simulando creación de usuario:", data);
+        
 
         setTimeout(() => {
             handlerApp.setLoader(false);
             
-            // Usamos SweetAlert2 en lugar del alert feo
+            // Usamos SweetAlert2 
             Swal.fire({
                 title: '¡Éxito!',
                 text: 'Usuario creado exitosamente (Simulación)',
