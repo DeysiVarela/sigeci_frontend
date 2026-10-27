@@ -85,7 +85,7 @@ const router = createBrowserRouter([
             },
             {
                 path: "/users/edit/:id",
-
+                element: <EditUserScreen/>
             },
         ]
     }
