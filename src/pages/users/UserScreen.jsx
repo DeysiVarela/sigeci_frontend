@@ -11,6 +11,7 @@ import InputText from "../../components/inputs/InputText";
 import InputEmail from "../../components/inputs/InputEmail";
 import ButtonLink from "../../components/buttons/ButtonLink";
 
+
 const INITIAL_USERS = [
     {
         id: 1,
@@ -223,7 +224,7 @@ const UserScreen = () => {
                     <ButtonPrimary
                         label="Editar"
                         className="btn-sm py-1 px-2 text-nowrap"
-                        onClick={() => navigate(`/users/edit/${row.id}`)}
+                        onClick={() => handleOpenEdit(row)}
                     />
                     <ButtonLink
                         label="Eliminar"

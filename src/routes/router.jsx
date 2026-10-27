@@ -11,7 +11,6 @@ import ArticleEditScreen from "../pages/article/ArticleEditScreen";
 import UserScreen from "../pages/users/UserScreen";
 import Container from "../theme/containers/Container";
 import CreateUserScreen from "../pages/users/CreateUserScreen";
-import EditUserScreen from "../pages/users/EditUserScreen";
 
 const router = createBrowserRouter([
     {
@@ -76,9 +75,9 @@ const router = createBrowserRouter([
                 path: "/users",
                 element: <UserScreen/>
             },
-                        {
-                path: "/users/create",
-                element: <CreateUserScreen/>
+            {
+                path: "/users/create", 
+                element: <CreateUserScreen/> 
             },
         ]
     }
