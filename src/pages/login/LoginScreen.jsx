@@ -45,6 +45,8 @@ const LoginScreen = () => {
                 setError("email", { type: "server", message: "Las credenciales no son válidas." });
                 setError("pass", { type: "server", message: "Las credenciales no son válidas." });
                 setSubmitError("No pudimos iniciar sesión. Revisa tus credenciales.");
+            } else if (error.status === 400 || error.status === 503) {
+                setSubmitError(error.message);
             } else {
                 setSubmitError("No pudimos conectar con el servicio. Inténtalo nuevamente.");
             }
