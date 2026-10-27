@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Navigate, Outlet } from 'react-router';
+import { Outlet } from 'react-router';
 import Header from '../sections/Header';
 import Nav from '../sections/Nav';
 import Footer from '../sections/Footer';
@@ -7,8 +7,8 @@ import { AppContextProvider } from '../../context/AppContext';
 import { LoaderContextProvider } from '../../context/LoaderContext';
 import Loader from '../../components/loaders/Loader';
 
-const DashboardLayout = () => {
-		const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+const Dashboard = () => {
+	const [, setSidebarCollapsed] = useState(false);
 
 	useEffect(() => {
 		// Sincronizar clases requeridas por AdminLTE en el body
@@ -51,12 +51,4 @@ const DashboardLayout = () => {
 	);
 };
 
-// Sin token no se entra al panel
-const Dashboard = () => {
-	if (!localStorage.getItem('token')) {
-		return <Navigate to="/login" replace />;
-	}
-	return <DashboardLayout />;
-};
-
-export default Dashboard;
+export default Dashboard;

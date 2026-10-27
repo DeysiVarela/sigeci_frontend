@@ -1,10 +1,8 @@
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import InputEmail from "../../components/inputs/InputEmail";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import HandlerApp from "../../utils/HandlerApp";
-import { forgotPassword } from "../../api/auth";
 
 const ForgotPasswordScreen = () => {
     const nav = useNavigate();
@@ -12,21 +10,17 @@ const ForgotPasswordScreen = () => {
 
     const { control, handleSubmit, formState: { errors } } = useForm();
 
-    const [error, setError] = useState(null);
-
-    const submitData = async (data) => {
-        setError(null);
+    const submitData = (data) => {
         handlerApp.setLoader(true);
-        try {
-            // La respuesta es la misma exista o no el correo (no se revela nada)
-            await forgotPassword(data.email);
+        console.log("Enviando PIN al correo:", data.email);
+
+        // Simulación de envío al backend
+        setTimeout(() => {
+            handlerApp.setLoader(false);
+            // Guardamos el correo para usarlo en la pantalla del PIN
             sessionStorage.setItem("recovery_email", data.email);
             nav("/reset-pin");
-        } catch (e) {
-            setError(e.status === 429 ? "Demasiados intentos. Espera un momento." : e.message);
-        } finally {
-            handlerApp.setLoader(false);
-        }
+        }, 2000);
     };
 
     return (
@@ -42,9 +36,7 @@ const ForgotPasswordScreen = () => {
                             Te enviaremos un PIN de 6 dígitos a tu correo.
                         </p>
 
-                        {error && <div className="alert alert-danger py-2" role="alert">{error}</div>}
-
-                        <form onSubmit={(e) => e.preventDefault()}>
+                        <form>
                             <InputEmail
                                 control={control}
                                 label="Correo electrónico"
@@ -70,4 +62,4 @@ const ForgotPasswordScreen = () => {
     );
 };
 
-export default ForgotPasswordScreen;
+export default ForgotPasswordScreen;
