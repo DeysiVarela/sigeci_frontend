@@ -10,6 +10,7 @@ import ArticleViewScreen from "../pages/article/ArticleViewScreen";
 import ArticleEditScreen from "../pages/article/ArticleEditScreen";
 import UserScreen from "../pages/users/UserScreen";
 import Container from "../theme/containers/Container";
+import CreateArticleScreen from "../pages/article/CreateArticleScreen";
 
 const router = createBrowserRouter([
     {
@@ -69,6 +70,10 @@ const router = createBrowserRouter([
             {
                 path: "/article/edit/:id",
                 element: <ArticleEditScreen/>
+            },
+            {
+                path: "/article/create",
+                element: <CreateArticleScreen/>
             },
             {
                 path: "/users",
