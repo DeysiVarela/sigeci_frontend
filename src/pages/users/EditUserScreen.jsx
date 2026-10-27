@@ -36,7 +36,7 @@ const EditUserScreen = () => {
         }, 1000);
     }, [id, reset]);
 
-    const submitData = (data) => {
+    const submitData = () => {
         handlerApp.setLoader(true);
         
 

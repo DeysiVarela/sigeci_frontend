@@ -84,7 +84,7 @@ const UserScreen = () => {
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
     // Formulario para edición
-    const { control, handleSubmit, setValue, formState: { errors } } = useForm();
+    const { control, handleSubmit, formState: { errors } } = useForm();
 
     const triggerAlert = (type, message, title = "Operación exitosa") => {
         setAlertNotification({ type, title, message });
@@ -99,15 +99,6 @@ const UserScreen = () => {
         setViewModalOpen(true);
     };
 
-    const handleOpenEdit = (user) => {
-        setSelectedUser(user);
-        setValue("name", user.name);
-        setValue("email", user.email);
-        setValue("role", user.role);
-        setValue("department", user.department);
-        setValue("status", user.status);
-        setEditModalOpen(true);
-    };
 
     const handleSaveEdit = (data) => {
         setUsers(prev =>
