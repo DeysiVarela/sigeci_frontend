@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useNavigate } from "react-router"; 
+import { useNavigate } from "react-router";
 import DataTable from "react-data-table-component";
 import { useForm } from "react-hook-form";
 import Card from "../../components/cards/Card";
@@ -223,7 +223,7 @@ const UserScreen = () => {
                     <ButtonPrimary
                         label="Editar"
                         className="btn-sm py-1 px-2 text-nowrap"
-                        onClick={() => handleOpenEdit(row)}
+                        onClick={() => navigate(`/users/edit/${row.id}`)}
                     />
                     <ButtonLink
                         label="Eliminar"
