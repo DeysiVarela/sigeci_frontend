@@ -17,7 +17,7 @@ const CreateUserScreen = () => {
         mode: "onChange" // <--- Esto valida mientras escribes o sales del campo
     });
 
-    const submitData = (data) => {
+    const submitData = () => {
         handlerApp.setLoader(true);
         
 
