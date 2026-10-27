@@ -38,7 +38,7 @@ const EditUserScreen = () => {
 
     const submitData = (data) => {
         handlerApp.setLoader(true);
-        console.log(`Actualizando usuario ${id}:`, data);
+        
 
         // Simulamos la petición al backend
         setTimeout(() => {
