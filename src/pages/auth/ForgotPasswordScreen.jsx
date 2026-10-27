@@ -1,8 +1,10 @@
 import { useForm } from "react-hook-form";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import InputEmail from "../../components/inputs/InputEmail";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import HandlerApp from "../../utils/HandlerApp";
+import { requestRecovery } from "../../services/authService";
 
 const ForgotPasswordScreen = () => {
     const nav = useNavigate();
@@ -10,17 +12,19 @@ const ForgotPasswordScreen = () => {
 
     const { control, handleSubmit, formState: { errors } } = useForm();
 
-    const submitData = (data) => {
+    const [error, setError] = useState("");
+    const submitData = async (data) => {
         handlerApp.setLoader(true);
-        console.log("Enviando PIN al correo:", data.email);
-
-        // Simulación de envío al backend
-        setTimeout(() => {
+        setError("");
+        try {
+            await requestRecovery(data.email);
             handlerApp.setLoader(false);
-            // Guardamos el correo para usarlo en la pantalla del PIN
             sessionStorage.setItem("recovery_email", data.email);
             nav("/reset-pin");
-        }, 2000);
+        } catch (requestError) {
+            setError(requestError.message);
+            handlerApp.setLoader(false);
+        }
     };
 
     return (
@@ -50,6 +54,7 @@ const ForgotPasswordScreen = () => {
                                 className="w-100"
                                 onClick={handleSubmit(submitData)}
                             />
+                            {error && <div className="alert alert-danger mt-3" role="alert">{error}</div>}
                         </form>
 
                         <p className="mt-3 mb-0 text-center">

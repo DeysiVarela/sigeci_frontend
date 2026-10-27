@@ -1,10 +1,12 @@
 import { useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import InputPin from "../../components/inputs/InputPin";
 import InputPassword from "../../components/inputs/InputPassword";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import HandlerApp from "../../utils/HandlerApp";
+import { resetPassword } from "../../services/authService";
 
 const ResetPinScreen = () => {
     const nav = useNavigate();
@@ -20,17 +22,23 @@ const ResetPinScreen = () => {
         }
     }, [nav]);
 
-    const submitData = (data) => {
+    const [error, setError] = useState("");
+    const submitData = async (data) => {
         handlerApp.setLoader(true);
-        console.log("Validando PIN:", data.pin);
-
-        // Simulación de validación contra backend
-        setTimeout(() => {
+        setError("");
+        try {
+            await resetPassword({
+                email: sessionStorage.getItem("recovery_email"),
+                code: data.pin,
+                password: data.password,
+            });
             handlerApp.setLoader(false);
-            console.log("PIN válido. Cambiando contraseña a:", data.password);
             sessionStorage.removeItem("recovery_email");
             nav("/login");
-        }, 2000);
+        } catch (requestError) {
+            setError(requestError.message);
+            handlerApp.setLoader(false);
+        }
     };
 
     return (
@@ -70,6 +78,7 @@ const ResetPinScreen = () => {
                                 className="w-100"
                                 onClick={handleSubmit(submitData)}
                             />
+                            {error && <div className="alert alert-danger mt-3" role="alert">{error}</div>}
                         </form>
 
                         <p className="mt-3 mb-0 text-center">

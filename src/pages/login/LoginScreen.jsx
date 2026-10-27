@@ -143,16 +143,16 @@ const LoginScreen = () => {
                         </form>
 
                         <div className="social-auth-links text-center d-grid gap-2">
-                            <a href="#" className="btn btn-danger">
+                            <button type="button" className="btn btn-danger" disabled>
                                 <i className="bi bi-google me-2"></i>Iniciar sesión con Google
-                            </a>
+                            </button>
                         </div>
 
                         <p className="mb-1">
                             <a href="/forgot-password">¿Olvidaste tu contraseña?</a>
                         </p>
                         <p className="mb-0">
-                            <a href="register.html" className="text-center">
+                            <a href="/register" className="text-center">
                                 Registrar nueva cuenta
                             </a>
                         </p>
