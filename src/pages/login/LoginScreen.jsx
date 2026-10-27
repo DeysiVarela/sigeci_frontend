@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import InputEmail from "../../components/inputs/InputEmail";
 import InputPassword from "../../components/inputs/InputPassword";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import HandlerApp from "../../utils/HandlerApp";
+import { login } from "../../api/auth";
 
 const LoginScreen = () => {
 
@@ -12,15 +14,19 @@ const LoginScreen = () => {
 
     const { control, handleSubmit, formState: { errors } } = useForm();
 
-    const submitData = (data) => {
-        handlerApp.setLoader(true);
-        console.log("simulando envio de datos", data);
+    const [error, setError] = useState(null);
 
-        setTimeout((nav) => {
-            console.log("recibi datos de backend");
-            nav("/");
+    const submitData = async (data) => {
+        setError(null);
+        handlerApp.setLoader(true);
+        try {
+            await login(data.email, data.pass);
+            nav("/home");
+        } catch (e) {
+            setError(e.status === 401 ? "Correo o contraseña incorrectos." : e.message);
+        } finally {
             handlerApp.setLoader(false);
-        }, 2000, nav);
+        }
     };
 
     return (
@@ -33,7 +39,9 @@ const LoginScreen = () => {
                     <div className="card-body login-card-body">
                         <p className="login-box-msg">Inicia sesión para comenzar</p>
 
-                        <form>
+                        {error && <div className="alert alert-danger py-2" role="alert">{error}</div>}
+
+                        <form onSubmit={(e) => e.preventDefault()}>
                             <InputEmail
                                 control={control}
                                 label="Correo electrónico"
@@ -84,4 +92,4 @@ const LoginScreen = () => {
     );
 };
 
-export default LoginScreen;
+export default LoginScreen;

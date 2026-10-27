@@ -1,8 +1,18 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { logout } from "../../api/auth";
 
 const Header = ({ onToggleSidebar }) => {
+
+	const nav = useNavigate();
+	const userName = localStorage.getItem("name") || "Usuario";
+	const userProfile = localStorage.getItem("profile") || "";
+
+	const handleLogout = () => {
+		logout();
+		nav("/login", { replace: true });
+	};
 
 	const { i18n } = useTranslation();
 
@@ -89,27 +99,27 @@ const Header = ({ onToggleSidebar }) => {
 							<img
 								src="https://img.magnific.com/vector-gratis/establecimiento-circulos-usuarios_78370-4704.jpg"
 								className="user-image rounded-circle shadow"
-								alt="Usuario X"
+								alt={userName}
 								style={{ width: '35px', height: '35px' }}
 							/>
-							<span className="d-none d-xl-inline">Usuario X</span>
+							<span className="d-none d-xl-inline">{userName}</span>
 						</a>
 						<ul className="dropdown-menu dropdown-menu-lg dropdown-menu-end">
 							<li className="user-header text-bg-primary">
 								<img
 									src="https://img.magnific.com/vector-gratis/establecimiento-circulos-usuarios_78370-4704.jpg"
 									className="rounded-circle shadow"
-									alt="Usuario X"
+									alt={userName}
 									style={{ width: '45px', height: '45px', display: "block", marginLeft: "auto", marginRight: "auto" }}
 								/>
 								<p>
-									Usuario X - Desarrollador
-									<small>Miembro desde {new Date().toLocaleDateString()}</small>
+									{userName} - {userProfile}
+									
 								</p>
 							</li>
 							<li className="user-footer">
 								<Link to="/profile" className="btn btn-outline-secondary">Perfil</Link>
-								<Link to="/login" className="btn btn-outline-danger float-end">Cerrar sesión</Link>
+								<button type="button" className="btn btn-outline-danger float-end" onClick={handleLogout}>Cerrar sesión</button>
 							</li>
 						</ul>
 					</li>
@@ -119,4 +129,4 @@ const Header = ({ onToggleSidebar }) => {
 	);
 };
 
-export default Header;
+export default Header;
