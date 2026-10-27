@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import InputPin from "../../components/inputs/InputPin";
 import InputPassword from "../../components/inputs/InputPassword";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import HandlerApp from "../../utils/HandlerApp";
-import { resetPassword } from "../../api/auth";
 
 const ResetPinScreen = () => {
     const nav = useNavigate();
@@ -21,21 +20,17 @@ const ResetPinScreen = () => {
         }
     }, [nav]);
 
-    const [error, setError] = useState(null);
-
-    const submitData = async (data) => {
-        setError(null);
+    const submitData = (data) => {
         handlerApp.setLoader(true);
-        try {
-            const email = sessionStorage.getItem("recovery_email");
-            await resetPassword(email, data.pin, data.password);
+        console.log("Validando PIN:", data.pin);
+
+        // Simulación de validación contra backend
+        setTimeout(() => {
+            handlerApp.setLoader(false);
+            console.log("PIN válido. Cambiando contraseña a:", data.password);
             sessionStorage.removeItem("recovery_email");
             nav("/login");
-        } catch (e) {
-            setError(e.message);
-        } finally {
-            handlerApp.setLoader(false);
-        }
+        }, 2000);
     };
 
     return (
@@ -51,9 +46,7 @@ const ResetPinScreen = () => {
                             Revisa tu correo. El PIN tiene 6 dígitos.
                         </p>
 
-                        {error && <div className="alert alert-danger py-2" role="alert">{error}</div>}
-
-                        <form onSubmit={(e) => e.preventDefault()}>
+                        <form>
                             <InputPin
                                 control={control}
                                 label="PIN de verificación"
@@ -89,4 +82,4 @@ const ResetPinScreen = () => {
     );
 };
 
-export default ResetPinScreen;
+export default ResetPinScreen;
