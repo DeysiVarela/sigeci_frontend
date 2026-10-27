@@ -268,7 +268,7 @@ const UserScreen = () => {
                 <div className="d-flex gap-2">
                     <button
                         className="btn btn-primary shadow-sm d-flex align-items-center gap-2"
-                        onClick={() => navigate("/users/create")}
+                        onClick={() => alert("Función para registrar nuevo usuario en desarrollo")}
                     >
                         <i className="bi bi-person-plus-fill"></i>
                         <span>Nuevo Usuario</span>
