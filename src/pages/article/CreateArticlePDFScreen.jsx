@@ -47,13 +47,6 @@ const CreateArticlePDFScreen = () => {
         formData.append("resumen", data.resumen);
         formData.append("pdfFile", selectedFile);
 
-        console.log("Enviando FormData al backend de Enrique (SCRUM-86):", {
-            titulo: data.titulo,
-            lineaTematica: data.lineaTematica,
-            resumen: data.resumen,
-            archivo: selectedFile.name
-        });
-
         // Simulamos la petición al backend
         setTimeout(() => {
             handlerApp.setLoader(false);
