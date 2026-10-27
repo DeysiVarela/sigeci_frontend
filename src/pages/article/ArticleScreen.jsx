@@ -233,7 +233,7 @@ const ArticleScreen = () => {
                 <div className="d-flex gap-2">
                     <button
                         className="btn btn-primary shadow-sm d-flex align-items-center gap-2"
-                        onClick={() => alert("Función para crear nuevo artículo próximamente")}
+                        onClick={() => navigate("/article/postulate")}
                     >
                         <i className="bi bi-plus-circle"></i>
                         <span>Nuevo Artículo</span>
