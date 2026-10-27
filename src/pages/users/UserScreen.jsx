@@ -11,6 +11,7 @@ import InputText from "../../components/inputs/InputText";
 import InputEmail from "../../components/inputs/InputEmail";
 import ButtonLink from "../../components/buttons/ButtonLink";
 
+
 const INITIAL_USERS = [
     {
         id: 1,
@@ -268,7 +269,7 @@ const UserScreen = () => {
                 <div className="d-flex gap-2">
                     <button
                         className="btn btn-primary shadow-sm d-flex align-items-center gap-2"
-                        onClick={() => alert("Función para registrar nuevo usuario en desarrollo")}
+                        onClick={() => navigate("/users/create")}
                     >
                         <i className="bi bi-person-plus-fill"></i>
                         <span>Nuevo Usuario</span>

@@ -10,8 +10,9 @@ import ArticleViewScreen from "../pages/article/ArticleViewScreen";
 import ArticleEditScreen from "../pages/article/ArticleEditScreen";
 import UserScreen from "../pages/users/UserScreen";
 import Container from "../theme/containers/Container";
-// import CreateUserScreen from "../pages/users/CreateUserScreen"; // <-- Comentado, está en la rama 72
+import CreateUserScreen from "../pages/users/CreateUserScreen";
 import EditUserScreen from "../pages/users/EditUserScreen";
+
 
 const router = createBrowserRouter([
     {
@@ -76,7 +77,12 @@ const router = createBrowserRouter([
                 path: "/users",
                 element: <UserScreen/>
             },
-            // { path: "/users/create", element: <CreateUserScreen/> }, // <-- esta en la rama 72
+
+            {
+                path: "/users/create", 
+                element: <CreateUserScreen/> 
+
+            },
             {
                 path: "/users/edit/:id",
                 element: <EditUserScreen/>
