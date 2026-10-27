@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { session } from "../../api/http";
 
 const Nav = () => {
   return (
@@ -39,12 +40,14 @@ const Nav = () => {
                 <p>Artículos</p>
               </Link>
             </li>
-            <li className="nav-item">
-              <Link to="/users" className="nav-link">
-                <i className="nav-icon bi bi-people"></i>
-                <p>Usuarios</p>
-              </Link>
-            </li>
+            {session.can("user", "view") && (
+              <li className="nav-item">
+                <Link to="/users" className="nav-link">
+                  <i className="nav-icon bi bi-people"></i>
+                  <p>Usuarios</p>
+                </Link>
+              </li>
+            )}
 
             <li className="nav-header">SISTEMA</li>
             <li className="nav-item">
@@ -60,4 +63,4 @@ const Nav = () => {
   );
 };
 
-export default Nav;
+export default Nav;
