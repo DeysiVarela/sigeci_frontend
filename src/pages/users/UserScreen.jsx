@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router";
 import DataTable from "react-data-table-component";
 import { useForm } from "react-hook-form";
@@ -68,10 +68,29 @@ const INITIAL_USERS = [
         avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80"
     }
 ];
+    
+// Cuando el endpoint del SCRUM 16 esté listo, reemplazar el cuerpo por un fetch real
+    const fetchUsers = () =>
+        new Promise((resolve) => setTimeout(() => resolve(INITIAL_USERS), 600));
 
-const UserScreen = () => {
+
+    const UserScreen = () => {
     const navigate = useNavigate();
-    const [users, setUsers] = useState(INITIAL_USERS);
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        fetchUsers()
+            .then((data) => !cancelled && setUsers(data))
+            .catch(() => !cancelled && setError("No se pudieron cargar los usuarios."))
+            .finally(() => !cancelled && setLoading(false));
+        return () => { cancelled = true; };
+    }, []);
+    //hasta aca se reemplazo
+
+
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("TODOS");
 
@@ -340,6 +359,15 @@ const UserScreen = () => {
             </div>
 
             {/* Contenedor Principal de la Tabla */}
+
+            {/* mensaje de error */}
+            {error && (
+                <div className="alert alert-danger d-flex align-items-center" role="alert">
+                    <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                    <span>{error} Intenta de nuevo en unos minutos.</span>
+                </div>
+)}
+
             <Card title="Listado Oficial de Usuarios" outline outlineColor="primary">
                 {/* Barra de Filtros y Búsqueda */}
                 <div className="row g-2 mb-3 align-items-center">
@@ -384,23 +412,30 @@ const UserScreen = () => {
                 </div>
 
                 {/* Tabla de React Data Table */}
-                <div className="border rounded">
-                    <DataTable
-                        columns={columns}
-                        data={filteredUsers}
-                        pagination
-                        paginationPerPage={5}
-                        paginationRowsPerPageOptions={[5, 10, 15, 20]}
-                        responsive
-                        highlightOnHover
-                        noDataComponent={
-                            <div className="py-5 text-center text-muted">
-                                <i className="bi bi-search fs-1 d-block mb-2 text-secondary opacity-50"></i>
-                                <p className="mb-0">No se encontraron usuarios con los criterios indicados.</p>
-                            </div>
-                        }
-                    />
-                </div>
+                {loading ? (
+                    <div className="py-5 text-center border rounded">
+                        <div className="spinner-border text-primary" role="status"></div>
+                        <p className="mt-2 mb-0 text-muted">Cargando usuarios...</p>
+                    </div>
+                ) : (
+                    <div className="border rounded">
+                        <DataTable
+                            columns={columns}
+                            data={filteredUsers}
+                            pagination
+                            paginationPerPage={5}
+                            paginationRowsPerPageOptions={[5, 10, 15, 20]}
+                            responsive
+                            highlightOnHover
+                            noDataComponent={
+                                <div className="py-5 text-center text-muted">
+                                    <i className="bi bi-search fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                                    <p className="mb-0">No se encontraron usuarios con los criterios indicados.</p>
+                                </div>
+                            }
+                        />
+                    </div>
+                )}
             </Card>
 
             {/* MODAL 1: VER DETALLES */}
