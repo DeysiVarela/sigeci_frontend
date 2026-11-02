@@ -29,13 +29,25 @@ const getErrorMessage = (payload, fallback) => {
 };
 
 export const request = async (path, options = {}) => {
+    const hasBody = options.body !== undefined && options.body !== null;
     const headers = {
-        ...(options.body ? { "Content-Type": "application/json" } : {}),
+        ...(hasBody ? { "Content-Type": "application/json" } : {}),
         ...(options.headers || {})
     };
+    const body = hasBody && typeof options.body !== "string"
+        ? JSON.stringify(options.body)
+        : options.body;
+    const url = new URL(`${backendUrl}${path}`);
 
-    const response = await fetch(`${backendUrl}${path}`, {
+    Object.entries(options.params || {}).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+            url.searchParams.set(key, value);
+        }
+    });
+
+    const response = await fetch(url, {
         ...options,
+        body,
         credentials: "include",
         headers
     });

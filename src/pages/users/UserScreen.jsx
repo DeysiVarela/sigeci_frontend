@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router";
 import DataTable from "react-data-table-component";
 import { useForm } from "react-hook-form";
 import Card from "../../components/cards/Card";
@@ -9,6 +10,7 @@ import ButtonSecondary from "../../components/buttons/ButtonSecondary";
 import InputText from "../../components/inputs/InputText";
 import InputEmail from "../../components/inputs/InputEmail";
 import ButtonLink from "../../components/buttons/ButtonLink";
+
 
 const INITIAL_USERS = [
     {
@@ -68,6 +70,7 @@ const INITIAL_USERS = [
 ];
 
 const UserScreen = () => {
+    const navigate = useNavigate();
     const [users, setUsers] = useState(INITIAL_USERS);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("TODOS");
@@ -82,7 +85,7 @@ const UserScreen = () => {
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
     // Formulario para edición
-    const { control, handleSubmit, setValue, formState: { errors } } = useForm();
+    const { control, handleSubmit, formState: { errors } } = useForm();
 
     const triggerAlert = (type, message, title = "Operación exitosa") => {
         setAlertNotification({ type, title, message });
@@ -97,15 +100,6 @@ const UserScreen = () => {
         setViewModalOpen(true);
     };
 
-    const handleOpenEdit = (user) => {
-        setSelectedUser(user);
-        setValue("name", user.name);
-        setValue("email", user.email);
-        setValue("role", user.role);
-        setValue("department", user.department);
-        setValue("status", user.status);
-        setEditModalOpen(true);
-    };
 
     const handleSaveEdit = (data) => {
         setUsers(prev =>
@@ -221,7 +215,7 @@ const UserScreen = () => {
                     <ButtonPrimary
                         label="Editar"
                         className="btn-sm py-1 px-2 text-nowrap"
-                        onClick={() => handleOpenEdit(row)}
+                        onClick={() => navigate(`/users/edit/${row.id}`)}
                     />
                     <ButtonLink
                         label="Eliminar"
@@ -275,7 +269,7 @@ const UserScreen = () => {
                 <div className="d-flex gap-2">
                     <button
                         className="btn btn-primary shadow-sm d-flex align-items-center gap-2"
-                        onClick={() => alert("Función para registrar nuevo usuario en desarrollo")}
+                        onClick={() => navigate("/users/create")}
                     >
                         <i className="bi bi-person-plus-fill"></i>
                         <span>Nuevo Usuario</span>

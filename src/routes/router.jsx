@@ -12,6 +12,10 @@ import ArticleEditScreen from "../pages/article/ArticleEditScreen";
 import UserScreen from "../pages/users/UserScreen";
 import Container from "../theme/containers/Container";
 import ProtectedRoute from "./ProtectedRoute";
+import CreateArticlePDFScreen from "../pages/article/CreateArticlePDFScreen";
+import CreateArticleScreen from "../pages/article/CreateArticleScreen";
+import CreateUserScreen from "../pages/users/CreateUserScreen";
+import EditUserScreen from "../pages/users/EditUserScreen";
 
 const router = createBrowserRouter([
     {
@@ -56,8 +60,12 @@ const router = createBrowserRouter([
                 { path: "/article", element: <ArticleScreen/> },
                 { path: "/article/:id", element: <ArticleViewScreen/> },
                 { path: "/article/edit/:id", element: <ArticleEditScreen/> },
+                { path: "/article/create", element: <CreateArticleScreen/> },
+                { path: "/article/postulate", element: <CreateArticlePDFScreen/> },
                 { path: "/users", element: <UserScreen/> },
-            ]},
+                { path: "/users/create", element: <CreateUserScreen/> },
+                { path: "/users/edit/:id", element: <EditUserScreen/> }
+            ]}
         ]
     }
 ]);
