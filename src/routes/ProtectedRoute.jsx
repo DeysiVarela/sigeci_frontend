@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router";
-import { getCurrentUser } from "../services/authService";
+import { getCurrentUser } from "../api/auth";
 
 const ProtectedRoute = () => {
     const [state, setState] = useState("checking");

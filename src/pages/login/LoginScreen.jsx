@@ -6,7 +6,7 @@ import InputEmail from "../../components/inputs/InputEmail";
 import InputPassword from "../../components/inputs/InputPassword";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import HandlerApp from "../../utils/HandlerApp";
-import { loginUser } from "../../services/authService";
+import { login } from "../../api/auth";
 
 const LoginScreen = () => {
     const nav = useNavigate();
@@ -34,7 +34,7 @@ const LoginScreen = () => {
         setIsSubmitting(true);
         handlerApp.setLoader(true);
         try {
-            await loginUser({
+            await login({
                 identifier: data.email,
                 password: data.pass,
                 captchaToken,

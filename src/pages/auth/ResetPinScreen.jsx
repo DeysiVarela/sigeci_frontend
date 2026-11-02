@@ -6,7 +6,7 @@ import InputPin from "../../components/inputs/InputPin";
 import InputPassword from "../../components/inputs/InputPassword";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import HandlerApp from "../../utils/HandlerApp";
-import { resetPassword } from "../../services/authService";
+import { resetPassword } from "../../api/auth";
 
 const ResetPinScreen = () => {
     const nav = useNavigate();

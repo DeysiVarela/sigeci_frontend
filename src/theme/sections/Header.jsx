@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
-import { logoutUser } from "../../services/authService";
+import { logout } from "../../api/auth";
 
 const Header = ({ onToggleSidebar }) => {
 
@@ -110,7 +110,7 @@ const Header = ({ onToggleSidebar }) => {
 							</li>
 							<li className="user-footer">
 								<Link to="/profile" className="btn btn-outline-secondary">Perfil</Link>
-								<button type="button" className="btn btn-outline-danger float-end" onClick={async () => { await logoutUser(); window.location.href = "/login"; }}>Cerrar sesión</button>
+								<button type="button" className="btn btn-outline-danger float-end" onClick={async () => { await logout(); window.location.href = "/login"; }}>Cerrar sesión</button>
 							</li>
 						</ul>
 					</li>

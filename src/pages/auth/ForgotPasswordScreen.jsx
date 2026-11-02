@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 import InputEmail from "../../components/inputs/InputEmail";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import HandlerApp from "../../utils/HandlerApp";
-import { requestRecovery } from "../../services/authService";
+import { forgotPassword } from "../../api/auth";
 
 const ForgotPasswordScreen = () => {
     const nav = useNavigate();
@@ -17,7 +17,7 @@ const ForgotPasswordScreen = () => {
         handlerApp.setLoader(true);
         setError("");
         try {
-            await requestRecovery(data.email);
+            await forgotPassword(data.email);
             handlerApp.setLoader(false);
             sessionStorage.setItem("recovery_email", data.email);
             nav("/reset-pin");

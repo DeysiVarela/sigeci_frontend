@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 import InputEmail from "../../components/inputs/InputEmail";
 import InputPassword from "../../components/inputs/InputPassword";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
-import { registerUser } from "../../services/authService";
+import { register } from "../../api/auth";
 
 const RegisterScreen = () => {
     const nav = useNavigate();
@@ -14,7 +14,7 @@ const RegisterScreen = () => {
     const submit = async ({ email, password }) => {
         setError("");
         setIsSubmitting(true);
-        try { await registerUser({ email, password }); nav("/home"); }
+        try { await register({ email, password }); nav("/home"); }
         catch (requestError) { setError(requestError.message); }
         finally { setIsSubmitting(false); }
     };
