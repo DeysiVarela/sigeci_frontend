@@ -54,12 +54,14 @@ const submitData = async (data) => {
             email: data.email.trim(),
             profile: Number(data.rol),
         });
+
+        handlerApp.setLoader(false); 
+
         await Swal.fire({ title: "¡Actualizado!", text: "Usuario actualizado exitosamente", icon: "success" });
         nav("/users");
     } catch (e) {
-        Swal.fire({ title: "No se pudo actualizar", text: e.message, icon: "error" });
-    } finally {
         handlerApp.setLoader(false);
+        Swal.fire({ title: "No se pudo actualizar", text: e.message, icon: "error" });
     }
 };
 

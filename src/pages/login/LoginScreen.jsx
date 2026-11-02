@@ -16,13 +16,6 @@ const LoginScreen = () => {
     const [submitError, setSubmitError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const captchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
-    
-console.log(
-  "CAPTCHA cargado:",
-  captchaSiteKey?.slice(0, 8),
-  "Longitud:",
-  captchaSiteKey?.length
-);
     const { control, handleSubmit, formState: { errors }, setError } = useForm({
         mode: "onBlur",
     });
