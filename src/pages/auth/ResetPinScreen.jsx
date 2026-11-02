@@ -5,6 +5,7 @@ import InputPin from "../../components/inputs/InputPin";
 import InputPassword from "../../components/inputs/InputPassword";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import HandlerApp from "../../utils/HandlerApp";
+import { resetPassword } from "../../api/auth";
 
 const ResetPinScreen = () => {
     const nav = useNavigate();
@@ -20,17 +21,26 @@ const ResetPinScreen = () => {
         }
     }, [nav]);
 
-    const submitData = (data) => {
-        handlerApp.setLoader(true);
-        console.log("Validando PIN:", data.pin);
+    const submitData = async (data) => {
+        const email = sessionStorage.getItem("recovery_email");
 
-        // Simulación de validación contra backend
-        setTimeout(() => {
-            handlerApp.setLoader(false);
-            console.log("PIN válido. Cambiando contraseña a:", data.password);
+        if (!email) {
+            nav("/forgot-password");
+            return;
+        }
+
+        handlerApp.setLoader(true);
+
+        try {
+            await resetPassword(email, data.pin, data.password);
             sessionStorage.removeItem("recovery_email");
             nav("/login");
-        }, 2000);
+        } catch (error) {
+            console.error("Error al restablecer contraseña:", error);
+            alert(error.message || "No fue posible restablecer la contraseña.");
+        } finally {
+            handlerApp.setLoader(false);
+        }
     };
 
     return (

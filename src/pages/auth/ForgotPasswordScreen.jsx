@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import InputEmail from "../../components/inputs/InputEmail";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import HandlerApp from "../../utils/HandlerApp";
+import { forgotPassword } from "../../api/auth";
 
 const ForgotPasswordScreen = () => {
     const nav = useNavigate();
@@ -10,17 +11,19 @@ const ForgotPasswordScreen = () => {
 
     const { control, handleSubmit, formState: { errors } } = useForm();
 
-    const submitData = (data) => {
+    const submitData = async (data) => {
         handlerApp.setLoader(true);
-        console.log("Enviando PIN al correo:", data.email);
 
-        // Simulación de envío al backend
-        setTimeout(() => {
-            handlerApp.setLoader(false);
-            // Guardamos el correo para usarlo en la pantalla del PIN
+        try {
+            await forgotPassword(data.email);
             sessionStorage.setItem("recovery_email", data.email);
             nav("/reset-pin");
-        }, 2000);
+        } catch (error) {
+                console.error("Error al solicitar recuperación:", error);
+                alert(error.message || "No fue posible enviar el PIN.");
+        } finally {
+                handlerApp.setLoader(false);
+        }
     };
 
     return (
