@@ -10,89 +10,60 @@ import ButtonSecondary from "../../components/buttons/ButtonSecondary";
 import InputText from "../../components/inputs/InputText";
 import InputEmail from "../../components/inputs/InputEmail";
 import ButtonLink from "../../components/buttons/ButtonLink";
+import { listUsers } from "../../api/users";
 
 
-const INITIAL_USERS = [
-    {
-        id: 1,
-        name: "Carlos Daniel Mendoza",
-        email: "carlos.mendoza@univalle.edu.co",
-        role: "Administrador",
-        department: "Tecnología",
-        status: "Activo",
-        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
-    },
-    {
-        id: 2,
-        name: "Sofía Valentina Rodríguez",
-        email: "sofia.rodriguez@univalle.edu.co",
-        role: "Docente",
-        department: "Ingeniería de Sistemas",
-        status: "Activo",
-        avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80"
-    },
-    {
-        id: 3,
-        name: "Mateo Fernando Gómez",
-        email: "mateo.gomez@univalle.edu.co",
-        role: "Estudiante",
-        department: "Ciencias de la Computación",
-        status: "Pendiente",
-        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80"
-    },
-    {
-        id: 4,
-        name: "Valeria Isabel Morales",
-        email: "valeria.morales@univalle.edu.co",
-        role: "Investigador",
-        department: "Inteligencia Artificial",
-        status: "Activo",
-        avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80"
-    },
-    {
-        id: 5,
-        name: "Julián David Castro",
-        email: "julian.castro@univalle.edu.co",
-        role: "Docente",
-        department: "Redes y Telecomunicaciones",
-        status: "Inactivo",
-        avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80"
-    },
-    {
-        id: 6,
-        name: "Mariana Restrepo Ortiz",
-        email: "mariana.restrepo@univalle.edu.co",
-        role: "Coordinador",
-        department: "Facultad de Ingeniería",
-        status: "Activo",
-        avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80"
-    }
-];
-    
-// Cuando el endpoint del SCRUM 16 esté listo, reemplazar el cuerpo por un fetch real
-    const fetchUsers = () =>
-        new Promise((resolve) => setTimeout(() => resolve(INITIAL_USERS), 600));
-
-
-    const UserScreen = () => {
+const UserScreen = () => {
     const navigate = useNavigate();
+
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
 
-    useEffect(() => {
-        let cancelled = false;
-        fetchUsers()
-            .then((data) => !cancelled && setUsers(data))
-            .catch(() => !cancelled && setError("No se pudieron cargar los usuarios."))
-            .finally(() => !cancelled && setLoading(false));
-        return () => { cancelled = true; };
-    }, []);
-    //hasta aca se reemplazo
-
+    const [error, setError] = useState("");
 
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("TODOS");
+
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                setLoading(true);
+                setError("");
+
+                const response = await listUsers();
+
+                const data = Array.isArray(response)
+                    ? response
+                    : response.results || [];
+
+                const formattedUsers = data.map(user => ({
+                    id: user.id,
+                    name: `${user.name} ${user.lastname}`,
+                    email: user.email,
+                    role: user.profile_name,
+                    department: "—",
+                    status: user.active ? "Activo" : "Inactivo",
+                    avatar: null,
+                }));
+
+                setUsers(formattedUsers);
+
+            } catch (err) {
+                console.error("Error al consultar usuarios:", err);
+                setError(err.message || "No fue posible cargar los usuarios.");
+
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUsers();
+    }, []);
+
+
+
+
+
 
     // Alerts / Notificaciones AdminLTE
     const [alertNotification, setAlertNotification] = useState(null);
@@ -179,12 +150,21 @@ const INITIAL_USERS = [
             minWidth: "250px",
             cell: row => (
                 <div className="d-flex align-items-center py-2 text-truncate" style={{ maxWidth: "100%" }}>
-                    <img
-                        src={row.avatar}
-                        alt={row.name}
-                        className="rounded-circle shadow-sm me-3 object-fit-cover flex-shrink-0"
-                        style={{ width: "40px", height: "40px" }}
-                    />
+                    {row.avatar ? (
+                        <img
+                            src={row.avatar}
+                            alt={row.name}
+                            className="rounded-circle shadow-sm me-3 object-fit-cover flex-shrink-0"
+                            style={{ width: "40px", height: "40px" }}
+                        />
+                    ) : (
+                        <div
+                            className="rounded-circle bg-primary-subtle text-primary fw-bold d-flex align-items-center justify-content-center me-3 flex-shrink-0"
+                            style={{ width: "40px", height: "40px" }}
+                        >
+                            {row.name.charAt(0).toUpperCase()}
+                        </div>
+                    )}
                     <div className="text-truncate">
                         <div className="fw-semibold text-dark text-truncate" title={row.name}>{row.name}</div>
                         <small className="text-secondary text-truncate d-block" title={row.email}>{row.email}</small>
@@ -255,11 +235,10 @@ const INITIAL_USERS = [
                     role="alert"
                 >
                     <div className="d-flex align-items-center">
-                        <i className={`bi fs-4 me-2 ${
-                            alertNotification.type === "danger"
-                                ? "bi-check-circle-fill"
-                                : "bi-info-circle-fill"
-                        }`}></i>
+                        <i className={`bi fs-4 me-2 ${alertNotification.type === "danger"
+                            ? "bi-check-circle-fill"
+                            : "bi-info-circle-fill"
+                            }`}></i>
                         <div>
                             <strong className="d-block">{alertNotification.title}</strong>
                             <span>{alertNotification.message}</span>
@@ -359,14 +338,14 @@ const INITIAL_USERS = [
             </div>
 
             {/* Contenedor Principal de la Tabla */}
-
-            {/* mensaje de error */}
             {error && (
                 <div className="alert alert-danger d-flex align-items-center" role="alert">
                     <i className="bi bi-exclamation-triangle-fill me-2"></i>
                     <span>{error} Intenta de nuevo en unos minutos.</span>
                 </div>
-)}
+            )}
+
+
 
             <Card title="Listado Oficial de Usuarios" outline outlineColor="primary">
                 {/* Barra de Filtros y Búsqueda */}
@@ -450,12 +429,21 @@ const INITIAL_USERS = [
             >
                 {selectedUser && (
                     <div className="text-center py-2">
-                        <img
-                            src={selectedUser.avatar}
-                            alt={selectedUser.name}
-                            className="rounded-circle shadow mb-3 object-fit-cover border border-3 border-primary"
-                            style={{ width: "90px", height: "90px" }}
-                        />
+                        {selectedUser.avatar ? (
+                            <img
+                                src={selectedUser.avatar}
+                                alt={selectedUser.name}
+                                className="rounded-circle shadow mb-3 object-fit-cover border border-3 border-primary"
+                                style={{ width: "90px", height: "90px" }}
+                            />
+                        ) : (
+                            <div
+                                className="rounded-circle bg-primary-subtle text-primary fw-bold d-flex align-items-center justify-content-center mx-auto mb-3 border border-3 border-primary"
+                                style={{ width: "90px", height: "90px", fontSize: "2rem" }}
+                            >
+                                {selectedUser.name.charAt(0).toUpperCase()}
+                            </div>
+                        )}
                         <h4 className="fw-bold mb-1">{selectedUser.name}</h4>
                         <p className="text-muted mb-3">{selectedUser.email}</p>
 
