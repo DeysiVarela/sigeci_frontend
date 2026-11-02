@@ -26,24 +26,26 @@ const EditUserScreen = () => {
     mode: "onChange", // Valida mientras escribes
   });
 
-  useEffect(() => {
+useEffect(() => {
     Promise.all([getUser(id), listProfiles()])
-      .then(([u, profiles]) => {
-        setRolesOptions(
-          profiles.map((p) => ({ value: String(p.id), label: p.name })),
-        );
-        reset({
-          nombre: u.name,
-          apellido: u.lastname,
-          email: u.email,
-          rol: String(u.profile),
-        });
-      })
-      .catch((e) =>
-        Swal.fire({ title: "Error", text: e.message, icon: "error" }),
-      )
-      .finally(() => setIsLoadingData(false));
-  }, [id, reset]);
+        .then(([u, profiles]) => {
+            setRolesOptions(
+                profiles.map((p) => ({ value: String(p.id), label: p.name })),
+            );
+            reset({
+                nombre: u.name,
+                apellido: u.lastname,
+                email: u.email,
+                rol: String(u.profile),
+            });
+        })
+        .catch((e) => {
+            
+            Swal.fire({ title: "Error", text: e.message, icon: "error" })
+                .then(() => nav("/users"));
+        })
+        .finally(() => setIsLoadingData(false));
+}, [id, reset, nav]); 
 
 const submitData = async (data) => {
     handlerApp.setLoader(true);
