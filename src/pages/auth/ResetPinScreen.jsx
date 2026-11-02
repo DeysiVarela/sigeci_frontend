@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import InputPin from "../../components/inputs/InputPin";
@@ -21,24 +22,21 @@ const ResetPinScreen = () => {
         }
     }, [nav]);
 
+    const [error, setError] = useState("");
     const submitData = async (data) => {
-        const email = sessionStorage.getItem("recovery_email");
-
-        if (!email) {
-            nav("/forgot-password");
-            return;
-        }
-
         handlerApp.setLoader(true);
-
+        setError("");
         try {
-            await resetPassword(email, data.pin, data.password);
+            await resetPassword({
+                email: sessionStorage.getItem("recovery_email"),
+                code: data.pin,
+                password: data.password,
+            });
+            handlerApp.setLoader(false);
             sessionStorage.removeItem("recovery_email");
             nav("/login");
-        } catch (error) {
-            console.error("Error al restablecer contraseña:", error);
-            alert(error.message || "No fue posible restablecer la contraseña.");
-        } finally {
+        } catch (requestError) {
+            setError(requestError.message);
             handlerApp.setLoader(false);
         }
     };
@@ -80,6 +78,7 @@ const ResetPinScreen = () => {
                                 className="w-100"
                                 onClick={handleSubmit(submitData)}
                             />
+                            {error && <div className="alert alert-danger mt-3" role="alert">{error}</div>}
                         </form>
 
                         <p className="mt-3 mb-0 text-center">

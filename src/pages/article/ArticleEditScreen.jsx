@@ -5,6 +5,7 @@ import Card from "../../components/cards/Card";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import ButtonSecondary from "../../components/buttons/ButtonSecondary";
 import InputText from "../../components/inputs/InputText";
+import InputPdf from "../../components/inputs/InputPdf";
 import { MOCK_ARTICLES } from "./mockArticles";
 
 const ArticleEditScreen = () => {
@@ -42,10 +43,19 @@ const ArticleEditScreen = () => {
     const onSubmit = (formData) => {
         const stored = localStorage.getItem("sigeci_articles");
         const list = stored ? JSON.parse(stored) : MOCK_ARTICLES;
+        const { pdfFile, ...articleData } = formData;
+        const selectedPdf = pdfFile?.[0];
 
         const updatedList = list.map(item =>
             String(item.id) === String(id)
-                ? { ...item, ...formData }
+                ? {
+                    ...item,
+                    ...articleData,
+                    ...(selectedPdf && {
+                        pdfFileName: selectedPdf.name,
+                        pdfFileSize: selectedPdf.size
+                    })
+                }
                 : item
         );
 
@@ -181,6 +191,13 @@ const ArticleEditScreen = () => {
                                     <option value="Borrador">Borrador</option>
                                 </select>
                             </div>
+
+                            <InputPdf
+                                register={register}
+                                errors={errors}
+                                name="pdfFile"
+                                label="Artículo en PDF"
+                            />
 
                             <div className="alert alert-info py-2 small mt-4 mb-0">
                                 <i className="bi bi-info-circle me-1"></i> Al guardar los cambios, la información se actualizará de inmediato en el repositorio general.

@@ -1,4 +1,5 @@
 import { useForm } from "react-hook-form";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import InputEmail from "../../components/inputs/InputEmail";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
@@ -11,18 +12,18 @@ const ForgotPasswordScreen = () => {
 
     const { control, handleSubmit, formState: { errors } } = useForm();
 
+    const [error, setError] = useState("");
     const submitData = async (data) => {
         handlerApp.setLoader(true);
-
+        setError("");
         try {
             await forgotPassword(data.email);
+            handlerApp.setLoader(false);
             sessionStorage.setItem("recovery_email", data.email);
             nav("/reset-pin");
-        } catch (error) {
-                console.error("Error al solicitar recuperación:", error);
-                alert(error.message || "No fue posible enviar el PIN.");
-        } finally {
-                handlerApp.setLoader(false);
+        } catch (requestError) {
+            setError(requestError.message);
+            handlerApp.setLoader(false);
         }
     };
 
@@ -53,6 +54,7 @@ const ForgotPasswordScreen = () => {
                                 className="w-100"
                                 onClick={handleSubmit(submitData)}
                             />
+                            {error && <div className="alert alert-danger mt-3" role="alert">{error}</div>}
                         </form>
 
                         <p className="mt-3 mb-0 text-center">
