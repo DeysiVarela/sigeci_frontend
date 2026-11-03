@@ -86,6 +86,7 @@ const UserScreen = () => {
     // Listado: se vuelve a pedir al backend cuando cambia la página, el tamaño o un filtro
     useEffect(() => {
         let cancelled = false;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLoading(true);
         setError("");
 

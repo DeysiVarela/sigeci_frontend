@@ -1,26 +1,30 @@
-import { request, session } from "./http";
+import { request } from "./http";
 
-/**
- * Única función de login del frontend.
- * POST /api/auth/login  { identifier, password, captchaToken }
- *  - 200 -> { access, refresh, user }  (guarda la sesión y devuelve el usuario)
- *  - 400 -> CAPTCHA inválido o faltante
- *  - 401 -> credenciales inválidas
- */
-export const login = async ({ identifier, password, captchaToken = "" }) => {
-    const data = await request("/api/auth/login", {
+export const login = async ({ identifier, password, captchaToken }) =>
+    request("/api/auth/login", {
         method: "POST",
-        body: { identifier, password, captchaToken },
-        auth: false,
+        body: { identifier, password, captchaToken }
     });
-    session.save(data);
-    return data.user;
-};
 
-export const logout = () => session.clear();
+export const register = (credentials) =>
+    request("/api/auth/register", {
+        method: "POST",
+        body: credentials
+    });
+
+export const getCurrentUser = () => request("/api/auth/me");
+
+export const logout = () =>
+    request("/api/auth/logout", { method: "POST" });
 
 export const forgotPassword = (email) =>
-    request("/api/auth/password/forgot/", { method: "POST", body: { email }, auth: false });
+    request("/api/auth/recovery", {
+        method: "POST",
+        body: { email }
+    });
 
-export const resetPassword = (email, pin, password) =>
-    request("/api/auth/password/reset/", { method: "POST", body: { email, pin, password }, auth: false });
+export const resetPassword = ({ email, code, password }) =>
+    request("/api/auth/reset-password", {
+        method: "POST",
+        body: { email, code, password }
+    });
