@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import InputText from "../../components/inputs/InputText";
@@ -7,48 +8,80 @@ import InputSelect from "../../components/inputs/InputSelect";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import Card from "../../components/cards/Card";
 import HandlerApp from "../../utils/HandlerApp";
-import Swal from "sweetalert2"; 
+import Swal from "sweetalert2";
+import { createUser, listProfiles } from "../../api/users";
+import { getErrorMessage } from "../../utils/apiError";
 
 const CreateUserScreen = () => {
     const nav = useNavigate();
     const handlerApp = HandlerApp();
 
     const { control, handleSubmit, formState: { errors }, reset } = useForm({
-        mode: "onChange" // <--- Esto valida mientras escribes o sales del campo
+        mode: "onChange" // Valida mientras escribes o sales del campo
     });
 
-    const submitData = () => {
+    const [profiles, setProfiles] = useState([]);
+    const [profilesError, setProfilesError] = useState(false);
+
+    // Los roles salen del backend para que los ids coincidan
+    useEffect(() => {
+        listProfiles()
+            .then((res) => setProfiles(Array.isArray(res) ? res : res?.results || []))
+            .catch(() => setProfilesError(true));
+    }, []);
+
+    const rolesOptions = profiles.map((p) => ({ value: String(p.id), label: p.name }));
+
+    const submitData = async (data) => {
         handlerApp.setLoader(true);
-        
+        let created = false;
+        let errorMessage = "";
 
-        setTimeout(() => {
-            handlerApp.setLoader(false);
-            
-            // Usamos SweetAlert2 
-            Swal.fire({
-                title: '¡Éxito!',
-                text: 'Usuario creado exitosamente (Simulación)',
-                icon: 'success',
-                confirmButtonText: 'Aceptar'
-            }).then(() => {
-                reset();
-                nav("/users");
+        try {
+            await createUser({
+                name: data.nombre,
+                lastname: data.apellido,
+                email: data.email,
+                password: data.password,
+                profile: Number(data.rol),
             });
+            created = true;
+        } catch (err) {
+            errorMessage = getErrorMessage(err, "No se pudo crear el usuario.");
+        } finally {
+            handlerApp.setLoader(false);
+        }
 
-        }, 2000);
+        if (!created) {
+            Swal.fire({
+                title: "No se pudo crear el usuario",
+                text: errorMessage,
+                icon: "error",
+                confirmButtonText: "Aceptar",
+            });
+            return;
+        }
+
+        await Swal.fire({
+            title: "¡Usuario creado!",
+            text: "El usuario se registró correctamente.",
+            icon: "success",
+            confirmButtonText: "Aceptar",
+        });
+        reset();
+        nav("/users");
     };
-
-    const rolesOptions = [
-        { value: "admin", label: "Administrador" },
-        { value: "comite", label: "Comité Científico" },
-        { value: "autor", label: "Autor" }
-    ];
 
     return (
         <div className="container-fluid pt-4">
             <div className="row justify-content-center">
                 <div className="col-md-8 col-lg-6">
                     <Card title="Crear Nuevo Usuario">
+                        {profilesError && (
+                            <div className="alert alert-warning py-2" role="alert">
+                                No se pudieron cargar los roles. Recarga la página para intentarlo de nuevo.
+                            </div>
+                        )}
                         <form>
                             <div className="row">
                                 <div className="col-md-6">
@@ -71,7 +104,6 @@ const CreateUserScreen = () => {
                                 </div>
                             </div>
 
-                            {/* Usamos InputEmail que ya tiene la validación regex del template */}
                             <InputEmail
                                 control={control}
                                 label="Correo electrónico"
@@ -80,7 +112,6 @@ const CreateUserScreen = () => {
                                 required={true}
                             />
 
-                            {/* Usamos InputPassword que ya tiene la validación de contraseña fuerte */}
                             <InputPassword
                                 control={control}
                                 label="Contraseña"
@@ -100,9 +131,9 @@ const CreateUserScreen = () => {
                             />
 
                             <div className="d-flex justify-content-end gap-2 mt-4">
-                                <button 
-                                    type="button" 
-                                    className="btn btn-secondary" 
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
                                     onClick={() => nav("/users")}
                                 >
                                     Cancelar

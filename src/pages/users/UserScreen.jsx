@@ -7,7 +7,8 @@ import Modal from "../../components/modals/Modal";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import ButtonSecondary from "../../components/buttons/ButtonSecondary";
 import ButtonLink from "../../components/buttons/ButtonLink";
-import { listUsers, listProfiles, deleteUser } from "../../api/users";
+import { listUsers, listProfiles, deleteUser, getMe } from "../../api/users";
+import { getErrorMessage } from "../../utils/apiError";
 
 const ROWS_PER_PAGE_OPTIONS = [10, 20, 50];
 
@@ -62,6 +63,7 @@ const UserScreen = () => {
     const [profiles, setProfiles] = useState([]);
     const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 });
     const [reloadKey, setReloadKey] = useState(0);
+    const [permissions, setPermissions] = useState(null); // null = aún cargando
 
     // Alertas y modales
     const [alertNotification, setAlertNotification] = useState(null);
@@ -100,7 +102,7 @@ const UserScreen = () => {
                 setTotalRows(Array.isArray(res) ? data.length : res.count ?? data.length);
             })
             .catch((err) => {
-                if (!cancelled) setError(err.message || "No fue posible cargar los usuarios.");
+                if (!cancelled) setError(getErrorMessage(err, "No fue posible cargar los usuarios."));
             })
             .finally(() => {
                 if (!cancelled) setLoading(false);
@@ -117,6 +119,15 @@ const UserScreen = () => {
             .then((res) => setProfiles(toArray(res)))
             .catch(() => setProfiles([]));
     }, []);
+
+    // Permisos del usuario autenticado (el backend sigue validando cada acción)
+    useEffect(() => {
+        getMe()
+            .then((me) => setPermissions(me.permissions || {}))
+            .catch(() => setPermissions({}));
+    }, []);
+
+    const can = (action) => Boolean(permissions?.user?.includes(action));
 
     // Contadores de las tarjetas (totales globales, sin filtros)
     useEffect(() => {
@@ -178,7 +189,7 @@ const UserScreen = () => {
             if (users.length === 1 && page > 1) setPage((p) => p - 1);
             setReloadKey((k) => k + 1);
         } catch (err) {
-            triggerAlert("danger", err.message || "No se pudo eliminar el usuario.", "No se pudo eliminar");
+            triggerAlert("danger", getErrorMessage(err, "No se pudo eliminar el usuario."), "No se pudo eliminar");
         } finally {
             setDeleteModalOpen(false);
             setSelectedUser(null);
@@ -226,21 +237,27 @@ const UserScreen = () => {
             button: true,
             cell: (row) => (
                 <div className="d-flex align-items-center gap-2 justify-content-end py-1 flex-nowrap">
-                    <ButtonSecondary
-                        label="Ver"
-                        className="btn-sm py-1 px-2 text-nowrap"
-                        onClick={() => handleOpenView(row)}
-                    />
-                    <ButtonPrimary
-                        label="Editar"
-                        className="btn-sm py-1 px-2 text-nowrap"
-                        onClick={() => navigate(`/users/edit/${row.id}`)}
-                    />
-                    <ButtonLink
-                        label="Eliminar"
-                        className="text-danger fw-semibold small text-nowrap px-1"
-                        onClick={() => handleOpenDelete(row)}
-                    />
+                    {can("view") && (
+                        <ButtonSecondary
+                            label="Ver"
+                            className="btn-sm py-1 px-2 text-nowrap"
+                            onClick={() => handleOpenView(row)}
+                        />
+                    )}
+                    {can("update") && (
+                        <ButtonPrimary
+                            label="Editar"
+                            className="btn-sm py-1 px-2 text-nowrap"
+                            onClick={() => navigate(`/users/edit/${row.id}`)}
+                        />
+                    )}
+                    {can("delete") && (
+                        <ButtonLink
+                            label="Eliminar"
+                            className="text-danger fw-semibold small text-nowrap px-1"
+                            onClick={() => handleOpenDelete(row)}
+                        />
+                    )}
                 </div>
             ),
         },
@@ -333,15 +350,17 @@ const UserScreen = () => {
                         Administra roles, accesos y estado del personal universitario registrado en SIGECI.
                     </p>
                 </div>
-                <div className="d-flex gap-2">
-                    <button
-                        className="btn btn-primary shadow-sm d-flex align-items-center gap-2"
-                        onClick={() => navigate("/users/create")}
-                    >
-                        <i className="bi bi-person-plus-fill"></i>
-                        <span>Nuevo Usuario</span>
-                    </button>
-                </div>
+                {can("create") && (
+                    <div className="d-flex gap-2">
+                        <button
+                            className="btn btn-primary shadow-sm d-flex align-items-center gap-2"
+                            onClick={() => navigate("/users/create")}
+                        >
+                            <i className="bi bi-person-plus-fill"></i>
+                            <span>Nuevo Usuario</span>
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Tarjetas de estadísticas */}
