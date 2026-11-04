@@ -1,4 +1,6 @@
 const backendUrl = import.meta.env.VITE_BACKEND_URL || "";
+const ACCESS_TOKEN_KEY = "access";
+const REFRESH_TOKEN_KEY = "refresh";
 
 export class ApiError extends Error {
     constructor(status, message) {
@@ -29,26 +31,30 @@ const getErrorMessage = (payload, fallback) => {
 };
 
 export const request = async (path, options = {}) => {
+    const { skipAuthRefresh = false, ...fetchOptions } = options;
     const hasBody = options.body !== undefined && options.body !== null;
     const headers = {
         ...(hasBody ? { "Content-Type": "application/json" } : {}),
-        ...(options.headers || {})
+        ...(fetchOptions.headers || {})
     };
-    const body = hasBody && typeof options.body !== "string"
-        ? JSON.stringify(options.body)
-        : options.body;
+    const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+    if (accessToken) {
+        headers.Authorization = `Bearer ${accessToken}`;
+    }
+    const body = hasBody && typeof fetchOptions.body !== "string"
+        ? JSON.stringify(fetchOptions.body)
+        : fetchOptions.body;
     const url = new URL(`${backendUrl}${path}`);
 
-    Object.entries(options.params || {}).forEach(([key, value]) => {
+    Object.entries(fetchOptions.params || {}).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== "") {
             url.searchParams.set(key, value);
         }
     });
 
     const response = await fetch(url, {
-        ...options,
+        ...fetchOptions,
         body,
-        credentials: "include",
         headers
     });
 
@@ -57,6 +63,24 @@ export const request = async (path, options = {}) => {
         payload = await response.json();
     } catch {
         payload = null;
+    }
+
+    if (response.status === 401 && !skipAuthRefresh && path !== "/api/auth/refresh/") {
+        const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+        if (refreshToken) {
+            try {
+                const refreshResponse = await request("/api/auth/refresh/", {
+                    method: "POST",
+                    body: { refresh: refreshToken },
+                    skipAuthRefresh: true
+                });
+                localStorage.setItem(ACCESS_TOKEN_KEY, refreshResponse.access);
+                return request(path, { ...fetchOptions, skipAuthRefresh: true });
+            } catch {
+                localStorage.removeItem(ACCESS_TOKEN_KEY);
+                localStorage.removeItem(REFRESH_TOKEN_KEY);
+            }
+        }
     }
 
     if (!response.ok) {
