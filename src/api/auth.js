@@ -1,30 +1,38 @@
 import { request } from "./http";
 
-export const login = async ({ identifier, password, captchaToken }) =>
-    request("/api/auth/login", {
+export const login = async ({ identifier, password, captchaToken }) => {
+    const response = await request("/api/auth/login/", {
         method: "POST",
         body: { identifier, password, captchaToken }
     });
+    localStorage.setItem("access", response.access);
+    localStorage.setItem("refresh", response.refresh);
+    localStorage.setItem("user", JSON.stringify(response.user));
+    return response;
+};
 
 export const register = (credentials) =>
-    request("/api/auth/register", {
+    request("/api/auth/register/", {
         method: "POST",
         body: credentials
     });
 
-export const getCurrentUser = () => request("/api/auth/me");
+export const getCurrentUser = () => request("/api/auth/me/");
 
-export const logout = () =>
-    request("/api/auth/logout", { method: "POST" });
+export const logout = () => {
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
+    localStorage.removeItem("user");
+};
 
 export const forgotPassword = (email) =>
-    request("/api/auth/recovery", {
+    request("/api/auth/password/forgot/", {
         method: "POST",
         body: { email }
     });
 
 export const resetPassword = ({ email, code, password }) =>
-    request("/api/auth/reset-password", {
+    request("/api/auth/password/reset/", {
         method: "POST",
-        body: { email, code, password }
+        body: { email, pin: code, password }
     });
