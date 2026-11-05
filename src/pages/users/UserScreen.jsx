@@ -9,6 +9,7 @@ import ButtonSecondary from "../../components/buttons/ButtonSecondary";
 import ButtonLink from "../../components/buttons/ButtonLink";
 import { listUsers, listProfiles, deleteUser, getMe } from "../../api/users";
 import { getErrorMessage } from "../../utils/apiError";
+import { isManager, canEditUser, canDeleteUser } from "../../utils/userAccess";
 
 const ROWS_PER_PAGE_OPTIONS = [10, 20, 50];
 
@@ -63,7 +64,8 @@ const UserScreen = () => {
     const [profiles, setProfiles] = useState([]);
     const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 });
     const [reloadKey, setReloadKey] = useState(0);
-    const [permissions, setPermissions] = useState(null); // null = aún cargando
+    const [me, setMe] = useState(null); // usuario autenticado (null = aún cargando)
+    const [meError, setMeError] = useState(false);
 
     // Alertas y modales
     const [alertNotification, setAlertNotification] = useState(null);
@@ -121,14 +123,12 @@ const UserScreen = () => {
             .catch(() => setProfiles([]));
     }, []);
 
-    // Permisos del usuario autenticado (el backend sigue validando cada acción)
+    // Usuario autenticado: de su rol e id dependen los botones (el backend sigue validando cada acción)
     useEffect(() => {
         getMe()
-            .then((me) => setPermissions(me.permissions || {}))
-            .catch(() => setPermissions({}));
+            .then((data) => setMe(data))
+            .catch(() => setMeError(true));
     }, []);
-
-    const can = (action) => Boolean(permissions?.user?.includes(action));
 
     // Contadores de las tarjetas (totales globales, sin filtros)
     useEffect(() => {
@@ -238,21 +238,21 @@ const UserScreen = () => {
             button: true,
             cell: (row) => (
                 <div className="d-flex align-items-center gap-2 justify-content-end py-1 flex-nowrap">
-                    {can("view") && (
-                        <ButtonSecondary
-                            label="Ver"
-                            className="btn-sm py-1 px-2 text-nowrap"
-                            onClick={() => handleOpenView(row)}
-                        />
-                    )}
-                    {can("update") && (
+
+                    <ButtonSecondary
+                        label="Ver"
+                        className="btn-sm py-1 px-2 text-nowrap"
+                        onClick={() => handleOpenView(row)}
+                    />
+
+                    {canEditUser(me, row.id) && (
                         <ButtonPrimary
                             label="Editar"
                             className="btn-sm py-1 px-2 text-nowrap"
                             onClick={() => navigate(`/users/edit/${row.id}`)}
                         />
                     )}
-                    {can("delete") && (
+                    {canDeleteUser(me, row.id) && (
                         <ButtonLink
                             label="Eliminar"
                             className="text-danger fw-semibold small text-nowrap px-1"
@@ -351,7 +351,7 @@ const UserScreen = () => {
                         Administra roles, accesos y estado del personal universitario registrado en SIGECI.
                     </p>
                 </div>
-                {can("create") && (
+                {isManager(me) && (
                     <div className="d-flex gap-2">
                         <button
                             className="btn btn-primary shadow-sm d-flex align-items-center gap-2"
@@ -393,6 +393,12 @@ const UserScreen = () => {
                     <button className="btn btn-sm btn-outline-danger" onClick={() => setReloadKey((k) => k + 1)}>
                         Reintentar
                     </button>
+                </div>
+            )}
+
+            {meError && (
+                <div className="alert alert-warning py-2" role="alert">
+                    No se pudo verificar tu rol; las acciones de edición están ocultas.
                 </div>
             )}
 

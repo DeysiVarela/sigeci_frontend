@@ -7,7 +7,8 @@ import InputSelect from "../../components/inputs/InputSelect";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import Card from "../../components/cards/Card";
 import HandlerApp from "../../utils/HandlerApp";
-import { getUser, updateUser, listProfiles } from "../../api/users";
+import { getUser, updateUser, listProfiles, getMe } from "../../api/users";
+import { isManager, canEditUser } from "../../utils/userAccess";
 import { getErrorMessage } from "../../utils/apiError";
 import Swal from "sweetalert2";
 
@@ -22,6 +23,8 @@ const EditUserScreen = () => {
   const handlerApp = HandlerApp();
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [rolesOptions, setRolesOptions] = useState([]);
+  const [manager, setManager] = useState(false);
+  const [original, setOriginal] = useState(null); // rol y estado originales del usuario
 
   const {
     control,
@@ -35,10 +38,26 @@ const EditUserScreen = () => {
   // Carga el usuario y los roles; el formulario se muestra cuando ya están ambos
   useEffect(() => {
     let cancelled = false;
+    let denied = false;
 
-    Promise.all([getUser(id), listProfiles()])
-      .then(([user, profileRes]) => {
+    Promise.all([getUser(id), listProfiles(), getMe()])
+      .then(([user, profileRes, me]) => {
         if (cancelled) return;
+
+        // Un usuario que no es gestor solo puede editar sus propios datos
+        if (!canEditUser(me, id)) {
+          denied = true;
+          Swal.fire({
+            title: "Sin permisos",
+            text: "Solo puedes editar tus propios datos.",
+            icon: "warning",
+          }).then(() => nav("/users"));
+          return;
+        }
+
+        setManager(isManager(me));
+        setOriginal({ profile: user.profile, active: user.active });
+
         const profiles = Array.isArray(profileRes)
           ? profileRes
           : profileRes?.results || [];
@@ -55,7 +74,6 @@ const EditUserScreen = () => {
       })
       .catch((err) => {
         if (cancelled) return;
-        // Si el usuario no existe o falla la carga, avisamos y volvemos al listado
         Swal.fire({
           title: "Error",
           text: getErrorMessage(err, "No se pudo cargar el usuario."),
@@ -63,7 +81,7 @@ const EditUserScreen = () => {
         }).then(() => nav("/users"));
       })
       .finally(() => {
-        if (!cancelled) setIsLoadingData(false);
+        if (!cancelled && !denied) setIsLoadingData(false);
       });
 
     return () => {
@@ -74,13 +92,22 @@ const EditUserScreen = () => {
   const submitData = async (data) => {
     handlerApp.setLoader(true);
     try {
-      await updateUser(id, {
+      const payload = {
         name: data.nombre.trim(),
         lastname: data.apellido.trim(),
         email: data.email.trim(),
-        profile: Number(data.rol),
-        active: data.estado === "true",
-      });
+      };
+
+      // Rol y estado solo los envía un gestor, y solo si cambiaron
+      if (manager) {
+        const newProfile = Number(data.rol);
+        if (newProfile !== original?.profile) payload.profile = newProfile;
+
+        const newActive = data.estado === "true";
+        if (newActive !== original?.active) payload.active = newActive;
+      }
+
+      await updateUser(id, payload);
 
       // Apagamos el loader ANTES de mostrar el modal
       handlerApp.setLoader(false);
@@ -146,23 +173,27 @@ const EditUserScreen = () => {
                   required={true}
                 />
 
-                <InputSelect
-                  control={control}
-                  label="Rol del Usuario"
-                  name="rol"
-                  options={rolesOptions}
-                  errors={errors.rol}
-                  required={true}
-                />
+                {manager && (
+                  <>
+                    <InputSelect
+                      control={control}
+                      label="Rol del Usuario"
+                      name="rol"
+                      options={rolesOptions}
+                      errors={errors.rol}
+                      required={true}
+                    />
 
-                <InputSelect
-                  control={control}
-                  label="Estado"
-                  name="estado"
-                  options={STATUS_OPTIONS}
-                  errors={errors.estado}
-                  required={true}
-                />
+                    <InputSelect
+                      control={control}
+                      label="Estado"
+                      name="estado"
+                      options={STATUS_OPTIONS}
+                      errors={errors.estado}
+                      required={true}
+                    />
+                  </>
+                )}
 
                 <div className="alert alert-info py-2 mt-3">
                   <small>

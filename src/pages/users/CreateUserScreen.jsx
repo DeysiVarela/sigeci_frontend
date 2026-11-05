@@ -8,7 +8,8 @@ import InputSelect from "../../components/inputs/InputSelect";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import Card from "../../components/cards/Card";
 import HandlerApp from "../../utils/HandlerApp";
-import { createUser, listProfiles } from "../../api/users";
+import { createUser, listProfiles, getMe } from "../../api/users";
+import { isManager } from "../../utils/userAccess";
 import { getErrorMessage } from "../../utils/apiError";
 import Swal from "sweetalert2";
 
@@ -38,6 +39,16 @@ const CreateUserScreen = () => {
       })
       .catch(() => setProfilesError(true));
   }, []);
+
+  // Solo ADMIN y MEMBER pueden crear usuarios
+  useEffect(() => {
+    getMe()
+      .then((me) => {
+        if (!isManager(me)) nav("/users");
+      })
+      .catch(() => nav("/users"));
+  }, [nav]);
+
 
   const submitData = async (data) => {
     handlerApp.setLoader(true);
