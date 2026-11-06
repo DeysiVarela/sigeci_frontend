@@ -14,11 +14,24 @@ const UserProfileScreen = () => {
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [showPasswordSection, setShowPasswordSection] = useState(false);
 
-    const { control, handleSubmit, formState: { errors }, reset, watch } = useForm({
-        mode: "onChange"
-    });
+    // Formulario separado para los datos del perfil
+    const { 
+        control: profileControl, 
+        handleSubmit: handleProfileSubmit, 
+        formState: { errors: profileErrors }, 
+        reset: resetProfile 
+    } = useForm({ mode: "onChange" });
 
-    const newPassword = watch("newPassword", "");
+    // Formulario separado para la contraseña
+    const { 
+        control: passwordControl, 
+        handleSubmit: handlePasswordSubmit, 
+        formState: { errors: passwordErrors }, 
+        reset: resetPassword,
+        watch: watchPassword 
+    } = useForm({ mode: "onChange" });
+
+    const newPassword = watchPassword("newPassword", "");
 
     useEffect(() => {
         setTimeout(() => {
@@ -29,14 +42,14 @@ const UserProfileScreen = () => {
                 telefono: "+57 300 123 4567",
                 afiliacion: "Universidad del Valle"
             };
-            reset(mockUser); 
+            resetProfile(mockUser); 
             setIsLoadingData(false);
         }, 1000);
-    }, [reset]);
+    }, [resetProfile]);
 
+    // Funcion para guardar los datos personales
     const submitData = () => {
         handlerApp.setLoader(true);
-        
         setTimeout(() => {
             handlerApp.setLoader(false);
             Swal.fire({
@@ -48,9 +61,9 @@ const UserProfileScreen = () => {
         }, 2000);
     };
 
+    // Funcion para cambiar la contraseña
     const submitPassword = () => {
         handlerApp.setLoader(true);
-        
         setTimeout(() => {
             handlerApp.setLoader(false);
             Swal.fire({
@@ -60,6 +73,7 @@ const UserProfileScreen = () => {
                 confirmButtonText: 'Aceptar'
             }).then(() => {
                 setShowPasswordSection(false);
+                resetPassword();
             });
         }, 2000);
     };
@@ -81,52 +95,52 @@ const UserProfileScreen = () => {
                                 <div className="row">
                                     <div className="col-md-6">
                                         <InputText
-                                            control={control}
+                                            control={profileControl}
                                             label="Nombre"
                                             name="nombre"
-                                            errors={errors.nombre}
+                                            errors={profileErrors.nombre}
                                             required={true}
                                         />
                                     </div>
                                     <div className="col-md-6">
                                         <InputText
-                                            control={control}
+                                            control={profileControl}
                                             label="Apellido"
                                             name="apellido"
-                                            errors={errors.apellido}
+                                            errors={profileErrors.apellido}
                                             required={true}
                                         />
                                     </div>
                                 </div>
 
                                 <InputEmail
-                                    control={control}
+                                    control={profileControl}
                                     label="Correo electronico"
                                     name="email"
-                                    errors={errors.email}
+                                    errors={profileErrors.email}
                                     required={true}
                                 />
 
                                 <InputText
-                                    control={control}
+                                    control={profileControl}
                                     label="Telefono"
                                     name="telefono"
-                                    errors={errors.telefono}
+                                    errors={profileErrors.telefono}
                                     required={true}
                                 />
 
                                 <InputText
-                                    control={control}
+                                    control={profileControl}
                                     label="Afiliacion / Institucion"
                                     name="afiliacion"
-                                    errors={errors.afiliacion}
+                                    errors={profileErrors.afiliacion}
                                     required={true}
                                 />
 
                                 <div className="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
                                     <ButtonPrimary
                                         label="Guardar cambios"
-                                        onClick={handleSubmit(submitData)}
+                                        onClick={handleProfileSubmit(submitData)}
                                     />
                                 </div>
                             </form>
@@ -145,24 +159,24 @@ const UserProfileScreen = () => {
                         ) : (
                             <form>
                                 <InputPassword
-                                    control={control}
+                                    control={passwordControl}
                                     label="Contraseña actual"
                                     name="currentPassword"
-                                    errors={errors.currentPassword}
+                                    errors={passwordErrors.currentPassword}
                                     required={true}
                                 />
                                 <InputPassword
-                                    control={control}
+                                    control={passwordControl}
                                     label="Nueva contraseña"
                                     name="newPassword"
-                                    errors={errors.newPassword}
+                                    errors={passwordErrors.newPassword}
                                     required={true}
                                 />
                                 <InputPassword
-                                    control={control}
+                                    control={passwordControl}
                                     label="Confirmar nueva contraseña"
                                     name="confirmPassword"
-                                    errors={errors.confirmPassword}
+                                    errors={passwordErrors.confirmPassword}
                                     required={true}
                                     rules={{
                                         validate: value => value === newPassword || "Las contraseñas no coinciden"
@@ -172,13 +186,16 @@ const UserProfileScreen = () => {
                                     <button 
                                         type="button" 
                                         className="btn btn-secondary" 
-                                        onClick={() => setShowPasswordSection(false)}
+                                        onClick={() => {
+                                            setShowPasswordSection(false);
+                                            resetPassword();
+                                        }}
                                     >
                                         Cancelar
                                     </button>
                                     <ButtonPrimary
                                         label="Actualizar contraseña"
-                                        onClick={handleSubmit(submitPassword)}
+                                        onClick={handlePasswordSubmit(submitPassword)}
                                     />
                                 </div>
                             </form>
