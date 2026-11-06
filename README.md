@@ -31,6 +31,19 @@ La clave secreta de reCAPTCHA debe permanecer en el backend. El frontend solo
 usa la clave pública para renderizar el widget y envía el token junto con las
 credenciales a `POST /api/auth/login`.
 
+## Integración con el backend
+
+El frontend consume los endpoints de autenticación JWT del backend para iniciar
+sesión, solicitar el PIN de recuperación y restablecer la contraseña. Las
+solicitudes autenticadas envían el encabezado
+`Authorization: Bearer <access>`. El access token se renueva automáticamente
+con el refresh token cuando el backend responde `401`.
+
+En el backend deben instalarse las dependencias del archivo
+`requirements.txt`, incluyendo `djangorestframework-simplejwt` y `PyJWT`. La
+configuración de CORS debe permitir el origen del frontend
+(`http://localhost:5173` en desarrollo).
+
 ## Rutas base
 
 - `/login`: inicio de sesión.
