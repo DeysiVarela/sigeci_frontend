@@ -40,7 +40,7 @@ const CreateUserScreen = () => {
       .catch(() => setProfilesError(true));
   }, []);
 
-  // Solo ADMIN y MEMBER pueden crear usuarios
+  // Solo quien tenga el permiso user.create puede crear usuarios
   useEffect(() => {
     getMe()
       .then((me) => {
