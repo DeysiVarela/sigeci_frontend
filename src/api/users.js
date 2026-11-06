@@ -8,3 +8,4 @@ export const createUser = (data) => request("/api/users/", { method: "POST", bod
 export const updateUser = (id, data) => request(`/api/users/${id}/`, { method: "PATCH", body: data });
 export const deleteUser = (id) => request(`/api/users/${id}/`, { method: "DELETE" });
 export const listProfiles = () => request("/api/profiles/");
+export const getMe = () => request("/api/auth/me/");
