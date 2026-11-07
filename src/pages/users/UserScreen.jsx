@@ -536,7 +536,7 @@ const UserScreen = () => {
                         </div>
                         <h5 className="fw-bold text-dark">¿Estás seguro de eliminar este usuario?</h5>
                         <p className="text-muted px-3">
-                            Se eliminará a <strong>{selectedUser.name}</strong> (<code>{selectedUser.email}</code>) y dejará de aparecer en el listado.
+                            Se eliminará a <strong>{selectedUser.name}</strong> (<code>{selectedUser.email}</code>) de forma permanente. Esta acción no se puede deshacer.
                         </p>
                     </div>
                 )}
