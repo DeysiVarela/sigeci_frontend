@@ -21,7 +21,7 @@ const InputEmail = ({
                 required: required,
                 pattern: rules.pattern || {
                     value: emailRegex,
-                    message: "This field must be a valid email"
+                    message: "Este campo debe ser un correo electrónico válido"
                 }
             }}
             defaultValue=""
@@ -44,12 +44,12 @@ const InputEmail = ({
                     />
                     {errors?.type === "required" && (
                         <p className="small text-danger">
-                            <span className="mr-1">⚠️</span>This field is required
+                            <span className="mr-1">⚠️</span>Este campo es obligatorio
                         </p>
                     )}
                     {errors?.type === "pattern" && (
                         <p className="small text-danger">
-                            <span className="mr-1">⚠️</span>This field must be a valid email
+                            <span className="mr-1">⚠️</span>Este campo debe ser un correo electrónico válido
                         </p>
                     )}
                     {errors?.type === "validate" && (
