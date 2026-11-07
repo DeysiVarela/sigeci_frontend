@@ -77,7 +77,7 @@ const UserScreen = () => {
 
     // La búsqueda por texto se hace en el cliente (el backend no la soporta), así que solo
     // es confiable cuando TODOS los resultados de los filtros caben en la página actual.
-    const canSearch = hasFilters && totalRows > 0 && totalRows <= perPage;
+    const canSearch = totalRows > 0 && totalRows <= perPage;
     const term = canSearch ? searchTerm.trim().toLowerCase() : "";
     const visibleUsers = term
         ? users.filter(
