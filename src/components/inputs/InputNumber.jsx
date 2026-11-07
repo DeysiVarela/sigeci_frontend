@@ -57,17 +57,17 @@ const InputNumber = ({
                     />
                     {errors?.type === "required" && (
                         <p className="small text-danger">
-                            <span className="mr-1">⚠️</span>This field is required
+                            <span className="mr-1">⚠️</span>Este campo es obligatorio
                         </p>
                     )}
                     {errors?.type === "min" && (
                         <p className="small text-danger">
-                            <span className="mr-1">⚠️</span>The value must be at least {min ?? rules.min?.value ?? rules.min}
+                            <span className="mr-1">⚠️</span>El valor debe ser como mínimo {min ?? rules.min?.value ?? rules.min}
                         </p>
                     )}
                     {errors?.type === "max" && (
                         <p className="small text-danger">
-                            <span className="mr-1">⚠️</span>The value cannot exceed {max ?? rules.max?.value ?? rules.max}
+                            <span className="mr-1">⚠️</span>El valor no puede superar {max ?? rules.max?.value ?? rules.max}
                         </p>
                     )}
                     {errors?.type === "validate" && (
