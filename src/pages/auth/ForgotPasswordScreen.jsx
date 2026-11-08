@@ -20,6 +20,7 @@ const ForgotPasswordScreen = () => {
             await forgotPassword(data.email);
             handlerApp.setLoader(false);
             sessionStorage.setItem("recovery_email", data.email);
+            sessionStorage.setItem("recovery_sent_at", String(Date.now()));
             nav("/reset-pin");
         } catch (requestError) {
             setError(requestError.message);

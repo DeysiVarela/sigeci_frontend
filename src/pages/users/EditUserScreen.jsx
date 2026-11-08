@@ -134,7 +134,7 @@ const EditUserScreen = () => {
     <div className="container-fluid pt-4">
       <div className="row justify-content-center">
         <div className="col-md-8 col-lg-6">
-          <Card title={`Editar Usuario (ID: ${id})`}>
+          <Card title={`Editar Usuario`}>
             {isLoadingData ? (
               <div className="text-center py-5">
                 <div className="spinner-border text-primary" role="status">

@@ -65,7 +65,7 @@ const LoginScreen = () => {
         <div className="login-page bg-body-secondary">
             <main className="login-box">
                 <h1 className="login-logo">
-                    {import.meta.env.VITE_PROJECT_NAME}
+                    {import.meta.env.VITE_PROJECT_NAME || "SIGECI"}
                 </h1>
                 <div className="card">
                     <div className="card-body login-card-body">
