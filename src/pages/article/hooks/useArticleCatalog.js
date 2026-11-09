@@ -12,28 +12,36 @@ const toFriendlyMessage = (error) => {
  * los filtros/página para evitar que una respuesta vieja pise a la nueva.
  */
 export const useArticleCatalog = (query, user) => {
-    const [state, setState] = useState({ items: [], total: 0, loading: true, error: null });
     const [reloadKey, setReloadKey] = useState(0);
+    const [result, setResult] = useState({ key: null, items: [], total: 0, error: null });
 
     const queryKey = JSON.stringify(query);
-    const userKey = `${user?.id}|${user?.role}`;
+    const userId = user?.id;
+    const userRole = user?.role;
+    const requestKey = `${queryKey}|${userId}|${userRole}|${reloadKey}`;
 
     useEffect(() => {
         const controller = new AbortController();
-        setState((prev) => ({ ...prev, loading: true, error: null }));
 
-        getArticles(JSON.parse(queryKey), { signal: controller.signal, user })
-            .then(({ items, total }) => setState({ items, total, loading: false, error: null }))
+        getArticles(JSON.parse(queryKey), { signal: controller.signal, user: { id: userId, role: userRole } })
+            .then(({ items, total }) => setResult({ key: requestKey, items, total, error: null }))
             .catch((error) => {
                 if (error?.name === "AbortError") return;
-                setState({ items: [], total: 0, loading: false, error: toFriendlyMessage(error) });
+                setResult({ key: requestKey, items: [], total: 0, error: toFriendlyMessage(error) });
             });
 
         return () => controller.abort();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [queryKey, userKey, reloadKey]);
+    }, [requestKey, queryKey, userId, userRole]);
 
     const reload = useCallback(() => setReloadKey((k) => k + 1), []);
 
-    return { ...state, reload };
+    const loading = result.key !== requestKey;
+
+    return {
+        items: result.items,
+        total: result.total,
+        loading,
+        error: loading ? null : result.error,
+        reload
+    };
 };
