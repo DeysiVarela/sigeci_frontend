@@ -24,9 +24,18 @@ const CreateUserScreen = () => {
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
+    getValues,
+    trigger,
   } = useForm({
     mode: "onChange", // Valida mientras escribes o sales del campo
   });
+
+  // Si se cambia la contraseña después de llenar la confirmación, se vuelve a comparar
+  const passwordValue = watch("password");
+  useEffect(() => {
+    if (getValues("confirmPassword")) trigger("confirmPassword");
+  }, [passwordValue, getValues, trigger]);
 
   // Los roles salen del backend para que los ids coincidan
   useEffect(() => {
@@ -134,6 +143,23 @@ const CreateUserScreen = () => {
                 placeholder="Mínimo 8 caracteres"
                 errors={errors.password}
                 required={true}
+              />
+
+              {/* Confirmación: debe coincidir con la contraseña para poder guardar.
+                  Solo se valida la coincidencia; la fortaleza ya se exige en "Contraseña". */}
+              <InputPassword
+                control={control}
+                label="Confirmar contraseña"
+                name="confirmPassword"
+                placeholder="Repite la contraseña"
+                errors={errors.confirmPassword}
+                required={true}
+                rules={{
+                  minLength: { value: 0, message: "" },
+                  pattern: { value: /^[\s\S]*$/, message: "" },
+                  validate: (value) =>
+                    value === getValues("password") || "Las contraseñas no coinciden",
+                }}
               />
 
               <InputSelect

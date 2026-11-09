@@ -77,7 +77,7 @@ const UserScreen = () => {
 
     // La búsqueda por texto se hace en el cliente (el backend no la soporta), así que solo
     // es confiable cuando TODOS los resultados de los filtros caben en la página actual.
-    const canSearch = hasFilters && totalRows > 0 && totalRows <= perPage;
+    const canSearch = totalRows > 0 && totalRows <= perPage;
     const term = canSearch ? searchTerm.trim().toLowerCase() : "";
     const visibleUsers = term
         ? users.filter(
@@ -536,7 +536,7 @@ const UserScreen = () => {
                         </div>
                         <h5 className="fw-bold text-dark">¿Estás seguro de eliminar este usuario?</h5>
                         <p className="text-muted px-3">
-                            Se eliminará a <strong>{selectedUser.name}</strong> (<code>{selectedUser.email}</code>) y dejará de aparecer en el listado.
+                            Se eliminará a <strong>{selectedUser.name}</strong> (<code>{selectedUser.email}</code>) de forma permanente. Esta acción no se puede deshacer.
                         </p>
                     </div>
                 )}
