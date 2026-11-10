@@ -1,12 +1,11 @@
 import { useParams, useNavigate, useLocation } from "react-router";
 import { useMemo } from "react";
 import Card from "../../components/cards/Card";
-import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import ButtonSecondary from "../../components/buttons/ButtonSecondary";
 import StatusBadge from "./components/StatusBadge";
 import { MOCK_ARTICLES } from "./mockArticles";
 import { getTopicLabel } from "./utils/constants";
-import { canEditArticle, canViewArticle } from "./utils/permissions";
+import { canViewArticle } from "./utils/permissions";
 import { formatSubmittedDate } from "./utils/catalogFormat";
 import { useCurrentUser } from "./hooks/useCurrentUser";
 
@@ -38,7 +37,6 @@ const ArticleViewScreen = () => {
         );
     }
 
-    const canEdit = canEditArticle(user, article);
 
     return (
         <div className="container-fluid p-4">
@@ -62,12 +60,7 @@ const ArticleViewScreen = () => {
 
                 <div className="d-flex align-items-center gap-2">
                     <ButtonSecondary label="Volver al catálogo" onClick={() => navigate(backTo)} />
-                    {canEdit && (
-                        <ButtonPrimary
-                            label="Editar Artículo"
-                            onClick={() => navigate(`/article/edit/${article.id}`)}
-                        />
-                    )}
+                    
                 </div>
             </div>
 
@@ -117,15 +110,7 @@ const ArticleViewScreen = () => {
                         <div className="mt-4 pt-3 border-top">
                             <small className="text-muted d-block mb-2">Acciones Rápidas:</small>
                             <div className="d-grid gap-2">
-                                {canEdit && (
-                                    <button
-                                        className="btn btn-outline-primary btn-sm d-flex align-items-center justify-content-center gap-2"
-                                        onClick={() => navigate(`/article/edit/${article.id}`)}
-                                    >
-                                        <i className="bi bi-pencil-square"></i>
-                                        <span>Modificar Información</span>
-                                    </button>
-                                )}
+                                
                                 <button
                                     className="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center gap-2"
                                     onClick={() => window.print()}

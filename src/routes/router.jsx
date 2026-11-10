@@ -9,6 +9,7 @@ import Dashboard from "../theme/containers/Dashboard";
 import ArticleScreen from "../pages/article/ArticleScreen";
 import ArticleViewScreen from "../pages/article/ArticleViewScreen";
 import ArticleEditScreen from "../pages/article/ArticleEditScreen";
+import ArticleEditGuard from "../pages/article/components/ArticleEditGuard";
 import UserScreen from "../pages/users/UserScreen";
 import Container from "../theme/containers/Container";
 import ProtectedRoute from "./ProtectedRoute";
@@ -60,7 +61,7 @@ const router = createBrowserRouter([
                 { path: "/home", element: <DashboardScreen/> },
                 { path: "/article", element: <ArticleScreen/> },
                 { path: "/article/:id", element: <ArticleViewScreen/> },
-                { path: "/article/edit/:id", element: <ArticleEditScreen/> },
+                { path: "/article/edit/:id", element: <ArticleEditGuard><ArticleEditScreen/></ArticleEditGuard> },
                 { path: "/article/create", element: <CreateArticleScreen/> },
                 { path: "/article/postulate", element: <CreateArticlePDFScreen/> },
                 { path: "/users", element: <UserScreen/> },

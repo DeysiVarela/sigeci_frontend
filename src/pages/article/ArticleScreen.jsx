@@ -108,11 +108,9 @@ const ArticleScreen = () => {
                 className={`btn-sm py-1 px-2 text-nowrap ${compact ? "flex-fill" : ""}`}
                 onClick={() => goToDetail(article)}
             />
-            {canEditArticle(user, article) && (
+            {/* "Editar" solo en la pestaña "Mis artículos" del autor */}
+            {catalog.scope === CATALOG_SCOPE.MINE && canEditArticle(user, article) && (
                 <ButtonPrimary
-                    label="Editar"
-                    className={`btn-sm py-1 px-2 text-nowrap ${compact ? "flex-fill" : ""}`}
-                    onClick={() => navigate(`/article/edit/${article.id}`)}
                 />
             )}
         </>

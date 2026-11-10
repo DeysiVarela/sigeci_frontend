@@ -37,6 +37,9 @@ export const canViewArticle = (user, article) => {
 // Modificar: el admin no edita artículos desde el catálogo
 // autor solo los propios (título, línea temática, autores, resumen, etc) mientras no esté deshabilitado
 // El miembro del comité no edita artículos desde el catálogo (la calificación es otra historia).
+// TODO(HU edición de artículos): exigir estado POSTULADO y que no haya vencido la fecha
+// límite de postulación (elicitación, pregunta 10) cuando el back exponga las fechas
+// de la conferencia.
 export const canEditArticle = (user, article) => {
     if (!user || !article) return false;
     if (isAdmin(user)) return false; 
