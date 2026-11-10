@@ -15,14 +15,42 @@ describe("RBAC del catálogo (CA-05 / CA-06)", () => {
         expect(all(ADMIN, {}).length).toBe(MOCK_ARTICLES.length);
     });
 
-    it("el miembro del comité solo ve los artículos asignados para evaluar", () => {
+    it("el miembro en 'asignados' solo ve los artículos asignados para evaluar", () => {
         const assigned = all(MEMBER, { scope: CATALOG_SCOPE.ASSIGNED });
         expect(assigned.map((a) => a.id).sort((a, b) => a - b)).toEqual([2, 3, 8, 14, 20]);
         expect(all({ id: 999, role: "MEMBER" }, {})).toHaveLength(0);
     });
 
-    it("vistas por rol: admin una, miembro una (asignados), autor dos", () => {
+    it("el miembro en 'publicados' ve solo artículos con aval de publicación, de cualquier autor", () => {
+        const pub = all(MEMBER, { scope: CATALOG_SCOPE.PUBLIC });
+        expect(pub.length).toBeGreaterThan(0);
+        expect(pub.every((a) => PUBLIC_STATUSES.includes(a.status))).toBe(true);
+        expect(all(MEMBER, { scope: CATALOG_SCOPE.PUBLIC, status: "EN_REVISION" })).toHaveLength(0);
+    });
+
+    it("el miembro puede abrir el detalle de un publicado", () => {
+        const publicadoNoAsignado = MOCK_ARTICLES.find(
+            (a) => PUBLIC_STATUSES.includes(a.status) && !a.reviewerIds.includes(25)
+        );
+        expect(canViewArticle(MEMBER, publicadoNoAsignado)).toBe(true);
+    });
+
+    it("el admin consulta todo pero no tiene botón de editar", () => {
+        expect(MOCK_ARTICLES.every((a) => canViewArticle(ADMIN, a))).toBe(true);
+        expect(MOCK_ARTICLES.some((a) => canEditArticle(ADMIN, a))).toBe(false);
+    });
+
+    it("el miembro no tiene botón de editar, ni en sus asignados ni en los publicados", () => {
+        const asignado = MOCK_ARTICLES.find((a) => a.reviewerIds.includes(25));
+        const publicado = MOCK_ARTICLES.find((a) => PUBLIC_STATUSES.includes(a.status));
+        expect(canEditArticle(MEMBER, asignado)).toBe(false);
+        expect(canEditArticle(MEMBER, publicado)).toBe(false);
+    });
+
+    it("vistas por rol: admin una, miembro dos (asignados / publicados), autor dos", () => {
         expect(readCatalogParams(new URLSearchParams(), ADMIN).scope).toBe(CATALOG_SCOPE.ALL);
+        expect(readCatalogParams(new URLSearchParams(), MEMBER).scope).toBe(CATALOG_SCOPE.ASSIGNED);
+        expect(readCatalogParams(new URLSearchParams("scope=public"), MEMBER).scope).toBe(CATALOG_SCOPE.PUBLIC);
         expect(readCatalogParams(new URLSearchParams("scope=all"), MEMBER).scope).toBe(CATALOG_SCOPE.ASSIGNED);
         expect(readCatalogParams(new URLSearchParams(), AUTOR).scope).toBe(CATALOG_SCOPE.MINE);
     });
@@ -62,9 +90,12 @@ describe("RBAC del catálogo (CA-05 / CA-06)", () => {
         expect(canEditArticle(AUTOR, propio)).toBe(true);
         const noAsignado = MOCK_ARTICLES.find((a) => !a.reviewerIds.includes(25));
         expect(canViewArticle(MEMBER, ajenoEnRevision)).toBe(ajenoEnRevision.reviewerIds.includes(25));
-        expect(canViewArticle(MEMBER, noAsignado)).toBe(false);
+        const noAsignadoNoPublico = MOCK_ARTICLES.find(
+            (a) => !a.reviewerIds.includes(25) && !PUBLIC_STATUSES.includes(a.status)
+        );
+        expect(canViewArticle(MEMBER, noAsignadoNoPublico)).toBe(false);
         expect(canEditArticle(MEMBER, noAsignado)).toBe(false);
-        expect(canEditArticle(ADMIN, noAsignado)).toBe(true);
+        expect(canEditArticle(ADMIN, noAsignado)).toBe(false);
     });
 });
 

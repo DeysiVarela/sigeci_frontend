@@ -6,7 +6,7 @@
 //   VITE_API_PAGE_BASE     0 si el backend numera páginas desde 0 (Spring), 1 por defecto
 //
 // Contrato esperado:  GET {VITE_API_URL}/articles?page=&size=&scope=&topic=&status=&dateFrom=&dateTo=
-//   - scope: "assigned" (miembro del comité) | "mine" | "public" (autor); el admin no lo envía
+//   - scope: "assigned" | "public" (miembro del comité), "mine" | "public" (autor); el admin no lo envía
 //   - dateFrom / dateTo: YYYY-MM-DD, ambos inclusivos, sobre la fecha de postulación
 //   - Respuesta: { content, totalElements } | { items, total } | { data, count }
 import { MOCK_ARTICLES } from "../mockArticles";
@@ -81,9 +81,9 @@ export const getArticles = async (query, { signal, user } = {}) => {
 /** RBAC del catálogo (CA-05 catálogo / CA-06 filtrado). */
 export const filterVisibleArticles = (articles, user, scope) => {
     if (isAdmin(user)) return articles;
-    if (isMember(user)) return articles.filter((a) => isAssignedReviewer(user, a));
-    if (!isAuthor(user)) return [];
+    if (!isMember(user) && !isAuthor(user)) return [];
     if (scope === CATALOG_SCOPE.PUBLIC) return articles.filter(isPublicArticle);
+    if (isMember(user)) return articles.filter((a) => isAssignedReviewer(user, a));
     return articles.filter((a) => isOwner(user, a));
 };
 

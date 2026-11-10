@@ -12,7 +12,7 @@ import { CatalogEmptyState, CatalogError, TableSkeleton } from "./components/Cat
 import { useArticleCatalog } from "./hooks/useArticleCatalog";
 import { useCurrentUser } from "./hooks/useCurrentUser";
 import { CATALOG_SCOPE, getStatusOptionsForScope, getTopicLabel } from "./utils/constants";
-import { canCreateArticle, canEditArticle, isAuthor } from "./utils/permissions";
+import { canCreateArticle, canEditArticle, getAllowedScopes } from "./utils/permissions";
 import { formatSubmittedDate } from "./utils/catalogFormat";
 import {
     EMPTY_FILTERS,
@@ -22,13 +22,22 @@ import {
     toSearchParams
 } from "./utils/catalogParams";
 
-const AUTHOR_TABS = [
+// Pestañas posibles del catálogo. Cada usuario ve las de sus vistas permitidas
+// (getAllowedScopes): autor -> mine + public; miembro -> assigned + public.
+const CATALOG_TABS = [
     {
         scope: CATALOG_SCOPE.MINE,
         label: "Mis artículos",
         shortLabel: "Mis artículos",
         icon: "bi-person-lines-fill",
         hint: "Artículos que has postulado y su estado actual de revisión."
+    },
+    {
+        scope: CATALOG_SCOPE.ASSIGNED,
+        label: "Asignados para evaluar",
+        shortLabel: "Por evaluar",
+        icon: "bi-clipboard-check",
+        hint: "Artículos que te asignaron para evaluar y su estado actual."
     },
     {
         scope: CATALOG_SCOPE.PUBLIC,
@@ -42,7 +51,7 @@ const AUTHOR_TABS = [
 // Textos de cabecera según la vista del usuario
 const SCOPE_SUBTITLE = {
     all: "Todos los artículos postulados a la conferencia y su estado de postulación.",
-    assigned: "Artículos que te fueron asignados para evaluar y su estado actual.",
+    assigned: "Consulta los artículos que te asignaron para evaluar y los publicados en las memorias.",
     mine: "Consulta tus postulaciones y los artículos publicados en las memorias.",
     public: "Consulta tus postulaciones y los artículos publicados en las memorias."
 };
@@ -56,7 +65,9 @@ const ArticleScreen = () => {
     const location = useLocation();
     const [searchParams, setSearchParams] = useSearchParams();
     const user = useCurrentUser();
-    const author = isAuthor(user);
+    // Vistas del usuario: la primera es la de inicio (define el subtítulo de la página)
+    const allowedScopes = getAllowedScopes(user);
+    const tabs = CATALOG_TABS.filter((t) => allowedScopes.includes(t.scope));
 
     // Estado del catálogo derivado de la URL (filtros + página + vista)
     const catalog = useMemo(() => readCatalogParams(searchParams, user), [searchParams, user]);
@@ -169,7 +180,7 @@ const ArticleScreen = () => {
         />
     );
 
-    const activeTab = AUTHOR_TABS.find((t) => t.scope === catalog.scope);
+    const activeTab = tabs.find((t) => t.scope === catalog.scope);
 
     return (
         <div className="container-fluid p-3 p-md-4">
@@ -197,7 +208,7 @@ const ArticleScreen = () => {
                         Catálogo de artículos
                     </h2>
                     <p className="text-secondary mb-0">
-                        {SCOPE_SUBTITLE[catalog.scope] ?? SCOPE_SUBTITLE.mine}
+                        {SCOPE_SUBTITLE[allowedScopes[0]] ?? SCOPE_SUBTITLE.mine}
                     </p>
                 </div>
                 {canCreateArticle(user) && (
@@ -212,11 +223,11 @@ const ArticleScreen = () => {
                 )}
             </div>
 
-            {/* dos vistas para el autor */}
-            {author && (
+            {/* CA-05: dos vistas para autor (propios / publicados) y miembro (asignados / publicados) */}
+            {tabs.length > 1 && (
                 <>
                     <ul className="nav nav-tabs nav-fill flex-nowrap mb-2" role="tablist">
-                        {AUTHOR_TABS.map((tab) => (
+                        {tabs.map((tab) => (
                             <li className="nav-item" role="presentation" key={tab.scope}>
                                 <button
                                     type="button"

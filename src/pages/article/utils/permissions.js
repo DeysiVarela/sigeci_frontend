@@ -29,17 +29,18 @@ export const isPublicArticle = (article) => PUBLIC_STATUSES.includes(article?.st
 export const canViewArticle = (user, article) => {
     if (!user || !article) return false;
     if (isAdmin(user)) return true;
-    if (isMember(user)) return isAssignedReviewer(user, article);
+    if (isMember(user)) return isAssignedReviewer(user, article) || isPublicArticle(article);
     if (isAuthor(user)) return isOwner(user, article) || isPublicArticle(article);
     return false;
 };
 
-// Modificar: admin cualquiera; miembro solo sus asignados (estado, acciones);
-// autor solo los propios (título y línea temática) mientras no esté deshabilitado
+// Modificar: el admin no edita artículos desde el catálogo
+// autor solo los propios (título, línea temática, autores, resumen, etc) mientras no esté deshabilitado
+// El miembro del comité no edita artículos desde el catálogo (la calificación es otra historia).
 export const canEditArticle = (user, article) => {
     if (!user || !article) return false;
-    if (isAdmin(user)) return true;
-    if (isMember(user)) return isAssignedReviewer(user, article);
+    if (isAdmin(user)) return false; 
+    if (isMember(user)) return false;
     if (isAuthor(user)) return isOwner(user, article) && article.status !== ARTICLE_STATUS.DESHABILITADO;
     return false;
 };
@@ -48,10 +49,10 @@ export const canEditArticle = (user, article) => {
 // Solo el autor postula artículos
 export const canCreateArticle = (user) => isAuthor(user);
 
-// Vistas: admin una (todo); miembro una (asignados); autor dos (propios / publicados)
+// Vistas: admin una (todo); miembro una (asignados y catalogo publico); autor dos (propios y catalogo publico)
 export const getAllowedScopes = (user) => {
     if (isAdmin(user)) return [CATALOG_SCOPE.ALL];
-    if (isMember(user)) return [CATALOG_SCOPE.ASSIGNED];
+    if (isMember(user)) return [CATALOG_SCOPE.ASSIGNED, CATALOG_SCOPE.PUBLIC];
     if (isAuthor(user)) return [CATALOG_SCOPE.MINE, CATALOG_SCOPE.PUBLIC];
     return [];
 };
