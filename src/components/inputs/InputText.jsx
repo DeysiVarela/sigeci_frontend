@@ -27,12 +27,12 @@ const InputText = ({control, label, name, onChange, rules={}, errors={}, placeho
                         placeholder={placeholder ? placeholder : label} 
                     />
                     {/* {JSON.stringify(errors)} */}
-                    {errors?.type === "required" && <p className="small text-danger"><span className="mr-1">⚠️</span>This field is required</p>}
-                    {errors?.type === "min" && <p className="small text-danger"><span className="mr-1">⚠️</span>The value of the {name} is less than required</p>}
-                    {errors?.type === "max" && <p className="small text-danger"><span className="mr-1">⚠️</span>The value of the {name} is greater than allowed</p>}
-                    {errors?.type === "minLength" && <p className="small text-danger"><span className="mr-1">⚠️</span>This field must have at least {errors?.minLength?.value} characters</p>}
-                    {errors?.type === "email" && <p className="small text-danger"><span className="mr-1">⚠️</span>This field must be a valid email</p>}
-                    {errors?.type === "pattern" && <p className="small text-danger"><span className="mr-1">⚠️</span>This field must be a valid {errors?.pattern?.value}</p>}
+                    {errors?.type === "required" && <p className="small text-danger"><span className="mr-1">⚠️</span>Este campo es obligatorio</p>}
+                    {errors?.type === "min" && <p className="small text-danger"><span className="mr-1">⚠️</span>El valor de {name} es menor al requerido</p>}
+                    {errors?.type === "max" && <p className="small text-danger"><span className="mr-1">⚠️</span>El valor de {name} supera el máximo permitido</p>}
+                    {errors?.type === "minLength" && <p className="small text-danger"><span className="mr-1">⚠️</span>Este campo debe tener al menos {errors?.minLength?.value} caracteres</p>}
+                    {errors?.type === "email" && <p className="small text-danger"><span className="mr-1">⚠️</span>Este campo debe ser un correo electrónico válido</p>}
+                    {errors?.type === "pattern" && <p className="small text-danger"><span className="mr-1">⚠️</span>Este campo debe tener un formato válido de {errors?.pattern?.value}</p>}
                     {errors?.type === "validate" && <p className="small text-danger"><span className="mr-1">⚠️</span>{errors?.message}</p>}
                 </div>
             )}

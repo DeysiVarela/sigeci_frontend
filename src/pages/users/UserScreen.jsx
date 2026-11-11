@@ -1,112 +1,178 @@
-import { useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import DataTable from "react-data-table-component";
-import { useForm } from "react-hook-form";
 import Card from "../../components/cards/Card";
 import Badge from "../../components/badges/Badge";
 import Modal from "../../components/modals/Modal";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import ButtonSecondary from "../../components/buttons/ButtonSecondary";
-import InputText from "../../components/inputs/InputText";
-import InputEmail from "../../components/inputs/InputEmail";
 import ButtonLink from "../../components/buttons/ButtonLink";
+import { listUsers, listProfiles, deleteUser, getMe } from "../../api/users";
+import { getErrorMessage } from "../../utils/apiError";
+import { isManager, canEditUser, canDeleteUser } from "../../utils/userAccess";
 
+const ROWS_PER_PAGE_OPTIONS = [10, 20, 50];
 
-const INITIAL_USERS = [
-    {
-        id: 1,
-        name: "Carlos Daniel Mendoza",
-        email: "carlos.mendoza@univalle.edu.co",
-        role: "Administrador",
-        department: "Tecnología",
-        status: "Activo",
-        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
-    },
-    {
-        id: 2,
-        name: "Sofía Valentina Rodríguez",
-        email: "sofia.rodriguez@univalle.edu.co",
-        role: "Docente",
-        department: "Ingeniería de Sistemas",
-        status: "Activo",
-        avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80"
-    },
-    {
-        id: 3,
-        name: "Mateo Fernando Gómez",
-        email: "mateo.gomez@univalle.edu.co",
-        role: "Estudiante",
-        department: "Ciencias de la Computación",
-        status: "Pendiente",
-        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80"
-    },
-    {
-        id: 4,
-        name: "Valeria Isabel Morales",
-        email: "valeria.morales@univalle.edu.co",
-        role: "Investigador",
-        department: "Inteligencia Artificial",
-        status: "Activo",
-        avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80"
-    },
-    {
-        id: 5,
-        name: "Julián David Castro",
-        email: "julian.castro@univalle.edu.co",
-        role: "Docente",
-        department: "Redes y Telecomunicaciones",
-        status: "Inactivo",
-        avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80"
-    },
-    {
-        id: 6,
-        name: "Mariana Restrepo Ortiz",
-        email: "mariana.restrepo@univalle.edu.co",
-        role: "Coordinador",
-        department: "Facultad de Ingeniería",
-        status: "Activo",
-        avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80"
-    }
+const toArray = (res) => (Array.isArray(res) ? res : res?.results || []);
+
+const formatUser = (u) => ({
+    id: u.id,
+    name: `${u.name} ${u.lastname}`.trim(),
+    email: u.email,
+    role: u.profile_name,
+    status: u.active ? "Activo" : "Inactivo",
+});
+
+const AvatarInitial = ({ name, size = 40, className = "" }) => (
+    <div
+        className={`rounded-circle bg-primary-subtle text-primary fw-bold d-flex align-items-center justify-content-center flex-shrink-0 ${className}`}
+        style={{ width: size, height: size, fontSize: size / 2.2 }}
+    >
+        {name.charAt(0).toUpperCase()}
+    </div>
+);
+
+const getStatusBadge = (status) =>
+    status === "Activo"
+        ? <Badge type="Success" text="Activo" pill />
+        : <Badge type="Danger" text="Inactivo" pill />;
+
+const STAT_CARDS = [
+    { key: "total", label: "Total Usuarios", color: "primary", icon: "bi-people", valueClass: "text-dark" },
+    { key: "active", label: "Activos", color: "success", icon: "bi-check-circle", valueClass: "text-success" },
+    { key: "inactive", label: "Inactivos", color: "danger", icon: "bi-dash-circle", valueClass: "text-danger" },
 ];
 
 const UserScreen = () => {
     const navigate = useNavigate();
-    const [users, setUsers] = useState(INITIAL_USERS);
+
+    // Datos de la tabla (paginados en el servidor)
+    const [users, setUsers] = useState([]);
+    const [totalRows, setTotalRows] = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    // Paginación y filtros (los 2 filtros que define el backend: profile y active)
+    const [page, setPage] = useState(1);
+    const [perPage, setPerPage] = useState(ROWS_PER_PAGE_OPTIONS[0]);
+    const [profileFilter, setProfileFilter] = useState("");
+    const [activeFilter, setActiveFilter] = useState("");
+    const [resetPaginationToggle, setResetPaginationToggle] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
-    const [statusFilter, setStatusFilter] = useState("TODOS");
 
-    // Alerts / Notificaciones AdminLTE
+    // Apoyo
+    const [profiles, setProfiles] = useState([]);
+    const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 });
+    const [reloadKey, setReloadKey] = useState(0);
+    const [me, setMe] = useState(null); // usuario autenticado (null = aún cargando)
+    const [meError, setMeError] = useState(false);
+
+    // Alertas y modales
     const [alertNotification, setAlertNotification] = useState(null);
-
-    // Modales
     const [selectedUser, setSelectedUser] = useState(null);
     const [viewModalOpen, setViewModalOpen] = useState(false);
-    const [editModalOpen, setEditModalOpen] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
-    // Formulario para edición
-    const { control, handleSubmit, formState: { errors } } = useForm();
+    const hasFilters = profileFilter !== "" || activeFilter !== "";
+
+    // La búsqueda por texto se hace en el cliente (el backend no la soporta), así que solo
+    // es confiable cuando TODOS los resultados de los filtros caben en la página actual.
+    const canSearch = totalRows > 0 && totalRows <= perPage;
+    const term = canSearch ? searchTerm.trim().toLowerCase() : "";
+    const visibleUsers = term
+        ? users.filter(
+            (u) => u.name.toLowerCase().includes(term) || u.email.toLowerCase().includes(term)
+        )
+        : users;
+
+    // Listado: se vuelve a pedir al backend cuando cambia la página, el tamaño o un filtro
+    useEffect(() => {
+        let cancelled = false;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setLoading(true);
+        setError("");
+
+        listUsers({
+            page,
+            pageSize: perPage,
+            profile: profileFilter || undefined,
+            active: activeFilter || undefined,
+        })
+            .then((res) => {
+                if (cancelled) return;
+                const data = toArray(res);
+                setUsers(data.map(formatUser));
+                setTotalRows(Array.isArray(res) ? data.length : res.count ?? data.length);
+            })
+            .catch((err) => {
+                if (!cancelled) setError(getErrorMessage(err, "No fue posible cargar los usuarios."));
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [page, perPage, profileFilter, activeFilter, reloadKey]);
+
+    // Opciones del filtro de rol
+    useEffect(() => {
+        listProfiles()
+            .then((res) => setProfiles(toArray(res)))
+            .catch(() => setProfiles([]));
+    }, []);
+
+    // Usuario autenticado: de su rol e id dependen los botones (el backend sigue validando cada acción)
+    useEffect(() => {
+        getMe()
+            .then((data) => setMe(data))
+            .catch(() => setMeError(true));
+    }, []);
+
+    // Contadores de las tarjetas (totales globales, sin filtros)
+    useEffect(() => {
+        Promise.all([
+            listUsers({ pageSize: 1 }),
+            listUsers({ pageSize: 1, active: true }),
+            listUsers({ pageSize: 1, active: false }),
+        ])
+            .then(([all, act, inact]) =>
+                setStats({ total: all.count ?? 0, active: act.count ?? 0, inactive: inact.count ?? 0 })
+            )
+            .catch(() => { });
+    }, [reloadKey]);
 
     const triggerAlert = (type, message, title = "Operación exitosa") => {
         setAlertNotification({ type, title, message });
-        setTimeout(() => {
-            setAlertNotification(null);
-        }, 4000);
+        setTimeout(() => setAlertNotification(null), 4000);
     };
 
-    // Acciones
+    const resetToFirstPage = () => {
+        setPage(1);
+        setResetPaginationToggle((t) => !t);
+        setSearchTerm("");
+    };
+
+    const handleProfileChange = (e) => {
+        setProfileFilter(e.target.value);
+        resetToFirstPage();
+    };
+
+    const handleActiveChange = (e) => {
+        setActiveFilter(e.target.value);
+        resetToFirstPage();
+    };
+
+    const clearFilters = () => {
+        setProfileFilter("");
+        setActiveFilter("");
+        resetToFirstPage();
+    };
+
     const handleOpenView = (user) => {
         setSelectedUser(user);
         setViewModalOpen(true);
-    };
-
-
-    const handleSaveEdit = (data) => {
-        setUsers(prev =>
-            prev.map(u => (u.id === selectedUser.id ? { ...u, ...data } : u))
-        );
-        setEditModalOpen(false);
-        triggerAlert("info", `Los datos de "${data.name}" han sido actualizados.`);
     };
 
     const handleOpenDelete = (user) => {
@@ -114,90 +180,55 @@ const UserScreen = () => {
         setDeleteModalOpen(true);
     };
 
-    const handleConfirmDelete = () => {
+    // El backend hace borrado lógico; la fila deja de aparecer en el listado
+    const handleConfirmDelete = async () => {
         if (!selectedUser) return;
-        setUsers(prev => prev.filter(u => u.id !== selectedUser.id));
-        setDeleteModalOpen(false);
-        triggerAlert(
-            "danger",
-            `El usuario "${selectedUser.name}" (${selectedUser.email}) fue eliminado del sistema correctamente.`,
-            "¡Usuario Eliminado!"
-        );
-        setSelectedUser(null);
-    };
-
-    // Filtros de búsqueda
-    const filteredUsers = useMemo(() => {
-        return users.filter(user => {
-            const matchesSearch =
-                user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.department.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesStatus =
-                statusFilter === "TODOS" || user.status === statusFilter;
-            return matchesSearch && matchesStatus;
-        });
-    }, [users, searchTerm, statusFilter]);
-
-    const getStatusBadge = (status) => {
-        switch (status) {
-            case "Activo":
-                return <Badge type="Success" text="Activo" pill />;
-            case "Pendiente":
-                return <Badge type="Warning" text="Pendiente" pill />;
-            case "Inactivo":
-                return <Badge type="Danger" text="Inactivo" pill />;
-            default:
-                return <Badge type="Secondary" text={status} pill />;
+        const target = selectedUser;
+        try {
+            await deleteUser(target.id);
+            triggerAlert("success", `El usuario "${target.name}" (${target.email}) fue eliminado.`, "Usuario eliminado");
+            if (users.length === 1 && page > 1) setPage((p) => p - 1);
+            setReloadKey((k) => k + 1);
+        } catch (err) {
+            triggerAlert("danger", getErrorMessage(err, "No se pudo eliminar el usuario."), "No se pudo eliminar");
+        } finally {
+            setDeleteModalOpen(false);
+            setSelectedUser(null);
         }
     };
 
     const columns = [
         {
             name: "Usuario",
-            selector: row => row.name,
-            sortable: true,
+            selector: (row) => row.name,
             minWidth: "250px",
-            cell: row => (
+            cell: (row) => (
                 <div className="d-flex align-items-center py-2 text-truncate" style={{ maxWidth: "100%" }}>
-                    <img
-                        src={row.avatar}
-                        alt={row.name}
-                        className="rounded-circle shadow-sm me-3 object-fit-cover flex-shrink-0"
-                        style={{ width: "40px", height: "40px" }}
-                    />
+                    <AvatarInitial name={row.name} className="me-3" />
                     <div className="text-truncate">
                         <div className="fw-semibold text-dark text-truncate" title={row.name}>{row.name}</div>
                         <small className="text-secondary text-truncate d-block" title={row.email}>{row.email}</small>
                     </div>
                 </div>
-            )
+            ),
         },
         {
             name: "Rol",
-            selector: row => row.role,
-            sortable: true,
+            selector: (row) => row.role,
             minWidth: "140px",
-            cell: row => (
+            cell: (row) => (
                 <span className="badge bg-light text-dark border fw-normal px-2 py-1">
                     <i className="bi bi-person-badge me-1 text-primary"></i>
                     {row.role}
                 </span>
-            )
-        },
-        {
-            name: "Departamento",
-            selector: row => row.department,
-            sortable: true,
-            cell: row => <span className="text-secondary small">{row.department}</span>
+            ),
         },
         {
             name: "Estado",
-            selector: row => row.status,
-            sortable: true,
+            selector: (row) => row.status,
             center: true,
             maxWidth: "180px",
-            cell: row => getStatusBadge(row.status)
+            cell: (row) => getStatusBadge(row.status),
         },
         {
             name: "Acciones",
@@ -205,42 +236,96 @@ const UserScreen = () => {
             allowOverflow: true,
             ignoreRowClick: true,
             button: true,
-            cell: row => (
+            cell: (row) => (
                 <div className="d-flex align-items-center gap-2 justify-content-end py-1 flex-nowrap">
+
                     <ButtonSecondary
                         label="Ver"
                         className="btn-sm py-1 px-2 text-nowrap"
                         onClick={() => handleOpenView(row)}
                     />
-                    <ButtonPrimary
-                        label="Editar"
-                        className="btn-sm py-1 px-2 text-nowrap"
-                        onClick={() => navigate(`/users/edit/${row.id}`)}
-                    />
-                    <ButtonLink
-                        label="Eliminar"
-                        className="text-danger fw-semibold small text-nowrap px-1"
-                        onClick={() => handleOpenDelete(row)}
-                    />
+
+                    {canEditUser(me, row.id) && (
+                        <ButtonPrimary
+                            label="Editar"
+                            className="btn-sm py-1 px-2 text-nowrap"
+                            onClick={() => navigate(`/users/edit/${row.id}`)}
+                        />
+                    )}
+                    {canDeleteUser(me, row.id) && (
+                        <ButtonLink
+                            label="Eliminar"
+                            className="text-danger fw-semibold small text-nowrap px-1"
+                            onClick={() => handleOpenDelete(row)}
+                        />
+                    )}
                 </div>
-            )
-        }
+            ),
+        },
     ];
+
+    const renderTable = () => {
+        if (loading) {
+            return (
+                <div className="py-5 text-center border rounded">
+                    <div className="spinner-border text-primary" role="status"></div>
+                    <p className="mt-2 mb-0 text-muted">Cargando usuarios...</p>
+                </div>
+            );
+        }
+        if (error) return null;
+
+        return (
+            <div className="border rounded">
+                <DataTable
+                    columns={columns}
+                    data={visibleUsers}
+                    pagination
+                    paginationServer
+                    paginationTotalRows={totalRows}
+                    paginationPerPage={perPage}
+                    paginationRowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
+                    paginationDefaultPage={page}
+                    paginationResetDefaultPage={resetPaginationToggle}
+                    onChangePage={(newPage) => setPage(newPage)}
+                    onChangeRowsPerPage={(newPerPage, newPage) => {
+                        setPerPage(newPerPage);
+                        setPage(newPage);
+                    }}
+                    responsive
+                    highlightOnHover
+                    noDataComponent={
+                        <div className="py-5 text-center text-muted">
+                            <i className={`bi ${hasFilters ? "bi-search" : "bi-people"} fs-1 d-block mb-2 text-secondary opacity-50`}></i>
+                            <p className="mb-0">
+                                {term
+                                    ? "Ningún usuario coincide con la búsqueda."
+                                    : hasFilters
+                                        ? "Ningún usuario coincide con los filtros seleccionados."
+                                        : "Aún no hay usuarios registrados."}
+                            </p>
+                        </div>
+                    }
+                />
+            </div>
+        );
+    };
 
     return (
         <div className="container-fluid p-4">
-            {/* Banner de alerta AdminLTE */}
+            {/* Banner de alerta */}
             {alertNotification && (
                 <div
                     className={`alert alert-${alertNotification.type} alert-dismissible fade show shadow-sm border-0 mb-4`}
                     role="alert"
                 >
                     <div className="d-flex align-items-center">
-                        <i className={`bi fs-4 me-2 ${
-                            alertNotification.type === "danger"
-                                ? "bi-check-circle-fill"
+                        <i className={`bi fs-4 me-2 ${alertNotification.type === "success"
+                            ? "bi-check-circle-fill"
+                            : alertNotification.type === "danger"
+                                ? "bi-exclamation-triangle-fill"
                                 : "bi-info-circle-fill"
-                        }`}></i>
+                            }`}></i>
                         <div>
                             <strong className="d-block">{alertNotification.title}</strong>
                             <span>{alertNotification.message}</span>
@@ -249,13 +334,13 @@ const UserScreen = () => {
                     <button
                         type="button"
                         className="btn-close"
-                        aria-label="Close"
+                        aria-label="Cerrar"
                         onClick={() => setAlertNotification(null)}
                     ></button>
                 </div>
             )}
 
-            {/* Header de la Pantalla */}
+            {/* Encabezado */}
             <div className="d-flex flex-wrap align-items-center justify-content-between mb-4 pb-2 border-bottom gap-3">
                 <div>
                     <h2 className="fw-bold mb-1 d-flex align-items-center gap-2">
@@ -266,160 +351,142 @@ const UserScreen = () => {
                         Administra roles, accesos y estado del personal universitario registrado en SIGECI.
                     </p>
                 </div>
-                <div className="d-flex gap-2">
-                    <button
-                        className="btn btn-primary shadow-sm d-flex align-items-center gap-2"
-                        onClick={() => navigate("/users/create")}
-                    >
-                        <i className="bi bi-person-plus-fill"></i>
-                        <span>Nuevo Usuario</span>
+                {isManager(me) && (
+                    <div className="d-flex gap-2">
+                        <button
+                            className="btn btn-primary shadow-sm d-flex align-items-center gap-2"
+                            onClick={() => navigate("/users/create")}
+                        >
+                            <i className="bi bi-person-plus-fill"></i>
+                            <span>Nuevo Usuario</span>
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {/* Tarjetas de estadísticas */}
+            <div className="row g-3 mb-4">
+                {STAT_CARDS.map((s) => (
+                    <div className="col-12 col-sm-6 col-xl-4" key={s.key}>
+                        <div className={`card shadow-sm border-0 border-start border-${s.color} border-4`}>
+                            <div className="card-body d-flex align-items-center justify-content-between py-3">
+                                <div>
+                                    <span className="text-muted small text-uppercase fw-bold">{s.label}</span>
+                                    <h3 className={`fw-bold mb-0 ${s.valueClass}`}>{stats[s.key]}</h3>
+                                </div>
+                                <div className={`bg-${s.color}-subtle p-3 rounded-circle text-${s.color}`}>
+                                    <i className={`bi ${s.icon} fs-4`}></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Error de comunicación */}
+            {error && (
+                <div className="alert alert-danger d-flex align-items-center justify-content-between" role="alert">
+                    <span>
+                        <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                        {error}
+                    </span>
+                    <button className="btn btn-sm btn-outline-danger" onClick={() => setReloadKey((k) => k + 1)}>
+                        Reintentar
                     </button>
                 </div>
-            </div>
+            )}
 
-            {/* Tarjetas de Estadísticas rápidas */}
-            <div className="row g-3 mb-4">
-                <div className="col-12 col-sm-6 col-xl-3">
-                    <div className="card shadow-sm border-0 border-start border-primary border-4">
-                        <div className="card-body d-flex align-items-center justify-content-between py-3">
-                            <div>
-                                <span className="text-muted small text-uppercase fw-bold">Total Usuarios</span>
-                                <h3 className="fw-bold mb-0 text-dark">{users.length}</h3>
-                            </div>
-                            <div className="bg-primary-subtle p-3 rounded-circle text-primary">
-                                <i className="bi bi-people fs-4"></i>
-                            </div>
-                        </div>
-                    </div>
+            {meError && (
+                <div className="alert alert-warning py-2" role="alert">
+                    No se pudo verificar tu rol; las acciones de edición están ocultas.
                 </div>
-                <div className="col-12 col-sm-6 col-xl-3">
-                    <div className="card shadow-sm border-0 border-start border-success border-4">
-                        <div className="card-body d-flex align-items-center justify-content-between py-3">
-                            <div>
-                                <span className="text-muted small text-uppercase fw-bold">Activos</span>
-                                <h3 className="fw-bold mb-0 text-success">
-                                    {users.filter(u => u.status === "Activo").length}
-                                </h3>
-                            </div>
-                            <div className="bg-success-subtle p-3 rounded-circle text-success">
-                                <i className="bi bi-check-circle fs-4"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="col-12 col-sm-6 col-xl-3">
-                    <div className="card shadow-sm border-0 border-start border-warning border-4">
-                        <div className="card-body d-flex align-items-center justify-content-between py-3">
-                            <div>
-                                <span className="text-muted small text-uppercase fw-bold">Pendientes</span>
-                                <h3 className="fw-bold mb-0 text-warning">
-                                    {users.filter(u => u.status === "Pendiente").length}
-                                </h3>
-                            </div>
-                            <div className="bg-warning-subtle p-3 rounded-circle text-warning">
-                                <i className="bi bi-hourglass-split fs-4"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="col-12 col-sm-6 col-xl-3">
-                    <div className="card shadow-sm border-0 border-start border-danger border-4">
-                        <div className="card-body d-flex align-items-center justify-content-between py-3">
-                            <div>
-                                <span className="text-muted small text-uppercase fw-bold">Inactivos</span>
-                                <h3 className="fw-bold mb-0 text-danger">
-                                    {users.filter(u => u.status === "Inactivo").length}
-                                </h3>
-                            </div>
-                            <div className="bg-danger-subtle p-3 rounded-circle text-danger">
-                                <i className="bi bi-dash-circle fs-4"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            )}
 
-            {/* Contenedor Principal de la Tabla */}
             <Card title="Listado Oficial de Usuarios" outline outlineColor="primary">
-                {/* Barra de Filtros y Búsqueda */}
+                {/* Filtros: rol y estado */}
                 <div className="row g-2 mb-3 align-items-center">
-                    <div className="col-12 col-md-6 col-lg-4">
+                    <div className="col-12 col-md-4 col-lg-3">
+                        <label htmlFor="filter-profile" className="visually-hidden">Filtrar por rol</label>
+                        <select
+                            id="filter-profile"
+                            className="form-select"
+                            value={profileFilter}
+                            onChange={handleProfileChange}
+                        >
+                            <option value="">Todos los roles</option>
+                            {profiles.map((p) => (
+                                <option key={p.id} value={p.id}>{p.name || p.profile_name}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="col-12 col-md-4 col-lg-3">
+                        <label htmlFor="filter-active" className="visually-hidden">Filtrar por estado</label>
+                        <select
+                            id="filter-active"
+                            className="form-select"
+                            value={activeFilter}
+                            onChange={handleActiveChange}
+                        >
+                            <option value="">Todos los estados</option>
+                            <option value="true">Solo Activos</option>
+                            <option value="false">Solo Inactivos</option>
+                        </select>
+                    </div>
+                    <div className="col-12 col-md-4 col-lg-3">
+                        <label htmlFor="filter-search" className="visually-hidden">Buscar por nombre o correo</label>
                         <div className="input-group">
                             <span className="input-group-text bg-white border-end-0">
                                 <i className="bi bi-search text-muted"></i>
                             </span>
                             <input
+                                id="filter-search"
                                 type="text"
                                 className="form-control border-start-0 ps-0"
-                                placeholder="Buscar por nombre, correo o departamento..."
+                                placeholder="Buscar por nombre o correo"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
+                                disabled={!canSearch}
                             />
-                            {searchTerm && (
-                                <button
-                                    className="btn btn-outline-secondary border-start-0"
-                                    type="button"
-                                    onClick={() => setSearchTerm("")}
-                                >
-                                    <i className="bi bi-x"></i>
-                                </button>
-                            )}
                         </div>
                     </div>
-                    <div className="col-12 col-md-4 col-lg-3">
-                        <select
-                            className="form-select"
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                        >
-                            <option value="TODOS">Todos los estados</option>
-                            <option value="Activo">Solo Activos</option>
-                            <option value="Pendiente">Solo Pendientes</option>
-                            <option value="Inactivo">Solo Inactivos</option>
-                        </select>
-                    </div>
-                    <div className="col-12 col-md-2 col-lg-5 text-md-end text-muted small">
-                        Mostrando <strong>{filteredUsers.length}</strong> de <strong>{users.length}</strong> usuarios
+                    <div className="col-12 col-lg-3 d-flex align-items-center justify-content-lg-end gap-3">
+                        {hasFilters && (
+                            <button type="button" className="btn btn-outline-secondary btn-sm" onClick={clearFilters}>
+                                <i className="bi bi-x-circle me-1"></i>
+                                Limpiar filtros
+                            </button>
+                        )}
+                        {!loading && !error && (
+                            <span className="text-muted small">
+                                <strong>{term ? `${visibleUsers.length} de ${totalRows}` : totalRows}</strong>{" "}
+                                {totalRows === 1 ? "usuario" : "usuarios"}
+                            </span>
+                        )}
                     </div>
                 </div>
+                {!canSearch && !loading && !error && (
+                    <p className="form-text mt-0 mb-3">
+                        La búsqueda por texto se habilita cuando los filtros dejan {perPage} usuarios o menos.
+                    </p>
+                )}
 
-                {/* Tabla de React Data Table */}
-                <div className="border rounded">
-                    <DataTable
-                        columns={columns}
-                        data={filteredUsers}
-                        pagination
-                        paginationPerPage={5}
-                        paginationRowsPerPageOptions={[5, 10, 15, 20]}
-                        responsive
-                        highlightOnHover
-                        noDataComponent={
-                            <div className="py-5 text-center text-muted">
-                                <i className="bi bi-search fs-1 d-block mb-2 text-secondary opacity-50"></i>
-                                <p className="mb-0">No se encontraron usuarios con los criterios indicados.</p>
-                            </div>
-                        }
-                    />
-                </div>
+                {renderTable()}
             </Card>
 
-            {/* MODAL 1: VER DETALLES */}
+            {/* MODAL: VER DETALLES */}
             <Modal
                 show={viewModalOpen}
                 onClose={() => setViewModalOpen(false)}
                 title="Detalles del Usuario"
                 size="md"
-                footer={
-                    <ButtonSecondary label="Cerrar" onClick={() => setViewModalOpen(false)} />
-                }
+                footer={<ButtonSecondary label="Cerrar" onClick={() => setViewModalOpen(false)} />}
             >
                 {selectedUser && (
                     <div className="text-center py-2">
-                        <img
-                            src={selectedUser.avatar}
-                            alt={selectedUser.name}
-                            className="rounded-circle shadow mb-3 object-fit-cover border border-3 border-primary"
-                            style={{ width: "90px", height: "90px" }}
+                        <AvatarInitial
+                            name={selectedUser.name}
+                            size={90}
+                            className="mx-auto mb-3 border border-3 border-primary"
                         />
                         <h4 className="fw-bold mb-1">{selectedUser.name}</h4>
                         <p className="text-muted mb-3">{selectedUser.email}</p>
@@ -434,10 +501,6 @@ const UserScreen = () => {
                                 <span className="fw-bold text-dark">{selectedUser.role}</span>
                             </div>
                             <div className="list-group-item d-flex justify-content-between align-items-center py-2">
-                                <span className="text-muted fw-semibold">Departamento / Escuela:</span>
-                                <span className="text-dark">{selectedUser.department}</span>
-                            </div>
-                            <div className="list-group-item d-flex justify-content-between align-items-center py-2">
                                 <span className="text-muted fw-semibold">Estado de Cuenta:</span>
                                 <span>{getStatusBadge(selectedUser.status)}</span>
                             </div>
@@ -446,76 +509,7 @@ const UserScreen = () => {
                 )}
             </Modal>
 
-            {/* MODAL 2: EDITAR USUARIO */}
-            <Modal
-                show={editModalOpen}
-                onClose={() => setEditModalOpen(false)}
-                title="Editar Usuario"
-                size="lg"
-                footer={
-                    <>
-                        <ButtonSecondary label="Cancelar" onClick={() => setEditModalOpen(false)} />
-                        <ButtonPrimary label="Guardar Cambios" onClick={handleSubmit(handleSaveEdit)} />
-                    </>
-                }
-            >
-                {selectedUser && (
-                    <form onSubmit={handleSubmit(handleSaveEdit)}>
-                        <div className="row g-3">
-                            <div className="col-12 col-md-6">
-                                <InputText
-                                    control={control}
-                                    name="name"
-                                    label="Nombre Completo"
-                                    placeholder="Nombre del usuario"
-                                    required
-                                    errors={errors.name}
-                                />
-                            </div>
-                            <div className="col-12 col-md-6">
-                                <InputEmail
-                                    control={control}
-                                    name="email"
-                                    label="Correo Institucional"
-                                    placeholder="usuario@univalle.edu.co"
-                                    required
-                                    errors={errors.email}
-                                />
-                            </div>
-                            <div className="col-12 col-md-6">
-                                <label className="form-label fw-semibold">Rol</label>
-                                <select className="form-select" {...control.register("role")}>
-                                    <option value="Administrador">Administrador</option>
-                                    <option value="Docente">Docente</option>
-                                    <option value="Estudiante">Estudiante</option>
-                                    <option value="Investigador">Investigador</option>
-                                    <option value="Coordinador">Coordinador</option>
-                                </select>
-                            </div>
-                            <div className="col-12 col-md-6">
-                                <label className="form-label fw-semibold">Estado</label>
-                                <select className="form-select" {...control.register("status")}>
-                                    <option value="Activo">Activo</option>
-                                    <option value="Pendiente">Pendiente</option>
-                                    <option value="Inactivo">Inactivo</option>
-                                </select>
-                            </div>
-                            <div className="col-12">
-                                <InputText
-                                    control={control}
-                                    name="department"
-                                    label="Departamento / Facultad"
-                                    placeholder="Ej. Ingeniería de Sistemas"
-                                    required
-                                    errors={errors.department}
-                                />
-                            </div>
-                        </div>
-                    </form>
-                )}
-            </Modal>
-
-            {/* MODAL 3: CONFIRMACIÓN DE ELIMINACIÓN */}
+            {/* MODAL: CONFIRMACIÓN DE ELIMINACIÓN */}
             <Modal
                 show={deleteModalOpen}
                 onClose={() => setDeleteModalOpen(false)}
@@ -530,7 +524,7 @@ const UserScreen = () => {
                             onClick={handleConfirmDelete}
                         >
                             <i className="bi bi-trash-fill"></i>
-                            <span>Sí, Eliminar Definitivamente</span>
+                            <span>Sí, Eliminar</span>
                         </button>
                     </>
                 }
@@ -542,7 +536,7 @@ const UserScreen = () => {
                         </div>
                         <h5 className="fw-bold text-dark">¿Estás seguro de eliminar este usuario?</h5>
                         <p className="text-muted px-3">
-                            Esta acción eliminará a <strong>{selectedUser.name}</strong> (<code>{selectedUser.email}</code>) de la base de datos de SIGECI. Esta operación no se puede deshacer.
+                            Se eliminará a <strong>{selectedUser.name}</strong> (<code>{selectedUser.email}</code>) de forma permanente. Esta acción no se puede deshacer.
                         </p>
                     </div>
                 )}

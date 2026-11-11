@@ -8,66 +8,102 @@ import InputSelect from "../../components/inputs/InputSelect";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import Card from "../../components/cards/Card";
 import HandlerApp from "../../utils/HandlerApp";
-import { createUser, listProfiles } from "../../api/users";
+import { createUser, listProfiles, getMe } from "../../api/users";
+import { isManager } from "../../utils/userAccess";
+import { getErrorMessage } from "../../utils/apiError";
 import Swal from "sweetalert2";
 
 const CreateUserScreen = () => {
   const nav = useNavigate();
   const handlerApp = HandlerApp();
   const [rolesOptions, setRolesOptions] = useState([]);
+  const [profilesError, setProfilesError] = useState(false);
 
   const {
     control,
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
+    getValues,
+    trigger,
   } = useForm({
-    mode: "onChange", // <--- Esto valida mientras escribes o sales del campo
+    mode: "onChange", // Valida mientras escribes o sales del campo
   });
 
+  // Si se cambia la contraseña después de llenar la confirmación, se vuelve a comparar
+  const passwordValue = watch("password");
+  useEffect(() => {
+    if (getValues("confirmPassword")) trigger("confirmPassword");
+  }, [passwordValue, getValues, trigger]);
+
+  // Los roles salen del backend para que los ids coincidan
   useEffect(() => {
     listProfiles()
-      .then((profiles) =>
+      .then((res) => {
+        const profiles = Array.isArray(res) ? res : res?.results || [];
         setRolesOptions(
           profiles.map((p) => ({ value: String(p.id), label: p.name })),
-        ),
-      )
-      .catch((e) =>
-        Swal.fire({ title: "Error", text: e.message, icon: "error" }),
-      );
+        );
+      })
+      .catch(() => setProfilesError(true));
   }, []);
 
-const submitData = async (data) => {
+  // Solo quien tenga el permiso user.create puede crear usuarios
+  useEffect(() => {
+    getMe()
+      .then((me) => {
+        if (!isManager(me)) nav("/users");
+      })
+      .catch(() => nav("/users"));
+  }, [nav]);
+
+
+  const submitData = async (data) => {
     handlerApp.setLoader(true);
     try {
-        await createUser({
-            name: data.nombre.trim(),
-            lastname: data.apellido.trim(),
-            email: data.email.trim(),
-            password: data.password,
-            profile: Number(data.rol),
-        });
-        
-        // 1. Apagamos el loader ANTES de mostrar el modal
-        handlerApp.setLoader(false); 
-        
-        // 2. Mostramos el modal
-        await Swal.fire({ title: "¡Éxito!", text: "Usuario creado exitosamente", icon: "success" });
-        
-        // 3. Limpiamos y navegamos
-        reset();
-        nav("/users");
-    } catch (e) {
-        handlerApp.setLoader(false); // También apagamos si hay error
-        Swal.fire({ title: "No se pudo crear", text: e.message, icon: "error" });
+      await createUser({
+        name: data.nombre.trim(),
+        lastname: data.apellido.trim(),
+        email: data.email.trim(),
+        password: data.password,
+        profile: Number(data.rol),
+      });
+
+      // Apagamos el loader ANTES de mostrar el modal
+      handlerApp.setLoader(false);
+
+      await Swal.fire({
+        title: "¡Usuario creado!",
+        text: "El usuario se registró correctamente.",
+        icon: "success",
+        confirmButtonText: "Aceptar",
+      });
+
+      reset();
+      nav("/users");
+    } catch (err) {
+      handlerApp.setLoader(false); // También apagamos si hay error
+      Swal.fire({
+        title: "No se pudo crear el usuario",
+        text: getErrorMessage(err, "No se pudo crear el usuario."),
+        icon: "error",
+        confirmButtonText: "Aceptar",
+      });
     }
-};
+  };
 
   return (
     <div className="container-fluid pt-4">
       <div className="row justify-content-center">
         <div className="col-md-8 col-lg-6">
           <Card title="Crear Nuevo Usuario">
+            {profilesError && (
+              <div className="alert alert-warning py-2" role="alert">
+                No se pudieron cargar los roles. Recarga la página para
+                intentarlo de nuevo.
+              </div>
+            )}
             <form>
               <div className="row">
                 <div className="col-md-6">
@@ -107,6 +143,23 @@ const submitData = async (data) => {
                 placeholder="Mínimo 8 caracteres"
                 errors={errors.password}
                 required={true}
+              />
+
+              {/* Confirmación: debe coincidir con la contraseña para poder guardar.
+                  Solo se valida la coincidencia; la fortaleza ya se exige en "Contraseña". */}
+              <InputPassword
+                control={control}
+                label="Confirmar contraseña"
+                name="confirmPassword"
+                placeholder="Repite la contraseña"
+                errors={errors.confirmPassword}
+                required={true}
+                rules={{
+                  minLength: { value: 0, message: "" },
+                  pattern: { value: /^[\s\S]*$/, message: "" },
+                  validate: (value) =>
+                    value === getValues("password") || "Las contraseñas no coinciden",
+                }}
               />
 
               <InputSelect

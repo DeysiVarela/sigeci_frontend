@@ -54,8 +54,6 @@ const UserProfileScreen = () => {
                 nombre: "Laura Dayana",
                 apellido: "Tascon",
                 email: "laura@test.com",
-                telefono: "+57 300 123 4567",
-                afiliacion: "Universidad del Valle"
             };
             resetProfile(mockUser); 
             setIsLoadingData(false);
@@ -200,22 +198,6 @@ const UserProfileScreen = () => {
                                     label="Correo electronico"
                                     name="email"
                                     errors={profileErrors.email}
-                                    required={true}
-                                />
-
-                                <InputText
-                                    control={profileControl}
-                                    label="Telefono"
-                                    name="telefono"
-                                    errors={profileErrors.telefono}
-                                    required={true}
-                                />
-
-                                <InputText
-                                    control={profileControl}
-                                    label="Afiliacion / Institucion"
-                                    name="afiliacion"
-                                    errors={profileErrors.afiliacion}
                                     required={true}
                                 />
 

@@ -5,8 +5,23 @@ import { useNavigate } from "react-router";
 import InputPin from "../../components/inputs/InputPin";
 import InputPassword from "../../components/inputs/InputPassword";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
+import ButtonLink from "../../components/buttons/ButtonLink";
 import HandlerApp from "../../utils/HandlerApp";
-import { resetPassword } from "../../api/auth";
+import { forgotPassword, resetPassword } from "../../api/auth";
+
+// Espera entre envíos del PIN (debe coincidir con PASSWORD_RESET_RESEND_SECONDS del backend)
+const RESEND_SECONDS = 60;
+
+const getSecondsLeft = () => {
+    const sentAt = Number(sessionStorage.getItem("recovery_sent_at") || 0);
+    if (!sentAt) return 0;
+    return Math.max(0, RESEND_SECONDS - Math.floor((Date.now() - sentAt) / 1000));
+};
+
+// Guarda cuánto falta para poder reenviar (por defecto, la espera completa)
+const markSent = (secondsLeft = RESEND_SECONDS) => {
+    sessionStorage.setItem("recovery_sent_at", String(Date.now() - (RESEND_SECONDS - secondsLeft) * 1000));
+};
 
 const ResetPinScreen = () => {
     const nav = useNavigate();
@@ -23,6 +38,41 @@ const ResetPinScreen = () => {
     }, [nav]);
 
     const [error, setError] = useState("");
+    const [info, setInfo] = useState("");
+    const [secondsLeft, setSecondsLeft] = useState(getSecondsLeft);
+
+    // Cuenta regresiva para habilitar "Reenviar PIN"
+    useEffect(() => {
+        if (secondsLeft <= 0) return undefined;
+        const timer = setTimeout(() => setSecondsLeft(getSecondsLeft()), 1000);
+        return () => clearTimeout(timer);
+    }, [secondsLeft]);
+
+    const resendPin = async () => {
+        if (secondsLeft > 0) return;
+        handlerApp.setLoader(true);
+        setError("");
+        setInfo("");
+        try {
+            await forgotPassword(sessionStorage.getItem("recovery_email"));
+            markSent();
+            setSecondsLeft(RESEND_SECONDS);
+            setInfo("Te enviamos un nuevo PIN. Revisa tu correo.");
+        } catch (requestError) {
+            setError(requestError.message);
+            if (requestError.status === 429) {
+                // El backend indica cuántos segundos faltan: "Espera N segundos..."
+                const match = /(\d+)/.exec(requestError.message);
+                if (match) {
+                    markSent(Number(match[1]));
+                    setSecondsLeft(getSecondsLeft());
+                }
+            }
+        } finally {
+            handlerApp.setLoader(false);
+        }
+    };
+
     const submitData = async (data) => {
         handlerApp.setLoader(true);
         setError("");
@@ -79,10 +129,15 @@ const ResetPinScreen = () => {
                                 onClick={handleSubmit(submitData)}
                             />
                             {error && <div className="alert alert-danger mt-3" role="alert">{error}</div>}
+                            {info && <div className="alert alert-success mt-3" role="status">{info}</div>}
                         </form>
 
                         <p className="mt-3 mb-0 text-center">
-                            <a href="/forgot-password">Reenviar PIN</a>
+                            <ButtonLink
+                                label={secondsLeft > 0 ? `Reenviar PIN (disponible en ${secondsLeft} s)` : "Reenviar PIN"}
+                                onClick={resendPin}
+                                disabled={secondsLeft > 0}
+                            />
                         </p>
                     </div>
                 </div>
