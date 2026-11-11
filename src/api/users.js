@@ -9,7 +9,7 @@ export const updateUser = (id, data) => request(`/api/users/${id}/`, { method: "
 export const deleteUser = (id) => request(`/api/users/${id}/`, { method: "DELETE" });
 export const listProfiles = () => request("/api/profiles/");
 feature/SCRUM-124-perfil-usuario
-Updated upstream
+ upstream
 
 export const getMe = () => request("/api/auth/me/");
 
@@ -18,5 +18,5 @@ export const updateMyProfile = ({ name, lastname, email }) =>
     request("/api/users/me", { method: "PATCH", body: { name, lastname, email } });
 export const changeMyPassword = ({ currentPassword, newPassword }) =>
     request("/api/users/me/password/", { method: "PUT", body: { currentPassword, newPassword } });
-Stashed changes
+changes
 

@@ -48,7 +48,7 @@ const UserProfileScreen = () => {
     const newPassword = watchPassword("newPassword", "");
 
     useEffect(() => {
-<<<<<<< Updated upstream
+upstream
         setTimeout(() => {
             const mockUser = {
                 nombre: "Laura Dayana",
@@ -58,7 +58,7 @@ const UserProfileScreen = () => {
             resetProfile(mockUser); 
             setIsLoadingData(false);
         }, 1000);
-=======
+
         let cancelled = false;
 
         const loadProfile = async () => {
@@ -81,7 +81,7 @@ const UserProfileScreen = () => {
 
         loadProfile();
         return () => { cancelled = true; };
->>>>>>> Stashed changes
+changes
     }, [resetProfile]);
 
     // Funcion para guardar los datos personales (PATCH /api/users/me)
