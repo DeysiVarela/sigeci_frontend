@@ -5,9 +5,10 @@ import ButtonSecondary from "../../components/buttons/ButtonSecondary";
 import StatusBadge from "./components/StatusBadge";
 import { MOCK_ARTICLES } from "./mockArticles";
 import { getTopicLabel } from "./utils/constants";
-import { canViewArticle } from "./utils/permissions";
+import { canViewArticle, isAuthor, isOwner } from "./utils/permissions";
 import { formatSubmittedDate } from "./utils/catalogFormat";
 import { useCurrentUser } from "./hooks/useCurrentUser";
+import ArticleVersionManager from "./components/ArticleVersionManager";
 
 // Ajustes SCRUM-67: modelo nuevo (topic / submittedAt / estados), insignias compartidas,
 // regreso al catálogo conservando filtros y restricción de visibilidad del autor.
@@ -37,6 +38,7 @@ const ArticleViewScreen = () => {
         );
     }
 
+    const canUpload = isAuthor(user) && isOwner(user, article);
 
     return (
         <div className="container-fluid p-4">
@@ -123,6 +125,9 @@ const ArticleViewScreen = () => {
                     </Card>
                 </div>
             </div>
+                        
+            
+            <ArticleVersionManager article={article} canUpload={canUpload} />
         </div>
     );
 };
