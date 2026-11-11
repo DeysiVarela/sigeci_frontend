@@ -48,17 +48,6 @@ const UserProfileScreen = () => {
     const newPassword = watchPassword("newPassword", "");
 
     useEffect(() => {
-upstream
-        setTimeout(() => {
-            const mockUser = {
-                nombre: "Laura Dayana",
-                apellido: "Tascon",
-                email: "laura@test.com",
-            };
-            resetProfile(mockUser); 
-            setIsLoadingData(false);
-        }, 1000);
-
         let cancelled = false;
 
         const loadProfile = async () => {
@@ -80,8 +69,24 @@ upstream
         };
 
         loadProfile();
+
+        // --- BLOQUE MOCK (Movido al final según tu indicación) ---
+        // Nota: Si quitas el comentario de estas líneas, los datos de prueba 
+        // sobrescribirán los datos reales de la API.
+        /*
+        setTimeout(() => {
+            const mockUser = {
+                nombre: "Laura Dayana",
+                apellido: "Tascon",
+                email: "laura@test.com",
+            };
+            resetProfile(mockUser); 
+            setIsLoadingData(false);
+        }, 1000);
+        */
+        // --------------------------------------------------------
+
         return () => { cancelled = true; };
-changes
     }, [resetProfile]);
 
     // Funcion para guardar los datos personales (PATCH /api/users/me)
