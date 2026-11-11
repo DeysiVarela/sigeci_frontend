@@ -8,6 +8,7 @@ import { getTopicLabel } from "./utils/constants";
 import { canViewArticle } from "./utils/permissions";
 import { formatSubmittedDate } from "./utils/catalogFormat";
 import { useCurrentUser } from "./hooks/useCurrentUser";
+import ArticleVersionManager from "./components/ArticleVersionManager";
 
 // Ajustes SCRUM-67: modelo nuevo (topic / submittedAt / estados), insignias compartidas,
 // regreso al catálogo conservando filtros y restricción de visibilidad del autor.
@@ -123,6 +124,10 @@ const ArticleViewScreen = () => {
                     </Card>
                 </div>
             </div>
+                        
+            <ArticleVersionManager 
+                article={{ id: article.id, status: "CON_AVAL_PRESENTACION" }} 
+            />
         </div>
     );
 };
