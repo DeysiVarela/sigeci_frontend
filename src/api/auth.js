@@ -11,10 +11,10 @@ export const login = async ({ identifier, password, captchaToken }) => {
     return response;
 };
 
-export const register = (credentials) =>
+export const register = ({ name, lastname, email, password, captchaToken }) =>
     request("/api/auth/register/", {
         method: "POST",
-        body: credentials
+        body: { name, lastname, email, password, captchaToken }
     });
 
 export const getCurrentUser = () => request("/api/auth/me/");
