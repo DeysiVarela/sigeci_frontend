@@ -7,6 +7,19 @@ import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import Card from "../../components/cards/Card";
 import HandlerApp from "../../utils/HandlerApp";
 import Swal from "sweetalert2";
+import { getMyProfile, updateMyProfile, changeMyPassword } from "../../api/users";
+import { getErrorMessage } from "../../utils/apiError";
+
+// El login guarda el usuario en localStorage["user"] (lo leen otras pantallas).
+// El PATCH devuelve la misma forma, así que se mezcla para no dejar la sesión desactualizada.
+const syncSessionUser = (updatedUser) => {
+    try {
+        const stored = JSON.parse(localStorage.getItem("user") || "{}");
+        localStorage.setItem("user", JSON.stringify({ ...stored, ...updatedUser }));
+    } catch {
+        // sesión corrupta: se ignora, el próximo login la reescribe
+    }
+};
 
 const UserProfileScreen = () => {
     const handlerApp = HandlerApp();
@@ -28,12 +41,14 @@ const UserProfileScreen = () => {
         handleSubmit: handlePasswordSubmit, 
         formState: { errors: passwordErrors }, 
         reset: resetPassword,
+        setError: setPasswordError,
         watch: watchPassword 
     } = useForm({ mode: "onChange" });
 
     const newPassword = watchPassword("newPassword", "");
 
     useEffect(() => {
+<<<<<<< Updated upstream
         setTimeout(() => {
             const mockUser = {
                 nombre: "Laura Dayana",
@@ -45,27 +60,68 @@ const UserProfileScreen = () => {
             resetProfile(mockUser); 
             setIsLoadingData(false);
         }, 1000);
+=======
+        let cancelled = false;
+
+        const loadProfile = async () => {
+            try {
+                const me = await getMyProfile();
+                if (cancelled) return;
+                resetProfile({ name: me.name, lastname: me.lastname, email: me.email });
+            } catch (err) {
+                if (cancelled) return;
+                Swal.fire({
+                    title: "No se pudo cargar tu perfil",
+                    text: getErrorMessage(err, "Intenta de nuevo en unos minutos."),
+                    icon: "error",
+                    confirmButtonText: "Aceptar"
+                });
+            } finally {
+                if (!cancelled) setIsLoadingData(false);
+            }
+        };
+
+        loadProfile();
+        return () => { cancelled = true; };
+>>>>>>> Stashed changes
     }, [resetProfile]);
 
-    // Funcion para guardar los datos personales
-    const submitData = () => {
+    // Funcion para guardar los datos personales (PATCH /api/users/me)
+    const submitData = async (formData) => {
         handlerApp.setLoader(true);
-        setTimeout(() => {
-            handlerApp.setLoader(false);
+        try {
+            const updated = await updateMyProfile({
+                name: formData.name.trim(),
+                lastname: formData.lastname.trim(),
+                email: formData.email.trim()
+            });
+            syncSessionUser(updated);
+            // El backend normaliza el correo (minúsculas): se refleja en el formulario
+            resetProfile({ name: updated.name, lastname: updated.lastname, email: updated.email });
             Swal.fire({
                 title: 'Perfil actualizado',
                 text: 'Tus datos se guardaron correctamente.',
                 icon: 'success',
                 confirmButtonText: 'Aceptar'
             });
-        }, 2000);
+        } catch (err) {
+            Swal.fire({
+                title: 'No se pudo actualizar el perfil',
+                text: getErrorMessage(err, "Revisa los datos e intenta de nuevo."),
+                icon: 'error',
+                confirmButtonText: 'Aceptar'
+            });
+        } finally {
+            handlerApp.setLoader(false);
+        }
     };
 
-    // Funcion para cambiar la contraseña
-    const submitPassword = () => {
+    // Funcion para cambiar la contraseña (PUT /api/users/me/password/)
+    // confirmPassword solo se valida en la pantalla: no se envía.
+    const submitPassword = async ({ currentPassword, newPassword }) => {
         handlerApp.setLoader(true);
-        setTimeout(() => {
-            handlerApp.setLoader(false);
+        try {
+            await changeMyPassword({ currentPassword, newPassword });
             Swal.fire({
                 title: 'Contraseña actualizada',
                 text: 'Tu contraseña ha sido cambiada exitosamente.',
@@ -75,7 +131,33 @@ const UserProfileScreen = () => {
                 setShowPasswordSection(false);
                 resetPassword();
             });
-        }, 2000);
+        } catch (err) {
+            const fieldErrors = err?.data;
+            const currentMsg = fieldErrors?.currentPassword?.[0];
+            const newMsg = fieldErrors?.newPassword?.[0];
+
+            if (err?.status === 429) {
+                Swal.fire({
+                    title: 'Demasiados intentos',
+                    text: 'Espera un minuto antes de volver a intentarlo.',
+                    icon: 'warning',
+                    confirmButtonText: 'Aceptar'
+                });
+            } else if (currentMsg || newMsg) {
+                // 400 con error por campo: se muestra debajo del input correspondiente
+                if (currentMsg) setPasswordError("currentPassword", { type: "validate", message: currentMsg });
+                if (newMsg) setPasswordError("newPassword", { type: "validate", message: newMsg });
+            } else {
+                Swal.fire({
+                    title: 'No se pudo cambiar la contraseña',
+                    text: getErrorMessage(err, "Intenta de nuevo."),
+                    icon: 'error',
+                    confirmButtonText: 'Aceptar'
+                });
+            }
+        } finally {
+            handlerApp.setLoader(false);
+        }
     };
 
     return (
@@ -97,8 +179,8 @@ const UserProfileScreen = () => {
                                         <InputText
                                             control={profileControl}
                                             label="Nombre"
-                                            name="nombre"
-                                            errors={profileErrors.nombre}
+                                            name="name"
+                                            errors={profileErrors.name}
                                             required={true}
                                         />
                                     </div>
@@ -106,8 +188,8 @@ const UserProfileScreen = () => {
                                         <InputText
                                             control={profileControl}
                                             label="Apellido"
-                                            name="apellido"
-                                            errors={profileErrors.apellido}
+                                            name="lastname"
+                                            errors={profileErrors.lastname}
                                             required={true}
                                         />
                                     </div>
