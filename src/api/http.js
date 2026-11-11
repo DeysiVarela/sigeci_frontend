@@ -3,10 +3,11 @@ const ACCESS_TOKEN_KEY = "access";
 const REFRESH_TOKEN_KEY = "refresh";
 
 export class ApiError extends Error {
-    constructor(status, message) {
+    constructor(status, message, data = null) {
         super(message);
         this.name = "ApiError";
         this.status = status;
+        this.data = data;
     }
 }
 
@@ -86,7 +87,8 @@ export const request = async (path, options = {}) => {
     if (!response.ok) {
         throw new ApiError(
             response.status,
-            getErrorMessage(payload, "No fue posible completar la solicitud.")
+            getErrorMessage(payload, "No fue posible completar la solicitud."),
+            payload
         );
     }
 

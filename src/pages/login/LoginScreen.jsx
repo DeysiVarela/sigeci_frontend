@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import ReCAPTCHA from "react-google-recaptcha";
 import InputEmail from "../../components/inputs/InputEmail";
 import InputPassword from "../../components/inputs/InputPassword";
@@ -152,9 +152,7 @@ const LoginScreen = () => {
                             <a href="/forgot-password">¿Olvidaste tu contraseña?</a>
                         </p>
                         <p className="mb-0">
-                            <a href="/register" className="text-center">
-                                Registrar nueva cuenta
-                            </a>
+                            ¿No tienes cuenta? <Link to="/register">Regístrate</Link>
                         </p>
                     </div>
                 </div>
