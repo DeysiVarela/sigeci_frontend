@@ -10,21 +10,31 @@ import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import HandlerApp from "../../utils/HandlerApp";
 import { register } from "../../api/auth";
 
-// SCRUM-120 [FE]: registro público. El rol NO se envía: el backend siempre crea la cuenta como AUTHOR.
-// Contrato: POST /api/auth/register/ { name, lastname, email, password, captchaToken }
-
-const NAME_MAX = 60; // mismos límites que RegisterSerializer
+const NAME_MAX = 60;
 const EMAIL_MAX = 120;
 const CAPTCHA_MISSING = "Completa el CAPTCHA para continuar.";
 const SERVER_FIELDS = ["name", "lastname", "email", "password"];
 
+const NAME_PATTERN = /^\p{L}+(?:[ '-]\p{L}+)*$/u;
+const STRONG_PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._\-#^()+=])[A-Za-z\d@$!%*?&._\-#^()+=]{8,}$/;
+const cleanName = (value) => (value || "").trim().replace(/\s+/g, " ");
+
 const nameRules = {
     validate: (value) => {
-        const text = (value || "").trim();
+        const text = cleanName(value);
         if (!text) return "Este campo es obligatorio";
         if (text.length > NAME_MAX) return `Máximo ${NAME_MAX} caracteres`;
+        if (!NAME_PATTERN.test(text)) return "Solo se permiten letras, espacios, apóstrofo (') y guion (-)";
         return true;
     },
+};
+
+const passwordRules = {
+    // Primero los espacios, para dar un mensaje claro; luego la regla de contraseña segura
+    pattern: { value: /^\S*$/, message: "La contraseña no puede contener espacios" },
+    validate: (value) =>
+        STRONG_PASSWORD.test(value) ||
+        "Debe contener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial",
 };
 
 const firstMessage = (value) => (Array.isArray(value) ? value[0] : value);
@@ -76,8 +86,8 @@ const RegisterScreen = () => {
         try {
             // Solo se envían estos campos: la confirmación de contraseña no viaja y el rol nunca se incluye
             await register({
-                name: data.name.trim(),
-                lastname: data.lastname.trim(),
+                name: cleanName(data.name),
+                lastname: cleanName(data.lastname),
                 email: data.email.trim().toLowerCase(),
                 password: data.password,
                 captchaToken,
@@ -160,8 +170,9 @@ const RegisterScreen = () => {
                                 name="password"
                                 errors={errors.password}
                                 required={true}
+                                rules={passwordRules}
                                 onChange={() => {
-                                    // Si ya escribió la confirmación, revalidar la coincidencia
+                                    
                                     if (getValues("confirmPassword")) void trigger("confirmPassword");
                                 }}
                             />
