@@ -1,28 +1,32 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react"; 
 import Card from "../../../components/cards/Card";
 import ButtonPrimary from "../../../components/buttons/ButtonPrimary";
 import Swal from "sweetalert2";
 
-const ArticleVersionManager = ({ article }) => {
-    // Estados para los archivos
+const ArticleVersionManager = ({ article, canUpload }) => {
     const [pdfFile, setPdfFile] = useState(null);
     const [copyrightFile, setCopyrightFile] = useState(null);
     
-    // Estados para la carga
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
 
-    // Referencias para limpiar los inputs
     const pdfInputRef = useRef(null);
     const copyrightInputRef = useRef(null);
+    const intervalRef = useRef(null);
 
-    // Historial simulado (CA-01)
+    // TODO: Historial simulado. Reemplazar con GET /articles/:id/attachments
     const [versions, setVersions] = useState([
         { id: 1, version: 1, date: "2026-11-01", url: "#", name: "Articulo_Inicial.pdf" },
         { id: 2, version: 2, date: "2026-11-10", url: "#", name: "Articulo_Corregido.pdf" },
     ]);
 
-    // Validación de archivos (CA-04)
+    // Cleanup del intervalo al desmontar
+    useEffect(() => {
+        return () => {
+            if (intervalRef.current) clearInterval(intervalRef.current);
+        };
+    }, []);
+
     const validateFile = (file, type) => {
         if (!file) return false;
         if (file.type !== "application/pdf") {
@@ -38,17 +42,56 @@ const ArticleVersionManager = ({ article }) => {
 
     const handlePdfChange = (e) => {
         const file = e.target.files[0];
-        if (validateFile(file, "versión")) setPdfFile(file);
+        if (validateFile(file, "versión")) {
+            setPdfFile(file);
+        } else {
+            e.target.value = ""; 
+            setPdfFile(null);
+        }
     };
 
     const handleCopyrightChange = (e) => {
         const file = e.target.files[0];
-        if (validateFile(file, "copyright")) setCopyrightFile(file);
+        if (validateFile(file, "copyright")) {
+            setCopyrightFile(file);
+        } else {
+            e.target.value = "";
+            setCopyrightFile(null);
+        }
     };
 
-    // Simulación de subida con barra de progreso (CA-05)
+    // Función final para cerrar el flujo (CA-06)
+    const finishUpload = (fileName) => {
+        setIsUploading(false);
+
+        Swal.fire({
+            title: '¡Subida Exitosa!',
+            text: 'El archivo ha sido cargado correctamente.',
+            icon: 'success',
+            confirmButtonText: 'Aceptar'
+        }).then(() => {
+            const today = new Date();
+            const formattedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+            setVersions((prev) => [
+                ...prev,
+                { 
+                    id: prev.length + 1, 
+                    version: prev.length + 1, 
+                    date: formattedDate, 
+                    url: "#", 
+                    name: fileName 
+                }
+            ]);
+            setPdfFile(null);
+            setCopyrightFile(null);
+            setUploadProgress(0);
+            if (pdfInputRef.current) pdfInputRef.current.value = "";
+            if (copyrightInputRef.current) copyrightInputRef.current.value = "";
+        });
+    };
+
     const handleUpload = () => {
-        // Validaciones mínimas
         if (article.status === 'ACEPTADO' && !pdfFile) {
             return Swal.fire("Atención", "Debes adjuntar el PDF corregido.", "warning");
         }
@@ -59,43 +102,23 @@ const ArticleVersionManager = ({ article }) => {
         setIsUploading(true);
         setUploadProgress(0);
 
-        const interval = setInterval(() => {
-            setUploadProgress((prev) => {
-                if (prev >= 100) {
-                    clearInterval(interval);
-                    setIsUploading(false);
-                    
-                    // Simulación de éxito (CA-06)
-                    Swal.fire({
-                        title: '¡Subida Exitosa!',
-                        text: 'El archivo ha sido cargado correctamente.',
-                        icon: 'success',
-                        confirmButtonText: 'Aceptar'
-                    }).then(() => {
-                        // Refrescar lista y limpiar campos
-                        const newVersion = {
-                            id: versions.length + 1,
-                            version: versions.length + 1,
-                            date: new Date().toISOString().split('T')[0],
-                            url: "#",
-                            name: pdfFile ? pdfFile.name : "Documento.pdf"
-                        };
-                        setVersions([...versions, newVersion]);
-                        setPdfFile(null);
-                        setCopyrightFile(null);
-                        if (pdfInputRef.current) pdfInputRef.current.value = "";
-                        if (copyrightInputRef.current) copyrightInputRef.current.value = "";
-                    });
-                    return 100;
-                }
-                return prev + 10;
-            });
-        }, 300); // Simula 3 segundos de carga
+        const uploadedName = pdfFile ? pdfFile.name : "Documento.pdf";
+        let progress = 0;
+
+        intervalRef.current = setInterval(() => {
+            progress += 10;
+            setUploadProgress(progress);
+
+            if (progress >= 100) {
+                clearInterval(intervalRef.current);
+                finishUpload(uploadedName);
+            }
+        }, 300);
     };
 
     return (
         <div className="mt-4">
-            {/* Sección de Historial (CA-01) */}
+            {/* CA-01: El historial lo pueden ver todos los que tengan acceso al artículo */}
             <Card title="Historial de Versiones">
                 <div className="table-responsive">
                     <table className="table table-bordered table-hover align-middle">
@@ -125,8 +148,8 @@ const ArticleVersionManager = ({ article }) => {
                 </div>
             </Card>
 
-            {/* Formulario Condicional (CA-02 y CA-03) */}
-            {(article.status === 'ACEPTADO' || article.status === 'CON_AVAL_PRESENTACION') && (
+            {/* CA-02: El formulario de subida SOLO lo ve el autor dueño (canUpload) */}
+            {canUpload && (article.status === 'ACEPTADO' || article.status === 'CON_AVAL_PRESENTACION') && (
                 <Card title="Subir Nueva Versión" className="mt-4" outline outlineColor="warning">
                     <div className="alert alert-warning py-2 small mb-4">
                         <i className="bi bi-info-circle me-2"></i>
@@ -147,7 +170,6 @@ const ArticleVersionManager = ({ article }) => {
                         />
                     </div>
 
-                    {/* Input de Copyright solo si está en CON_AVAL_PRESENTACION (CA-03) */}
                     {article.status === 'CON_AVAL_PRESENTACION' && (
                         <div className="mb-3">
                             <label className="form-label fw-semibold">Documento de Cesión de Derechos (Copyright) *</label>
@@ -162,7 +184,6 @@ const ArticleVersionManager = ({ article }) => {
                         </div>
                     )}
 
-                    {/* Barra de Progreso (CA-05) */}
                     {isUploading && (
                         <div className="mb-3">
                             <div className="progress" style={{ height: "20px" }}>
