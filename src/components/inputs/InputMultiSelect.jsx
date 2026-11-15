@@ -15,42 +15,58 @@ const InputMultiSelect = ({
             rules={{
                 required: required ? "Debes seleccionar al menos un rol" : false,
             }}
-            defaultValue={[]} // El valor por defecto es un arreglo vacío
-            render={({ field }) => (
-                <div className="form-group mb-3">
-                    <label htmlFor={name} className="form-label fw-semibold">
-                        {label} {required && "*"}
-                    </label>
-                    <select
-                        multiple
-                        id={name}
-                        className={`form-select ${errors?.type ? "is-invalid" : ""}`}
-                        style={{ height: "120px" }} // Para que se vean varias opciones
-                        value={field.value || []}
-                        onChange={(e) => {
-                            // Extraemos todos los valores seleccionados
-                            const selectedOptions = Array.from(e.target.selectedOptions, (option) => option.value);
-                            field.onChange(selectedOptions);
-                        }}
-                        onBlur={field.onBlur}
-                    >
-                        {options.map((opt) => (
-                            <option key={opt.value} value={opt.value}>
-                                {opt.label}
-                            </option>
-                        ))}
-                    </select>
-                    <small className="text-muted d-block mt-1">
-                        Mantén presionado <b>Ctrl</b> (o Cmd en Mac) para seleccionar varios roles.
-                    </small>
-                    {errors?.type && (
-                        <p className="small text-danger mt-1">
-                            <span className="me-1">⚠️</span>
-                            {errors.message}
-                        </p>
-                    )}
-                </div>
-            )}
+            defaultValue={[]} // Arreglo vacío por defecto
+            render={({ field }) => {
+                // Aseguramos que field.value siempre sea un arreglo
+                const selectedValues = Array.isArray(field.value) ? field.value : [];
+
+                const handleCheckboxChange = (value) => {
+                    // Si ya está seleccionado, lo quitamos. Si no, lo agregamos.
+                    const newValue = selectedValues.includes(value)
+                        ? selectedValues.filter((v) => v !== value)
+                        : [...selectedValues, value];
+                    
+                    field.onChange(newValue);
+                };
+
+                return (
+                    <div className="form-group mb-3">
+                        <label className="form-label fw-semibold d-block mb-2">
+                            {label} {required && "*"}
+                        </label>
+                        
+                        <div className="d-flex flex-wrap gap-3 p-3 border rounded bg-light">
+                            {options.map((opt) => (
+                                <div className="form-check" key={opt.value}>
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        id={`${name}-${opt.value}`}
+                                        value={opt.value}
+                                        checked={selectedValues.includes(opt.value)}
+                                        onChange={() => handleCheckboxChange(opt.value)}
+                                        onBlur={field.onBlur}
+                                    />
+                                    <label 
+                                        className="form-check-label user-select-none" 
+                                        htmlFor={`${name}-${opt.value}`}
+                                        style={{ cursor: "pointer" }}
+                                    >
+                                        {opt.label}
+                                    </label>
+                                </div>
+                            ))}
+                        </div>
+
+                        {errors?.type && (
+                            <p className="small text-danger mt-1">
+                                <span className="me-1">⚠️</span>
+                                {errors.message}
+                            </p>
+                        )}
+                    </div>
+                );
+            }}
         />
     );
 };
