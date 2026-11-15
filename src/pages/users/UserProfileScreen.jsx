@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router";
 import InputText from "../../components/inputs/InputText";
 import InputEmail from "../../components/inputs/InputEmail";
 import InputPassword from "../../components/inputs/InputPassword";
@@ -23,6 +24,7 @@ const syncSessionUser = (updatedUser) => {
 
 const UserProfileScreen = () => {
     const handlerApp = HandlerApp();
+    const navigate = useNavigate();
 
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [showPasswordSection, setShowPasswordSection] = useState(false);
@@ -70,21 +72,6 @@ const UserProfileScreen = () => {
 
         loadProfile();
 
-        // --- BLOQUE MOCK (Movido al final según tu indicación) ---
-        // Nota: Si quitas el comentario de estas líneas, los datos de prueba 
-        // sobrescribirán los datos reales de la API.
-        /*
-        setTimeout(() => {
-            const mockUser = {
-                nombre: "Laura Dayana",
-                apellido: "Tascon",
-                email: "laura@test.com",
-            };
-            resetProfile(mockUser); 
-            setIsLoadingData(false);
-        }, 1000);
-        */
-        // --------------------------------------------------------
 
         return () => { cancelled = true; };
     }, [resetProfile]);
@@ -160,6 +147,60 @@ const UserProfileScreen = () => {
             }
         } finally {
             handlerApp.setLoader(false);
+        }
+    };
+
+        //Funcion para manejar la eliminacion de la cuenta
+    const handleDeleteAccount = async () => {
+        const { value: password } = await Swal.fire({
+            title: '¿Estás seguro?',
+            text: "Esta acción desactivará tu cuenta. Tus artículos se conservarán, pero no podrás volver a ingresar.",
+            icon: 'warning',
+            input: 'password',
+            inputLabel: 'Ingresa tu contraseña para confirmar',
+            inputPlaceholder: 'Tu contraseña actual',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, eliminar mi cuenta',
+            cancelButtonText: 'Cancelar',
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'Debes ingresar tu contraseña';
+                }
+            }
+        });
+
+        if (password) {
+            handlerApp.setLoader(true);
+            try {
+                // Reemplazar por la llamada real al endpoint de(SCRUM-129)
+                // await deleteMyAccount({ password });
+                
+                // Simulacion de eliminacion exitosa
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                
+                await Swal.fire({
+                    title: 'Cuenta eliminada',
+                    text: 'Tu cuenta ha sido desactivada. Si deseas volver, puedes solicitar la reactivación.',
+                    icon: 'success',
+                    confirmButtonText: 'Ir al Login'
+                });
+                
+                navigate("/login");
+            } catch (err) {
+                Swal.fire({
+                    title: 'Error al eliminar',
+                    text: getErrorMessage(err, "No se pudo eliminar la cuenta. Verifica tu contraseña."),
+                    icon: 'error',
+                    confirmButtonText: 'Aceptar'
+                });
+            } finally {
+                handlerApp.setLoader(false);
+            }
         }
     };
 
@@ -269,6 +310,22 @@ const UserProfileScreen = () => {
                                 </div>
                             </form>
                         )}
+                    </Card>
+                    {/*Zona de Peligro para eliminar la cuenta */}
+                    <Card title="Zona de Peligro" outline outlineColor="danger" className="mt-4">
+                        <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                            <div>
+                                <h6 className="fw-bold text-danger mb-1">Eliminar mi cuenta</h6>
+                                <p className="text-muted small mb-0">Una vez eliminada, tu cuenta se desactivará y no podrás volver a ingresar sin solicitar reactivación.</p>
+                            </div>
+                            <button 
+                                type="button" 
+                                className="btn btn-danger"
+                                onClick={handleDeleteAccount}
+                            >
+                                <i className="bi bi-trash me-1"></i> Eliminar mi cuenta
+                            </button>
+                        </div>
                     </Card>
                 </div>
             </div>
