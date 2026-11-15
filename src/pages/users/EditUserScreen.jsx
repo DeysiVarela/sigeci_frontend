@@ -68,7 +68,7 @@ const EditUserScreen = () => {
           nombre: user.name,
           apellido: user.lastname,
           email: user.email,
-          roles: user.profile ? [String(user.profile)] : [], 
+          roles: user.profiles ? user.profiles.map(p => String(p.id)) : [], 
           estado: String(user.active),
         });
       })
