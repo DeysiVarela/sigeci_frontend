@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
 import InputText from "../../components/inputs/InputText";
 import InputEmail from "../../components/inputs/InputEmail";
-import InputSelect from "../../components/inputs/InputSelect";
+import InputMultiSelect from "../../components/inputs/InputMultiSelect";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import Card from "../../components/cards/Card";
 import HandlerApp from "../../utils/HandlerApp";
@@ -68,7 +68,7 @@ const EditUserScreen = () => {
           nombre: user.name,
           apellido: user.lastname,
           email: user.email,
-          rol: String(user.profile),
+          roles: user.profile ? [String(user.profile)] : [], 
           estado: String(user.active),
         });
       })
@@ -100,8 +100,9 @@ const EditUserScreen = () => {
 
       // Rol y estado solo los envía un gestor, y solo si cambiaron
       if (manager) {
-        const newProfile = Number(data.rol);
-        if (newProfile !== original?.profile) payload.profile = newProfile;
+        const newProfiles = data.roles.map(Number);
+        payload.profiles = newProfiles;
+        
 
         const newActive = data.estado === "true";
         if (newActive !== original?.active) payload.active = newActive;
@@ -175,24 +176,16 @@ const EditUserScreen = () => {
 
                 {manager && (
                   <>
-                    <InputSelect
-                      control={control}
-                      label="Rol del Usuario"
-                      name="rol"
-                      options={rolesOptions}
-                      errors={errors.rol}
-                      required={true}
-                    />
 
-                    <InputSelect
-                      control={control}
-                      label="Estado"
-                      name="estado"
-                      options={STATUS_OPTIONS}
-                      errors={errors.estado}
-                      required={true}
-                    />
-                  </>
+                <InputMultiSelect
+                  control={control}
+                  label="Roles del Usuario"
+                  name="roles"
+                  options={rolesOptions}
+                  errors={errors.roles}
+                  required={true}
+                  />
+                </>
                 )}
 
                 <div className="alert alert-info py-2 mt-3">
