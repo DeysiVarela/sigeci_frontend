@@ -16,3 +16,7 @@ export const updateMyProfile = ({ name, lastname, email }) =>
     request("/api/users/me", { method: "PATCH", body: { name, lastname, email } });
 export const changeMyPassword = ({ currentPassword, newPassword }) =>
     request("/api/users/me/password/", { method: "PUT", body: { currentPassword, newPassword } });
+
+//  desactiva MI cuenta (borrado lógico). Pide la contraseña actual.
+export const deleteMyAccount = ({ password }) =>
+    request("/api/users/me/delete/", { method: "POST", body: { password } });

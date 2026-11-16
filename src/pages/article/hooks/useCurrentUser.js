@@ -9,11 +9,13 @@ const readSessionUser = () => {
         const raw = localStorage.getItem(SESSION_KEY);
         if (!raw) return null;
         const session = JSON.parse(raw);
+        const roles = (session.profiles ?? []).map((p) => p.name);
         return {
             id: session.id,
             name: [session.name, session.lastname].filter(Boolean).join(" "),
             email: session.email,
-            role: session.profile_name, // se normaliza en utils/permissions.js
+            roles: roles,
+            role: roles[0] || null,
             permissions: session.permissions
         };
     } catch {

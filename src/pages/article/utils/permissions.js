@@ -3,18 +3,25 @@
 // sobre el token, porque cualquier usuario puede llamar al endpoint directamente.
 import { CATALOG_SCOPE, PUBLIC_STATUSES, ROLES, ARTICLE_STATUS, normalizeRole } from "./constants";
 
-const roleOf = (user) => normalizeRole(user?.role);
+const hasRole = (user, roleToCheck) => {
+    if (!user) return false;
+    if (Array.isArray(user.roles)) {
+        return user.roles.some((r) => normalizeRole(r) === roleToCheck);
+    }
+    // Fallback por si el usuario viene del contrato viejo (single role)
+    return normalizeRole(user.role) === roleToCheck;
+};
 
-export const isAdmin = (user) => roleOf(user) === ROLES.ADMIN;
+export const isAdmin = (user) => hasRole(user, ROLES.ADMIN); 
 
 // Miembro del comité científico: evalúa los artículos que le asignan
-export const isMember = (user) => roleOf(user) === ROLES.MEMBER;
+export const isMember = (user) => hasRole(user, ROLES.MEMBER); 
 
 // Comité y administrador: evalúan y hacen seguimiento, no postulan
 export const isCommittee = (user) => isAdmin(user) || isMember(user);
 
 // Autor: se valida explícitamente (un rol desconocido ya NO cuenta como autor)
-export const isAuthor = (user) => roleOf(user) === ROLES.AUTOR;
+export const isAuthor = (user) => hasRole(user, ROLES.AUTOR);
 
 export const isOwner = (user, article) =>
     article?.authorId != null && user?.id != null && String(article.authorId) === String(user.id);
@@ -55,7 +62,16 @@ export const canCreateArticle = (user) => isAuthor(user);
 // Vistas: admin una (todo); miembro una (asignados y catalogo publico); autor dos (propios y catalogo publico)
 export const getAllowedScopes = (user) => {
     if (isAdmin(user)) return [CATALOG_SCOPE.ALL];
-    if (isMember(user)) return [CATALOG_SCOPE.ASSIGNED, CATALOG_SCOPE.PUBLIC];
-    if (isAuthor(user)) return [CATALOG_SCOPE.MINE, CATALOG_SCOPE.PUBLIC];
-    return [];
+    
+    const scopes = new Set();
+    if (isMember(user)) {
+        scopes.add(CATALOG_SCOPE.ASSIGNED);
+        scopes.add(CATALOG_SCOPE.PUBLIC);
+    }
+    if (isAuthor(user)) {
+        scopes.add(CATALOG_SCOPE.MINE);
+        scopes.add(CATALOG_SCOPE.PUBLIC);
+    }
+    
+    return Array.from(scopes);
 };

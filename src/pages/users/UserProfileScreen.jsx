@@ -8,8 +8,9 @@ import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import Card from "../../components/cards/Card";
 import HandlerApp from "../../utils/HandlerApp";
 import Swal from "sweetalert2";
-import { getMyProfile, updateMyProfile, changeMyPassword } from "../../api/users";
+import { getMyProfile, updateMyProfile, changeMyPassword, deleteMyAccount } from "../../api/users";
 import { getErrorMessage } from "../../utils/apiError";
+import { logout } from "../../api/auth";
 
 // El login guarda el usuario en localStorage["user"] (lo leen otras pantallas).
 // El PATCH devuelve la misma forma, así que se mezcla para no dejar la sesión desactualizada.
@@ -152,56 +153,50 @@ const UserProfileScreen = () => {
 
         //Funcion para manejar la eliminacion de la cuenta
     const handleDeleteAccount = async () => {
-        const { value: password } = await Swal.fire({
-            title: '¿Estás seguro?',
+        const result = await Swal.fire({
+            title: "¿Estás seguro?",
             text: "Esta acción desactivará tu cuenta. Tus artículos se conservarán, pero no podrás volver a ingresar.",
-            icon: 'warning',
-            input: 'password',
-            inputLabel: 'Ingresa tu contraseña para confirmar',
-            inputPlaceholder: 'Tu contraseña actual',
+            icon: "warning",
+            input: "password",
+            inputLabel: "Ingresa tu contraseña para confirmar",
+            inputPlaceholder: "Tu contraseña actual",
             showCancelButton: true,
-            confirmButtonColor: '#dc3545',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Sí, eliminar mi cuenta',
-            cancelButtonText: 'Cancelar',
-            inputValidator: (value) => {
-                if (!value) {
-                    return 'Debes ingresar tu contraseña';
+            confirmButtonColor: "#dc3545",
+            cancelButtonColor: "#6c757d",
+            confirmButtonText: "Sí, eliminar mi cuenta",
+            cancelButtonText: "Cancelar",
+            showLoaderOnConfirm: true,                          //  muestra el spinner mientras llama al backend
+            allowOutsideClick: () => !Swal.isLoading(),         // no se puede cerrar mientras carga
+            inputValidator: (value) => (value ? undefined : "Debes ingresar tu contraseña"),
+            //  Llamada REAL al backend (ya no hay setTimeout simulado)
+            preConfirm: async (password) => {
+                try {
+                    await deleteMyAccount({ password });
+                    return true;
+                } catch (err) {
+                    // 400 (clave incorrecta / último admin) o 429 (demasiados intentos):
+                    // el error se ve dentro del diálogo y este sigue abierto
+                    Swal.showValidationMessage(
+                        getErrorMessage(err, "No se pudo eliminar la cuenta. Intenta de nuevo.")
+                    );
+                    return false;
                 }
-            }
+            },
         });
 
-        if (password) {
-            handlerApp.setLoader(true);
-            try {
-                // Reemplazar por la llamada real al endpoint de(SCRUM-129)
-                // await deleteMyAccount({ password });
-                
-                // Simulacion de eliminacion exitosa
-                await new Promise(resolve => setTimeout(resolve, 1500));
+        if (!result.isConfirmed) return; // canceló o cerró el diálogo
 
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
-                
-                await Swal.fire({
-                    title: 'Cuenta eliminada',
-                    text: 'Tu cuenta ha sido desactivada. Si deseas volver, puedes solicitar la reactivación.',
-                    icon: 'success',
-                    confirmButtonText: 'Ir al Login'
-                });
-                
-                navigate("/login");
-            } catch (err) {
-                Swal.fire({
-                    title: 'Error al eliminar',
-                    text: getErrorMessage(err, "No se pudo eliminar la cuenta. Verifica tu contraseña."),
-                    icon: 'error',
-                    confirmButtonText: 'Aceptar'
-                });
-            } finally {
-                handlerApp.setLoader(false);
-            }
-        }
+        // Antes borraba "token" y "user" (claves que no existen). logout() borra access, refresh y user.
+        logout();
+
+        await Swal.fire({
+            title: "Cuenta eliminada",
+            text: "Tu cuenta ha sido desactivada.", //se quitó lo de "reactivación": ese flujo no existe
+            icon: "success",
+            confirmButtonText: "Ir al Login",
+        });
+
+        navigate("/login", { replace: true }); // evita volver atrás a una pantalla protegida
     };
 
     return (
@@ -311,12 +306,16 @@ const UserProfileScreen = () => {
                             </form>
                         )}
                     </Card>
-                    {/*Zona de Peligro para eliminar la cuenta */}
+
+                    {/* Zona de peligro: eliminar la cuenta (SCRUM-129) */}
                     <Card title="Zona de Peligro" outline outlineColor="danger" className="mt-4">
                         <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
                             <div>
                                 <h6 className="fw-bold text-danger mb-1">Eliminar mi cuenta</h6>
-                                <p className="text-muted small mb-0">Una vez eliminada, tu cuenta se desactivará y no podrás volver a ingresar sin solicitar reactivación.</p>
+                                {/* se quitó "sin solicitar reactivación": no existe ese flujo */}
+                                <p className="text-muted small mb-0">
+                                    Una vez eliminada, tu cuenta se desactivará y no podrás volver a ingresar.
+                                </p>
                             </div>
                             <button 
                                 type="button" 
