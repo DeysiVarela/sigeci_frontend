@@ -5,7 +5,7 @@ const FIELD_LABELS = {
     lastname: "Apellido",
     email: "Correo",
     password: "Contraseña",
-    profile: "Rol",
+    profiles: "Roles",
     active: "Estado",
 };
 
