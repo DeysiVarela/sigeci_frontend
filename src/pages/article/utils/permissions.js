@@ -12,16 +12,16 @@ const hasRole = (user, roleToCheck) => {
     return normalizeRole(user.role) === roleToCheck;
 };
 
-export const isAdmin = (user) => roleOf(user) === ROLES.ADMIN;
+export const isAdmin = (user) => hasRole(user, ROLES.ADMIN); 
 
 // Miembro del comité científico: evalúa los artículos que le asignan
-export const isMember = (user) => roleOf(user) === ROLES.MEMBER;
+export const isMember = (user) => hasRole(user, ROLES.MEMBER); 
 
 // Comité y administrador: evalúan y hacen seguimiento, no postulan
 export const isCommittee = (user) => isAdmin(user) || isMember(user);
 
 // Autor: se valida explícitamente (un rol desconocido ya NO cuenta como autor)
-export const isAuthor = (user) => roleOf(user) === ROLES.AUTOR;
+export const isAuthor = (user) => hasRole(user, ROLES.AUTOR);
 
 export const isOwner = (user, article) =>
     article?.authorId != null && user?.id != null && String(article.authorId) === String(user.id);
