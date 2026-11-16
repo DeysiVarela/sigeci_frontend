@@ -67,7 +67,7 @@ const CreateUserScreen = () => {
         lastname: data.apellido.trim(),
         email: data.email.trim(),
         password: data.password,
-        profile: Number(data.rol),
+        profiles: data.roles.map(Number),
       });
 
       // Apagamos el loader ANTES de mostrar el modal

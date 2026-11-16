@@ -19,7 +19,7 @@ const formatUser = (u) => ({
     id: u.id,
     name: `${u.name} ${u.lastname}`.trim(),
     email: u.email,
-    role: u.profile_name,
+    role: (u.profiles ?? []).map((p) => p.name).join(", "),
     status: u.active ? "Activo" : "Inactivo",
 });
 
