@@ -16,6 +16,8 @@ import CreateArticlePDFScreen from "../pages/article/CreateArticlePDFScreen";
 import CreateArticleScreen from "../pages/article/CreateArticleScreen";
 import CreateUserScreen from "../pages/users/CreateUserScreen";
 import EditUserScreen from "../pages/users/EditUserScreen";
+import EvaluationListScreen from "../pages/evaluation/EvaluationListScreen";
+import EvaluationDetailScreen from "../pages/evaluation/EvaluationDetailScreen";
 
 const router = createBrowserRouter([
     {
@@ -64,7 +66,9 @@ const router = createBrowserRouter([
                 { path: "/article/postulate", element: <CreateArticlePDFScreen/> },
                 { path: "/users", element: <UserScreen/> },
                 { path: "/users/create", element: <CreateUserScreen/> },
-                { path: "/users/edit/:id", element: <EditUserScreen/> }
+                { path: "/users/edit/:id", element: <EditUserScreen/> },
+                { path: "/evaluations", element: <EvaluationListScreen/> },
+                { path: "/evaluations/:id", element: <EvaluationDetailScreen/> }
             ]}
         ]
     }

@@ -40,6 +40,12 @@ const Nav = () => {
               </Link>
             </li>
             <li className="nav-item">
+              <Link to="/evaluations" className="nav-link">
+                <i className="nav-icon bi bi-clipboard2-check"></i>
+                <p>Mis evaluaciones</p>
+              </Link>
+            </li>
+            <li className="nav-item">
               <Link to="/users" className="nav-link">
                 <i className="nav-icon bi bi-people"></i>
                 <p>Usuarios</p>
