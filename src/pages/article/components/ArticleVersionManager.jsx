@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import Card from "../../../components/cards/Card";
 import ButtonPrimary from "../../../components/buttons/ButtonPrimary";
 import Swal from "sweetalert2";
-import { getCorrectedVersion, submitFinalVersion } from "../../../api/articles";
+import { getCorrectedVersion, submitCorrectedVersion, submitFinalVersion } from "../../../api/articles";
 import { getErrorMessage } from "../../../utils/apiError";
 import { FILE_RULES, MAX_FILE_MB, normalizeAttachment, validateVersionFile } from "../utils/versionFiles";
 
@@ -12,9 +12,8 @@ import { FILE_RULES, MAX_FILE_MB, normalizeAttachment, validateVersionFile } fro
 //
 // Estado del contrato con el backend:
 //   ✔ GET  /api/articles/:id/corrected-version/   → historial (solo devuelve la versión más reciente)
+//   ✔ POST /api/articles/:id/corrected-version/   → versión corregida, estado ACEPTADO (multipart)
 //   ✔ POST /api/articles/:id/final-submission/    → versión final + copyright (multipart)
-//   ✘ Subir la versión CORREGIDA (estado ACEPTADO): no existe endpoint POST todavía.
-//     Mientras no exista, con el back real se avisa al usuario y NO se guarda nada.
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
 const USE_MOCK = import.meta.env.VITE_VERSIONS_MOCK !== "false";
 
@@ -139,20 +138,23 @@ const ArticleVersionManager = ({ article, canUpload }) => {
         }, 300);
     };
 
-    // --- Subida real de la versión final + copyright (SCRUM-31) ---
-    const uploadFinalVersion = async () => {
+    // --- Subida real: versión corregida (SCRUM-30) o versión final + copyright (SCRUM-31) ---
+    const uploadReal = async () => {
         const controller = new AbortController();
         abortRef.current = controller;
+        const options = { onProgress: setUploadProgress, signal: controller.signal };
         try {
-            await submitFinalVersion(
-                article.id,
-                { finalPdf: pdfFile, copyrightFile },
-                { onProgress: setUploadProgress, signal: controller.signal }
-            );
+            if (isCorrectedStep) {
+                await submitCorrectedVersion(article.id, { correctedPdf: pdfFile }, options);
+            } else {
+                await submitFinalVersion(article.id, { finalPdf: pdfFile, copyrightFile }, options);
+            }
             setUploadProgress(100);
             await Swal.fire({
                 title: "¡Subida Exitosa!",
-                text: "La versión final y el documento de copyright se cargaron correctamente.",
+                text: isCorrectedStep
+                    ? "La versión corregida se cargó correctamente."
+                    : "La versión final y el documento de copyright se cargaron correctamente.",
                 icon: "success",
                 confirmButtonText: "Aceptar"
             });
@@ -178,20 +180,12 @@ const ArticleVersionManager = ({ article, canUpload }) => {
             return Swal.fire("Atención", "Debes adjuntar el PDF final y el Copyright.", "warning");
         }
 
-        // Con el back real, la versión corregida aún no tiene endpoint: no se finge una subida exitosa.
-        if (!USE_MOCK && isCorrectedStep) {
-            return Swal.fire({
-                title: "Función aún no disponible",
-                text: "El servidor todavía no tiene el endpoint para subir la versión corregida. Tu archivo NO se ha guardado.",
-                icon: "info",
-                confirmButtonText: "Entendido"
-            });
-        }
-
-        if (!USE_MOCK && isFinalStep) {
+        if (!USE_MOCK) {
             const { isConfirmed } = await Swal.fire({
-                title: "¿Subir versión final?",
-                text: "Se registrará la versión final y el documento de copyright de este artículo.",
+                title: isCorrectedStep ? "¿Subir versión corregida?" : "¿Subir versión final?",
+                text: isCorrectedStep
+                    ? "Se registrará la versión corregida de este artículo."
+                    : "Se registrará la versión final y el documento de copyright de este artículo.",
                 icon: "question",
                 showCancelButton: true,
                 confirmButtonText: "Sí, subir",
@@ -204,7 +198,7 @@ const ArticleVersionManager = ({ article, canUpload }) => {
         setUploadProgress(0);
 
         if (USE_MOCK) simulateUpload();
-        else uploadFinalVersion();
+        else uploadReal();
     };
 
     const serverProcessing = isUploading && uploadProgress >= 100 && !USE_MOCK;
