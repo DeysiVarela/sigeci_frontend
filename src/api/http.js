@@ -31,18 +31,21 @@ const getErrorMessage = (payload, fallback) => {
     return fieldMessages.length ? fieldMessages.join(" ") : fallback;
 };
 
+const isFormData = (value) => typeof FormData !== "undefined" && value instanceof FormData;
+
 export const request = async (path, options = {}) => {
     const { skipAuthRefresh = false, ...fetchOptions } = options;
     const hasBody = options.body !== undefined && options.body !== null;
+    // Con FormData el navegador pone solo el Content-Type (multipart + boundary): no se debe forzar JSON.
     const headers = {
-        ...(hasBody ? { "Content-Type": "application/json" } : {}),
+        ...(hasBody && !isFormData(options.body) ? { "Content-Type": "application/json" } : {}),
         ...(fetchOptions.headers || {})
     };
     const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
     if (accessToken) {
         headers.Authorization = `Bearer ${accessToken}`;
     }
-    const body = hasBody && typeof fetchOptions.body !== "string"
+    const body = hasBody && typeof fetchOptions.body !== "string" && !isFormData(fetchOptions.body)
         ? JSON.stringify(fetchOptions.body)
         : fetchOptions.body;
     const url = new URL(`${backendUrl}${path}`);
@@ -94,3 +97,67 @@ export const request = async (path, options = {}) => {
 
     return payload;
 };
+
+
+const tryRefreshToken = async () => {
+    const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+    if (!refreshToken) return false;
+    try {
+        const refreshResponse = await request("/api/auth/refresh/", {
+            method: "POST",
+            body: { refresh: refreshToken },
+            skipAuthRefresh: true
+        });
+        localStorage.setItem(ACCESS_TOKEN_KEY, refreshResponse.access);
+        return true;
+    } catch {
+        localStorage.removeItem(ACCESS_TOKEN_KEY);
+        localStorage.removeItem(REFRESH_TOKEN_KEY);
+        return false;
+    }
+};
+
+// POST multipart con progreso real (0-100). fetch() no informa el avance de una subida, por eso XMLHttpRequest.
+// Mantiene el mismo contrato que request(): devuelve el JSON o lanza ApiError (status 0 = sin conexión).
+export const uploadRequest = (path, formData, { onProgress, signal, skipAuthRefresh = false } = {}) =>
+    new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", `${backendUrl}${path}`);
+        xhr.setRequestHeader("Accept", "application/json");
+        const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+        if (accessToken) xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
+
+        xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable && onProgress) {
+                onProgress(Math.round((event.loaded / event.total) * 100));
+            }
+        };
+
+        xhr.onload = async () => {
+            let payload = null;
+            try {
+                payload = JSON.parse(xhr.responseText);
+            } catch {
+                payload = null;
+            }
+
+            if (xhr.status === 401 && !skipAuthRefresh && (await tryRefreshToken())) {
+                uploadRequest(path, formData, { onProgress, signal, skipAuthRefresh: true }).then(resolve, reject);
+                return;
+            }
+
+            if (xhr.status >= 200 && xhr.status < 300) return resolve(payload);
+
+            reject(new ApiError(
+                xhr.status,
+                getErrorMessage(payload, "No fue posible completar la solicitud."),
+                payload
+            ));
+        };
+
+        xhr.onerror = () => reject(new ApiError(0, "No se pudo conectar con el servidor. Revisa tu conexión e intenta de nuevo."));
+        xhr.onabort = () => reject(new DOMException("Subida cancelada", "AbortError"));
+        signal?.addEventListener("abort", () => xhr.abort(), { once: true });
+
+        xhr.send(formData);
+    });
