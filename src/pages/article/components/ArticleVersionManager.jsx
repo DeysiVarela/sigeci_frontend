@@ -32,11 +32,13 @@ const todayISO = () => {
 const requestHistory = async (articleId, signal) => {
     try {
         const data = await getCorrectedVersion(articleId, { signal });
-        const latest = normalizeAttachment(data?.corrected_version, BACKEND_URL);
+        const list = Array.isArray(data?.versions) && data.versions.length > 0
+            ? data.versions.map((item) => normalizeAttachment(item, BACKEND_URL)).filter(Boolean)
+            : (data?.corrected_version ? [normalizeAttachment(data.corrected_version, BACKEND_URL)] : []);
         const copyrightUrl = data?.article_copyright_url
             ? toAbsoluteUrl(data.article_copyright_url, BACKEND_URL)
             : null;
-        return { versions: latest ? [latest] : [], copyrightUrl, error: "" };
+        return { versions: list, copyrightUrl, error: "" };
     } catch (err) {
         if (err?.name === "AbortError") return null;
         return { versions: [], copyrightUrl: null, error: getErrorMessage(err, "No se pudo cargar el historial de versiones.") };
