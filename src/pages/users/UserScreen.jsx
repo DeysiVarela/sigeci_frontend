@@ -7,9 +7,9 @@ import Modal from "../../components/modals/Modal";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import ButtonSecondary from "../../components/buttons/ButtonSecondary";
 import ButtonLink from "../../components/buttons/ButtonLink";
-import { listUsers, listProfiles, deleteUser, getMe } from "../../api/users";
+import { listUsers, listProfiles, deactivateUser, getMe } from "../../api/users";
 import { getErrorMessage } from "../../utils/apiError";
-import { isManager, canEditUser, canDeleteUser } from "../../utils/userAccess";
+import { isManager, canEditUser, canDeactivateUser } from "../../utils/userAccess";
 
 const ROWS_PER_PAGE_OPTIONS = [10, 20, 50];
 
@@ -20,7 +20,8 @@ const formatUser = (u) => ({
     name: `${u.name} ${u.lastname}`.trim(),
     email: u.email,
     role: (u.profiles ?? []).map((p) => p.name).join(", "),
-    status: u.active ? "Activo" : "Inactivo",
+    active: u.active ?? u.is_active ?? !u.user_delete,
+    status: (u.active ?? u.is_active ?? !u.user_delete) ? "Activo" : "Inactivo",
     profiles: u.profiles ?? [],
 });
 
@@ -72,7 +73,8 @@ const UserScreen = () => {
     const [alertNotification, setAlertNotification] = useState(null);
     const [selectedUser, setSelectedUser] = useState(null);
     const [viewModalOpen, setViewModalOpen] = useState(false);
-    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
+    const [deactivating, setDeactivating] = useState(false);
 
     const hasFilters = profileFilter !== "" || activeFilter !== "";
 
@@ -176,24 +178,24 @@ const UserScreen = () => {
         setViewModalOpen(true);
     };
 
-    const handleOpenDelete = (user) => {
+    const handleOpenDeactivate = (user) => {
         setSelectedUser(user);
-        setDeleteModalOpen(true);
+        setDeactivateModalOpen(true);
     };
 
-    // El backend hace borrado lógico; la fila deja de aparecer en el listado
-    const handleConfirmDelete = async () => {
+    const handleConfirmDeactivate = async () => {
         if (!selectedUser) return;
         const target = selectedUser;
+        setDeactivating(true);
         try {
-            await deleteUser(target.id);
-            triggerAlert("success", `El usuario "${target.name}" (${target.email}) fue eliminado.`, "Usuario eliminado");
-            if (users.length === 1 && page > 1) setPage((p) => p - 1);
+            await deactivateUser(target.id);
+            triggerAlert("success", `El usuario "${target.name}" (${target.email}) fue desactivado.`, "Usuario desactivado");
             setReloadKey((k) => k + 1);
         } catch (err) {
-            triggerAlert("danger", getErrorMessage(err, "No se pudo eliminar el usuario."), "No se pudo eliminar");
+            triggerAlert("danger", getErrorMessage(err, "No se pudo desactivar el usuario."), "No se pudo desactivar");
         } finally {
-            setDeleteModalOpen(false);
+            setDeactivating(false);
+            setDeactivateModalOpen(false);
             setSelectedUser(null);
         }
     };
@@ -253,11 +255,11 @@ const UserScreen = () => {
                             onClick={() => navigate(`/users/edit/${row.id}`)}
                         />
                     )}
-                    {canDeleteUser(me, row.id, row) && (
+                    {canDeactivateUser(me, row.id, row) && row.active && (
                         <ButtonLink
-                            label="Eliminar"
-                            className="text-danger fw-semibold small text-nowrap px-1"
-                            onClick={() => handleOpenDelete(row)}
+                            label="Desactivar"
+                            className="text-warning-emphasis fw-semibold small text-nowrap px-1"
+                            onClick={() => handleOpenDeactivate(row)}
                         />
                     )}
                 </div>
@@ -510,34 +512,35 @@ const UserScreen = () => {
                 )}
             </Modal>
 
-            {/* MODAL: CONFIRMACIÓN DE ELIMINACIÓN */}
+            {/* MODAL: CONFIRMACIÓN DE DESACTIVACIÓN */}
             <Modal
-                show={deleteModalOpen}
-                onClose={() => setDeleteModalOpen(false)}
-                title="Confirmar Eliminación"
+                show={deactivateModalOpen}
+                onClose={() => !deactivating && setDeactivateModalOpen(false)}
+                title="Confirmar desactivación"
                 size="md"
                 footer={
                     <>
-                        <ButtonSecondary label="Cancelar" onClick={() => setDeleteModalOpen(false)} />
+                        <ButtonSecondary label="Cancelar" onClick={() => setDeactivateModalOpen(false)} disabled={deactivating} />
                         <button
                             type="button"
-                            className="btn btn-danger d-flex align-items-center gap-1 shadow-sm"
-                            onClick={handleConfirmDelete}
+                            className="btn btn-warning d-flex align-items-center gap-1 shadow-sm"
+                            onClick={handleConfirmDeactivate}
+                            disabled={deactivating}
                         >
-                            <i className="bi bi-trash-fill"></i>
-                            <span>Sí, Eliminar</span>
+                            {deactivating ? <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> : <i className="bi bi-person-slash"></i>}
+                            <span>{deactivating ? "Desactivando..." : "Sí, desactivar"}</span>
                         </button>
                     </>
                 }
             >
                 {selectedUser && (
                     <div className="text-center py-3">
-                        <div className="text-danger mb-3">
-                            <i className="bi bi-exclamation-triangle-fill" style={{ fontSize: "3rem" }}></i>
+                        <div className="text-warning mb-3">
+                            <i className="bi bi-person-slash" style={{ fontSize: "3rem" }}></i>
                         </div>
-                        <h5 className="fw-bold text-dark">¿Estás seguro de eliminar este usuario?</h5>
+                        <h5 className="fw-bold text-dark">¿Desactivar esta cuenta?</h5>
                         <p className="text-muted px-3">
-                            Se eliminará a <strong>{selectedUser.name}</strong> (<code>{selectedUser.email}</code>) de forma permanente. Esta acción no se puede deshacer.
+                            <strong>{selectedUser.name}</strong> (<code>{selectedUser.email}</code>) perderá el acceso al sistema. Sus artículos, revisiones y demás histórico se conservarán.
                         </p>
                     </div>
                 )}
