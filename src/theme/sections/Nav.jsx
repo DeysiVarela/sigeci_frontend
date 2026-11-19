@@ -32,6 +32,12 @@ const Nav = ({ me }) => {
                 <p>Dashboard</p>
               </Link>
             </li>
+            <li className="nav-item">
+              <Link to="/agenda" className="nav-link">
+                <i className="nav-icon bi bi-calendar3"></i>
+                <p>Agenda general</p>
+              </Link>
+            </li>
 
             <li className="nav-header">GESTIÓN</li>
             <li className="nav-item">

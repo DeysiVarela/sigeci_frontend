@@ -22,6 +22,7 @@ import EditUserScreen from "../pages/users/EditUserScreen";
 import EvaluationListScreen from "../pages/evaluation/EvaluationListScreen";
 import EvaluationDetailScreen from "../pages/evaluation/EvaluationDetailScreen";
 import UserProfileScreen from "../pages/users/UserProfileScreen";
+import AgendaScreen from "../pages/agenda/AgendaScreen";
 
 const router = createBrowserRouter([
     {
@@ -64,6 +65,7 @@ const router = createBrowserRouter([
                     { index: true, element: <ComponentsScreen /> },
                     { path: "/components", element: <ComponentsScreen /> },
                     { path: "/home", element: <DashboardScreen /> },
+                    { path: "/agenda", element: <AgendaScreen /> },
                     { path: "/article", element: <ArticleScreen /> },
                     { path: "/article/:id", element: <ArticleViewScreen /> },
                     { path: "/article/edit/:id", element: <ArticleEditGuard><ArticleEditScreen /></ArticleEditGuard> },
