@@ -21,6 +21,7 @@ const formatUser = (u) => ({
     email: u.email,
     role: (u.profiles ?? []).map((p) => p.name).join(", "),
     status: u.active ? "Activo" : "Inactivo",
+    profiles: u.profiles ?? [],
 });
 
 const AvatarInitial = ({ name, size = 40, className = "" }) => (
@@ -245,14 +246,14 @@ const UserScreen = () => {
                         onClick={() => handleOpenView(row)}
                     />
 
-                    {canEditUser(me, row.id) && (
+                    {canEditUser(me, row.id, row) && (
                         <ButtonPrimary
                             label="Editar"
                             className="btn-sm py-1 px-2 text-nowrap"
                             onClick={() => navigate(`/users/edit/${row.id}`)}
                         />
                     )}
-                    {canDeleteUser(me, row.id) && (
+                    {canDeleteUser(me, row.id, row) && (
                         <ButtonLink
                             label="Eliminar"
                             className="text-danger fw-semibold small text-nowrap px-1"
