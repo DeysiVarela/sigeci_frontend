@@ -16,6 +16,8 @@
     "@popperjs/core": "^2.11.8",
     "admin-lte": "^4.10.0",
     "bootstrap": "^5.3.8",
+    "date-fns": "^4.4.0",
+    "date-fns-tz": "^3.2.0",
     "i18next": "^26.4.4",
     "lucide-react": "^1.48.0",
     "prop-types": "^15.8.1",

@@ -32,12 +32,24 @@ const Nav = ({ me }) => {
                 <p>Dashboard</p>
               </Link>
             </li>
+            <li className="nav-item">
+              <Link to="/agenda" className="nav-link">
+                <i className="nav-icon bi bi-calendar3"></i>
+                <p>Agenda general</p>
+              </Link>
+            </li>
 
             <li className="nav-header">GESTIÓN</li>
             <li className="nav-item">
               <Link to="/article" className="nav-link">
                 <i className="nav-icon bi bi-file-earmark-text"></i>
                 <p>Artículos</p>
+              </Link>
+            </li>
+            <li className="nav-item">
+              <Link to="/evaluations" className="nav-link">
+                <i className="nav-icon bi bi-clipboard2-check"></i>
+                <p>Mis evaluaciones</p>
               </Link>
             </li>
             {canViewUsers(me) && (
