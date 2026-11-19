@@ -4,7 +4,7 @@ import ButtonPrimary from "../../../components/buttons/ButtonPrimary";
 import Swal from "sweetalert2";
 import { getCorrectedVersion, submitCorrectedVersion, submitFinalVersion } from "../../../api/articles";
 import { getErrorMessage } from "../../../utils/apiError";
-import { FILE_RULES, MAX_FILE_MB, normalizeAttachment, validateVersionFile } from "../utils/versionFiles";
+import { FILE_RULES, MAX_FILE_MB, normalizeAttachment, toAbsoluteUrl, validateVersionFile } from "../utils/versionFiles";
 
 // SCRUM-33 · Frontend de SCRUM-30 (versión corregida) y SCRUM-31 (versión final + copyright).
 //
@@ -33,10 +33,13 @@ const requestHistory = async (articleId, signal) => {
     try {
         const data = await getCorrectedVersion(articleId, { signal });
         const latest = normalizeAttachment(data?.corrected_version, BACKEND_URL);
-        return { versions: latest ? [latest] : [], error: "" };
+        const copyrightUrl = data?.article_copyright_url
+            ? toAbsoluteUrl(data.article_copyright_url, BACKEND_URL)
+            : null;
+        return { versions: latest ? [latest] : [], copyrightUrl, error: "" };
     } catch (err) {
         if (err?.name === "AbortError") return null;
-        return { versions: [], error: getErrorMessage(err, "No se pudo cargar el historial de versiones.") };
+        return { versions: [], copyrightUrl: null, error: getErrorMessage(err, "No se pudo cargar el historial de versiones.") };
     }
 };
 
@@ -50,6 +53,7 @@ const ArticleVersionManager = ({ article, canUpload }) => {
     const [versions, setVersions] = useState(USE_MOCK ? MOCK_VERSIONS : []);
     const [loadingHistory, setLoadingHistory] = useState(!USE_MOCK);
     const [historyError, setHistoryError] = useState("");
+    const [copyrightUrl, setCopyrightUrl] = useState(null);
 
     const pdfInputRef = useRef(null);
     const copyrightInputRef = useRef(null);
@@ -60,10 +64,11 @@ const ArticleVersionManager = ({ article, canUpload }) => {
     const isFinalStep = article.status === "CON_AVAL_PRESENTACION";
 
     const applyHistory = (result) => {
-        if (!result) return; // petición cancelada
-        setVersions(result.versions);
-        setHistoryError(result.error);
-        setLoadingHistory(false);
+    if (!result) return; // petición cancelada
+    setVersions(result.versions);
+    setCopyrightUrl(result.copyrightUrl);
+    setHistoryError(result.error);
+    setLoadingHistory(false);
     };
 
     // Carga inicial: loadingHistory ya arranca en true con el back real
@@ -262,9 +267,19 @@ const ArticleVersionManager = ({ article, canUpload }) => {
                     </div>
                 )}
 
-                {!USE_MOCK && !loadingHistory && !historyError && versions.length > 0 && (
+            {!USE_MOCK && !loadingHistory && !historyError && versions.length > 0 && (
                     <small className="text-muted d-block mt-2">Se muestra la versión más reciente registrada.</small>
-                )}
+            )}
+
+            
+            {!USE_MOCK && !loadingHistory && !historyError && copyrightUrl && (
+                <div className="mt-3">
+                    <a href={copyrightUrl} target="_blank" rel="noopener noreferrer"
+                    className="btn btn-sm btn-outline-secondary">
+                        <i className="bi bi-file-earmark-text me-1"></i> Ver documento de copyright
+                    </a>
+                </div>
+            )}
             </Card>
 
             {/* CA-02: El formulario de subida SOLO lo ve el autor dueño (canUpload) */}

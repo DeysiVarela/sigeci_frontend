@@ -20,7 +20,14 @@ const ArticleViewScreen = () => {
     const user = useCurrentUser();
     const backTo = location.state?.from ?? "/article";
 
-    const article = useMemo(() => MOCK_ARTICLES.find((a) => String(a.id) === String(id)) || null, [id]);
+const article = useMemo(() => {
+    const found = MOCK_ARTICLES.find((a) => String(a.id) === String(id)) || null;
+    // Pruebas con back real: los artículos testOwner son del autor logueado
+    if (found?.testOwner && import.meta.env.VITE_VERSIONS_MOCK === "false" && user?.id != null) {
+        return { ...found, authorId: user.id };
+    }
+    return found;
+}, [id, user]);
 
     if (!article || !canViewArticle(user, article)) {
         return (
