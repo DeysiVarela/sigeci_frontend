@@ -149,22 +149,40 @@ const ArticleViewScreen = () => {
                                 />
                             </li>
                             <li className="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
-                                <span className="text-muted fw-semibold">Tópico ID:</span>
-                                <span className="badge bg-light text-dark border">#{article.topic_id}</span>
+                                <span className="text-muted fw-semibold">Tópico:</span>
+                                <span className="badge bg-light text-dark border">{article.topic_name || "—"}</span>
                             </li>
                             <li className="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
-                                <span className="text-muted fw-semibold">Fecha del Artículo:</span>
-                                <span className="text-dark fw-medium">{article.article_date || "—"}</span>
+                                <span className="text-muted fw-semibold">Creado por:</span>
+                                <span className="text-dark fw-medium">{article.article_created_by_name || "—"}</span>
                             </li>
                             <li className="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
-                                <span className="text-muted fw-semibold">Creado por (User ID):</span>
-                                <span className="text-dark">#{article.article_created_by}</span>
-                            </li>
-                            <li className="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
-                                <span className="text-muted fw-semibold">Fecha de Creación:</span>
-                                <span className="text-muted small">
-                                    {article.article_created_at ? article.article_created_at.split("T")[0] : "—"}
+                                <span className="text-muted fw-semibold">Fecha:</span>
+                                <span className="text-dark fw-medium">
+                                    {article.article_date || (article.article_created_at ? article.article_created_at.split("T")[0] : "—")}
                                 </span>
+                            </li>
+                            <li className="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
+                                <span className="text-muted fw-semibold">Versión PDF:</span>
+                                <span className="badge bg-light text-dark border">
+                                    {article.article_attached_version ? `v${article.article_attached_version}` : "—"}
+                                </span>
+                            </li>
+                            <li className="list-group-item px-0 py-3">
+                                <span className="text-muted fw-semibold d-block mb-1">Archivo PDF:</span>
+                                {article.article_attached_url ? (
+                                    <a
+                                        href={article.article_attached_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="small text-decoration-none d-inline-flex align-items-center gap-1"
+                                    >
+                                        <i className="bi bi-file-earmark-pdf text-danger"></i>
+                                        <span>{`${article.article_subject}.pdf (V${article.article_attached_version})`}</span>
+                                    </a>
+                                ) : (
+                                    <span className="text-muted small">Sin archivo adjunto</span>
+                                )}
                             </li>
                             {article.article_updated_at && (
                                 <li className="list-group-item d-flex justify-content-between align-items-center px-0 py-3">

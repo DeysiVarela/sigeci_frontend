@@ -1,4 +1,9 @@
+import { useContext } from "react"
+import { AppContext } from "../../context/AppContext"
+
 const DashboardScreen = () => {
+  const {app} = useContext(AppContext);
+  console.log(app, "app")
   return (
     <>
       {/* App Content Header */}

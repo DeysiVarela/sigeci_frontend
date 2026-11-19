@@ -8,4 +8,11 @@ export const createUser = (data) => request("/api/users/", { method: "POST", bod
 export const updateUser = (id, data) => request(`/api/users/${id}/`, { method: "PATCH", body: data });
 export const deleteUser = (id) => request(`/api/users/${id}/`, { method: "DELETE" });
 export const listProfiles = () => request("/api/profiles/");
+
 export const getMe = () => request("/api/auth/me/");
+
+export const getMyProfile = () => request("/api/users/me");
+export const updateMyProfile = ({ name, lastname, email }) =>
+    request("/api/users/me", { method: "PATCH", body: { name, lastname, email } });
+export const changeMyPassword = ({ currentPassword, newPassword }) =>
+    request("/api/users/me/password/", { method: "PUT", body: { currentPassword, newPassword } });

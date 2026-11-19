@@ -29,7 +29,8 @@ export const useFetch = () => {
     const instance = axios.create({
         baseURL: `${import.meta.env.VITE_BACKEND_URL}`,
         headers: {
-            Authorization: (app.token) ? app.token : (localStorage.getItem("token") || "")
+            Authorization: (app.token) ? app.token : (localStorage.getItem("token") || ""),
+            profile: (app.profile) ? app.profile : (parseInt(localStorage.getItem("profile")) || 0)
         }
     });
     

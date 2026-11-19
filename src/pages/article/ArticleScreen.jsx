@@ -1,14 +1,14 @@
+import { useFetch } from "../../hooks/useFetch";
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router";
-import DataTable from "react-data-table-component";
 import Card from "../../components/cards/Card";
+import HandlerApp from "../../utils/HandlerApp";
 import Badge from "../../components/badges/Badge";
 import Modal from "../../components/modals/Modal";
+import DataTable from "react-data-table-component";
+import ButtonLink from "../../components/buttons/ButtonLink";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import ButtonSecondary from "../../components/buttons/ButtonSecondary";
-import ButtonLink from "../../components/buttons/ButtonLink";
-import { useFetch } from "../../hooks/useFetch";
-import HandlerApp from "../../utils/HandlerApp";
 
 const ArticleScreen = () => {
     const navigate = useNavigate();
@@ -135,23 +135,52 @@ const ArticleScreen = () => {
             )
         },
         {
-            name: "Tópico ID",
-            selector: row => row.topic_id,
+            name: "Tópico",
+            selector: row => row.topic_name || "",
             sortable: true,
-            width: "120px",
-            center: true,
+            width: "180px",
             cell: row => (
-                <span className="badge bg-light text-dark border">
-                    ID #{row.topic_id}
+                <span className="badge bg-light text-dark border text-truncate" title={row.topic_name || ""}>
+                    {row.topic_name || "—"}
                 </span>
             )
         },
         {
-            name: "Fecha",
-            selector: row => row.article_date,
+            name: "Creado por",
+            selector: row => row.article_created_by_name || "",
             sortable: true,
-            width: "140px",
-            cell: row => <span className="small text-muted">{row.article_date || "—"}</span>
+            width: "160px",
+            cell: row => (
+                <span className="small text-dark text-truncate" title={row.article_created_by_name || ""}>
+                    {row.article_created_by_name || "—"}
+                </span>
+            )
+        },
+        {
+            name: "PDF / Versión",
+            selector: row => row.article_attached_version || "",
+            sortable: true,
+            width: "130px",
+            center: true,
+            cell: row => row.article_attached_url ? (
+                <span className="badge bg-danger-subtle text-danger border border-danger-subtle" title={`${row.article_subject}.pdf`}>
+                    <i className="bi bi-file-earmark-pdf me-1"></i>
+                    v{row.article_attached_version || "1.0"}
+                </span>
+            ) : (
+                <span className="small text-muted">—</span>
+            )
+        },
+        {
+            name: "Fecha",
+            selector: row => row.article_date || row.article_created_at || "",
+            sortable: true,
+            width: "120px",
+            cell: row => (
+                <span className="small text-muted">
+                    {row.article_date || (row.article_created_at ? row.article_created_at.split("T")[0] : "—")}
+                </span>
+            )
         },
         {
             name: "Estado",
@@ -237,7 +266,8 @@ const ArticleScreen = () => {
                 <div className="d-flex gap-2">
                     <button
                         className="btn btn-primary shadow-sm d-flex align-items-center gap-2"
-                        onClick={() => navigate("/article/postulate")}
+                        // onClick={() => navigate("/article/postulate")}
+                        onClick={() => navigate("/article/create")}
                     >
                         <i className="bi bi-plus-circle"></i>
                         <span>Nuevo Artículo</span>

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 import InputText from "../../components/inputs/InputText";
 import InputEmail from "../../components/inputs/InputEmail";
 import InputPassword from "../../components/inputs/InputPassword";
-import InputSelect from "../../components/inputs/InputSelect";
+import InputMultiSelect from "../../components/inputs/InputMultiSelect";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import Card from "../../components/cards/Card";
 import HandlerApp from "../../utils/HandlerApp";
@@ -67,7 +67,7 @@ const CreateUserScreen = () => {
         lastname: data.apellido.trim(),
         email: data.email.trim(),
         password: data.password,
-        profile: Number(data.rol),
+        profiles: data.roles.map(Number),
       });
 
       // Apagamos el loader ANTES de mostrar el modal
@@ -162,13 +162,13 @@ const CreateUserScreen = () => {
                 }}
               />
 
-              <InputSelect
-                control={control}
-                label="Rol del Usuario"
-                name="rol"
-                options={rolesOptions}
-                errors={errors.rol}
-                required={true}
+              <InputMultiSelect
+                  control={control}
+                  label="Roles del Usuario"
+                  name="roles" 
+                  options={rolesOptions}
+                  errors={errors.roles}
+                  required={true}
               />
 
               <div className="d-flex justify-content-end gap-2 mt-4">

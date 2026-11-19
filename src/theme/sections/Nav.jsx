@@ -1,6 +1,7 @@
 import { Link } from "react-router";
+import { canViewUsers } from "../../utils/userAccess";
 
-const Nav = () => {
+const Nav = ({ me }) => {
   return (
     <aside className="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
       {/* Sidebar Brand */}
@@ -39,12 +40,14 @@ const Nav = () => {
                 <p>Artículos</p>
               </Link>
             </li>
-            <li className="nav-item">
-              <Link to="/users" className="nav-link">
-                <i className="nav-icon bi bi-people"></i>
-                <p>Usuarios</p>
-              </Link>
-            </li>
+            {canViewUsers(me) && (
+              <li className="nav-item">
+                <Link to="/users" className="nav-link">
+                  <i className="nav-icon bi bi-people"></i>
+                  <p>Usuarios</p>
+                </Link>
+              </li>
+            )}
 
             <li className="nav-header">SISTEMA</li>
             <li className="nav-item">

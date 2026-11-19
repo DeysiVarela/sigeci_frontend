@@ -1,6 +1,6 @@
 import { useContext, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import ReCAPTCHA from "react-google-recaptcha";
 import InputEmail from "../../components/inputs/InputEmail";
 import InputPassword from "../../components/inputs/InputPassword";
@@ -9,6 +9,7 @@ import HandlerApp from "../../utils/HandlerApp";
 // import { login } from "../../api/auth";
 import { useFetch } from "../../hooks/useFetch";
 import { AppContext } from "../../context/AppContext";
+import Swal from "sweetalert2";
 
 const LoginScreen = () => {
     const nav               = useNavigate();
@@ -53,9 +54,36 @@ const LoginScreen = () => {
                 localStorage.setItem("lastname", data.user.lastname);
                 localStorage.setItem("email", data.user.email);
                 localStorage.setItem("id", data.user.id);
-                localStorage.setItem("profile", data.user.role);
                 localStorage.setItem("permissions", JSON.stringify(data.permissions));
-                setApp((app) => ({ ...app, user: data.user, token: data.token, isAuthenticated: true }));
+                
+                let profiles = data.user.profiles;
+                
+                let profile = null;
+                // mostrar modal para seleccionar perfil.
+                if(profiles.length > 1){
+                    handlerApp.setLoader(false);
+                    res = await Swal.fire({
+                        title: "Selecciona un perfil",
+                        input: "select",
+                        inputOptions: profiles.reduce((acc, profile) => {
+                            acc[profile.id] = profile.name;
+                            return acc;
+                        }, {}),
+                        inputValidator: (value) => {
+                            if (!value) {
+                                return "Debes seleccionar un perfil.";
+                            }
+                        },
+                    });
+                    profile = parseInt(res.value);
+                }else{
+                    profile = parseInt(profiles[0].id);
+                }
+                
+                localStorage.setItem("profiles", JSON.stringify(profiles));
+                localStorage.setItem("profile", profile);
+
+                setApp((app) => ({ ...app, profile, profiles, user: data.user, token: data.token, isAuthenticated: true }));
                 nav("/home");
             }else{
                 setSubmitError(res.message);
@@ -174,9 +202,7 @@ const LoginScreen = () => {
                             <a href="/forgot-password">¿Olvidaste tu contraseña?</a>
                         </p>
                         <p className="mb-0">
-                            <a href="/register" className="text-center">
-                                Registrar nueva cuenta
-                            </a>
+                            ¿No tienes cuenta? <Link to="/register">Regístrate</Link>
                         </p>
                     </div>
                 </div>

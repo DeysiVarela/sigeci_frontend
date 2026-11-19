@@ -6,6 +6,11 @@ import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import HandlerApp from "../../utils/HandlerApp";
 import { forgotPassword } from "../../api/auth";
 
+const markRecoverySent = (email) => {
+    sessionStorage.setItem("recovery_email", email);
+    sessionStorage.setItem("recovery_sent_at", String(Date.now()));
+};
+
 const ForgotPasswordScreen = () => {
     const nav = useNavigate();
     const handlerApp = HandlerApp();
@@ -13,14 +18,14 @@ const ForgotPasswordScreen = () => {
     const { control, handleSubmit, formState: { errors } } = useForm();
 
     const [error, setError] = useState("");
+    
     const submitData = async (data) => {
         handlerApp.setLoader(true);
         setError("");
         try {
             await forgotPassword(data.email);
             handlerApp.setLoader(false);
-            sessionStorage.setItem("recovery_email", data.email);
-            sessionStorage.setItem("recovery_sent_at", String(Date.now()));
+            markRecoverySent(data.email);
             nav("/reset-pin");
         } catch (requestError) {
             setError(requestError.message);
