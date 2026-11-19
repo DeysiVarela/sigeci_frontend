@@ -19,7 +19,7 @@ export const canEditUser = (me, userId, target) => {
     return hasPermission(me, "user", "update") && !isProtectedAdmin(me, target);
 };
 
-export const canDeleteUser = (me, userId, target) =>
+export const canDeactivateUser = (me, userId, target) =>
     hasPermission(me, "user", "delete") &&
     me?.id !== Number(userId) &&
     !isProtectedAdmin(me, target);

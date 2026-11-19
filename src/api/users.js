@@ -6,7 +6,8 @@ export const listUsers = ({ page = 1, pageSize = 10, profile, active } = {}) =>
 export const getUser = (id) => request(`/api/users/${id}/`);
 export const createUser = (data) => request("/api/users/", { method: "POST", body: data });
 export const updateUser = (id, data) => request(`/api/users/${id}/`, { method: "PATCH", body: data });
-export const deleteUser = (id) => request(`/api/users/${id}/`, { method: "DELETE" });
+export const deactivateUser = (id) =>
+    request(`/api/users/${id}/status/`, { method: "PATCH", body: { active: false } });
 export const listProfiles = () => request("/api/profiles/");
 
 export const getMe = () => request("/api/auth/me/");
