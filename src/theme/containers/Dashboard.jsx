@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Outlet } from 'react-router';
+import { Outlet, useOutletContext } from 'react-router';
 import Header from '../sections/Header';
 import Nav from '../sections/Nav';
 import Footer from '../sections/Footer';
@@ -9,9 +9,10 @@ import Loader from '../../components/loaders/Loader';
 
 const Dashboard = () => {
 	const [, setSidebarCollapsed] = useState(false);
+	const outletContext = useOutletContext();
 
 	useEffect(() => {
-		// Sincronizar clases requeridas por AdminLTE en el body
+
 		document.body.classList.add('layout-fixed', 'sidebar-expand-lg', 'bg-body-tertiary');
 		return () => {
 			document.body.classList.remove('layout-fixed', 'sidebar-expand-lg', 'bg-body-tertiary', 'sidebar-collapse', 'sidebar-open');
@@ -36,16 +37,16 @@ const Dashboard = () => {
 
 	return (
 		<AppContextProvider>
-            <LoaderContextProvider>
+			<LoaderContextProvider>
 				<div className="app-wrapper">
 					<Header onToggleSidebar={handleToggleSidebar} />
-					<Nav />
+					<Nav me={outletContext?.me} />
 					<main className="app-main">
-						<Outlet />
+						<Outlet context={outletContext} />
 					</main>
 					<Footer />
 				</div>
-				<Loader/>
+				<Loader />
 			</LoaderContextProvider>
 		</AppContextProvider>
 	);

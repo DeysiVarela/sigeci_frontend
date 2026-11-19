@@ -9,15 +9,19 @@ import Dashboard from "../theme/containers/Dashboard";
 import ArticleScreen from "../pages/article/ArticleScreen";
 import ArticleViewScreen from "../pages/article/ArticleViewScreen";
 import ArticleEditScreen from "../pages/article/ArticleEditScreen";
+import ArticleEditGuard from "../pages/article/components/ArticleEditGuard";
 import UserScreen from "../pages/users/UserScreen";
 import Container from "../theme/containers/Container";
 import ProtectedRoute from "./ProtectedRoute";
+import PermissionRoute from "./PermissionRoute";
+import { canViewUsers } from "../utils/userAccess";
 import CreateArticlePDFScreen from "../pages/article/CreateArticlePDFScreen";
 import CreateArticleScreen from "../pages/article/CreateArticleScreen";
 import CreateUserScreen from "../pages/users/CreateUserScreen";
 import EditUserScreen from "../pages/users/EditUserScreen";
 import EvaluationListScreen from "../pages/evaluation/EvaluationListScreen";
 import EvaluationDetailScreen from "../pages/evaluation/EvaluationDetailScreen";
+import UserProfileScreen from "../pages/users/UserProfileScreen";
 
 const router = createBrowserRouter([
     {
@@ -55,21 +59,28 @@ const router = createBrowserRouter([
         path: "/",
         element: <ProtectedRoute />,
         children: [
-            { element: <Dashboard />, children: [
-                { index: true, element: <ComponentsScreen/> },
-                { path: "/components", element: <ComponentsScreen/> },
-                { path: "/home", element: <DashboardScreen/> },
-                { path: "/article", element: <ArticleScreen/> },
-                { path: "/article/:id", element: <ArticleViewScreen/> },
-                { path: "/article/edit/:id", element: <ArticleEditScreen/> },
-                { path: "/article/create", element: <CreateArticleScreen/> },
-                { path: "/article/postulate", element: <CreateArticlePDFScreen/> },
-                { path: "/users", element: <UserScreen/> },
-                { path: "/users/create", element: <CreateUserScreen/> },
-                { path: "/users/edit/:id", element: <EditUserScreen/> },
-                { path: "/evaluations", element: <EvaluationListScreen/> },
-                { path: "/evaluations/:id", element: <EvaluationDetailScreen/> }
-            ]}
+            {
+                element: <Dashboard />, children: [
+                    { index: true, element: <ComponentsScreen /> },
+                    { path: "/components", element: <ComponentsScreen /> },
+                    { path: "/home", element: <DashboardScreen /> },
+                    { path: "/article", element: <ArticleScreen /> },
+                    { path: "/article/:id", element: <ArticleViewScreen /> },
+                    { path: "/article/edit/:id", element: <ArticleEditGuard><ArticleEditScreen /></ArticleEditGuard> },
+                    { path: "/article/create", element: <CreateArticleScreen /> },
+                    { path: "/article/postulate", element: <CreateArticlePDFScreen /> },
+                    { path: "/evaluations", element: <EvaluationListScreen /> },
+                    { path: "/evaluations/:id", element: <EvaluationDetailScreen /> },
+                    {
+                        element: <PermissionRoute allow={canViewUsers} />, children: [
+                            { path: "/users", element: <UserScreen /> },
+                            { path: "/users/create", element: <CreateUserScreen /> },
+                        ]
+                    },
+                    { path: "/users/edit/:id", element: <EditUserScreen /> },
+                    { path: "/profile", element: <UserProfileScreen /> }
+                ]
+            }
         ]
     }
 ]);

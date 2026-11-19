@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { useNavigate } from "react-router";
 import InputText from "../../components/inputs/InputText";
+import InputEmail from "../../components/inputs/InputEmail"; 
 import InputSelect from "../../components/inputs/InputSelect";
 import InputTextArea from "../../components/inputs/InputTextArea";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
@@ -15,9 +16,30 @@ const CreateArticlePDFScreen = () => {
     const handlerApp = HandlerApp();
     const [selectedFile, setSelectedFile] = useState(null);
 
-    const { control, handleSubmit, formState: { errors }, reset } = useForm({
+    const { control, handleSubmit, getValues, formState: { errors }, reset } = useForm({   
         mode: "onChange"
     });
+
+    // Lista dinámica de coautores
+    const { fields, append, remove } = useFieldArray({
+        control,
+        name: "coautores"
+    });
+
+    //Función para agregar una fila vacía
+    const handleAddCoautor = () => {
+        append({ nombre: "", afiliacion: "", correo: "" });
+    };
+
+    //No permite repetir el mismo correo entre coautores
+    const validateCorreoUnico = (value) => {
+        if (!value) return true;
+        const correo = value.trim().toLowerCase();
+        const repetidos = (getValues("coautores") || []).filter(
+            (c) => (c.correo || "").trim().toLowerCase() === correo
+        );
+        return repetidos.length <= 1 || "Este correo ya está en la lista de coautores";
+    };
 
     // Manejo manual del archivo PDF
     const handleFileChange = (e) => {
@@ -47,7 +69,13 @@ const CreateArticlePDFScreen = () => {
         formData.append("resumen", data.resumen);
         formData.append("pdfFile", selectedFile);
 
-        // Simulamos la petición al backend
+        // <--- Lista de coautores como JSON en un solo campo 
+        formData.append("coautores", JSON.stringify(data.coautores ?? []));
+
+        //borrar al conectar el backend real para verificar en pruebas qué se enviaría
+        console.log("FormData coautores →", formData.get("coautores"));
+
+        // Simulamos la petición al backend (reemplazar cuando endpoint real se haya creado en el backend, scrum-86 bolivar)
         setTimeout(() => {
             handlerApp.setLoader(false);
             
@@ -126,6 +154,72 @@ const CreateArticlePDFScreen = () => {
                                 rows={5}
                                 placeholder="Escribe un resumen breve del trabajo..."
                             />
+
+                            
+                            <div className="mb-4">
+                                <div className="d-flex align-items-center justify-content-between mb-2">
+                                    <label className="fw-semibold mb-0">
+                                        <i className="bi bi-people me-1"></i>
+                                        Coautores (opcional)
+                                    </label>
+                                    <ButtonSecondary
+                                        label="+ Agregar coautor"
+                                        className="btn-sm"
+                                        onClick={handleAddCoautor}
+                                    />
+                                </div>
+ 
+                                {fields.length === 0 && (
+                                    <small className="text-muted">
+                                        Si tu trabajo tiene coautores, agrégalos con el botón de arriba.
+                                    </small>
+                                )}
+ 
+                                {fields.map((field, index) => (
+                                    <div key={field.id} className="border rounded p-3 mb-3 bg-light">
+                                        <div className="d-flex justify-content-between align-items-center mb-2">
+                                            <span className="fw-semibold small text-uppercase text-muted">
+                                                Coautor {index + 1}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                className="btn btn-outline-danger btn-sm"
+                                                onClick={() => remove(index)}
+                                                title="Quitar coautor"
+                                            >
+                                                <i className="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+ 
+                                        <InputText
+                                            control={control}
+                                            label="Nombre completo"
+                                            name={`coautores.${index}.nombre`}
+                                            errors={errors.coautores?.[index]?.nombre}
+                                            required={true}
+                                            placeholder="Nombre y apellido del coautor"
+                                        />
+                                        <InputText
+                                            control={control}
+                                            label="Afiliación"
+                                            name={`coautores.${index}.afiliacion`}
+                                            errors={errors.coautores?.[index]?.afiliacion}
+                                            required={true}
+                                            placeholder="Universidad, institución o empresa"
+                                        />
+                                        <InputEmail
+                                            control={control}
+                                            label="Correo"
+                                            name={`coautores.${index}.correo`}
+                                            errors={errors.coautores?.[index]?.correo}
+                                            required={true}
+                                            rules={{ validate: validateCorreoUnico }}
+                                            placeholder="correo@institucion.edu"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                            
 
                             <div className="form-group mb-3">
                                 <label htmlFor="pdfFile" className="fw-semibold">Archivo PDF de la Propuesta *</label>
