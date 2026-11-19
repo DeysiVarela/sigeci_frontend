@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router";
 import InputText from "../../components/inputs/InputText";
 import InputEmail from "../../components/inputs/InputEmail";
 import InputPassword from "../../components/inputs/InputPassword";
@@ -7,8 +8,9 @@ import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import Card from "../../components/cards/Card";
 import HandlerApp from "../../utils/HandlerApp";
 import Swal from "sweetalert2";
-import { getMyProfile, updateMyProfile, changeMyPassword } from "../../api/users";
+import { getMyProfile, updateMyProfile, changeMyPassword, deleteMyAccount } from "../../api/users";
 import { getErrorMessage } from "../../utils/apiError";
+import { logout } from "../../api/auth";
 
 // El login guarda el usuario en localStorage["user"] (lo leen otras pantallas).
 // El PATCH devuelve la misma forma, así que se mezcla para no dejar la sesión desactualizada.
@@ -23,6 +25,7 @@ const syncSessionUser = (updatedUser) => {
 
 const UserProfileScreen = () => {
     const handlerApp = HandlerApp();
+    const navigate = useNavigate();
 
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [showPasswordSection, setShowPasswordSection] = useState(false);
@@ -70,21 +73,6 @@ const UserProfileScreen = () => {
 
         loadProfile();
 
-        // --- BLOQUE MOCK (Movido al final según tu indicación) ---
-        // Nota: Si quitas el comentario de estas líneas, los datos de prueba 
-        // sobrescribirán los datos reales de la API.
-        /*
-        setTimeout(() => {
-            const mockUser = {
-                nombre: "Laura Dayana",
-                apellido: "Tascon",
-                email: "laura@test.com",
-            };
-            resetProfile(mockUser); 
-            setIsLoadingData(false);
-        }, 1000);
-        */
-        // --------------------------------------------------------
 
         return () => { cancelled = true; };
     }, [resetProfile]);
@@ -161,6 +149,54 @@ const UserProfileScreen = () => {
         } finally {
             handlerApp.setLoader(false);
         }
+    };
+
+        //Funcion para manejar la eliminacion de la cuenta
+    const handleDeleteAccount = async () => {
+        const result = await Swal.fire({
+            title: "¿Estás seguro?",
+            text: "Esta acción desactivará tu cuenta. Tus artículos se conservarán, pero no podrás volver a ingresar.",
+            icon: "warning",
+            input: "password",
+            inputLabel: "Ingresa tu contraseña para confirmar",
+            inputPlaceholder: "Tu contraseña actual",
+            showCancelButton: true,
+            confirmButtonColor: "#dc3545",
+            cancelButtonColor: "#6c757d",
+            confirmButtonText: "Sí, eliminar mi cuenta",
+            cancelButtonText: "Cancelar",
+            showLoaderOnConfirm: true,                          //  muestra el spinner mientras llama al backend
+            allowOutsideClick: () => !Swal.isLoading(),         // no se puede cerrar mientras carga
+            inputValidator: (value) => (value ? undefined : "Debes ingresar tu contraseña"),
+            //  Llamada REAL al backend (ya no hay setTimeout simulado)
+            preConfirm: async (password) => {
+                try {
+                    await deleteMyAccount({ password });
+                    return true;
+                } catch (err) {
+                    // 400 (clave incorrecta / último admin) o 429 (demasiados intentos):
+                    // el error se ve dentro del diálogo y este sigue abierto
+                    Swal.showValidationMessage(
+                        getErrorMessage(err, "No se pudo eliminar la cuenta. Intenta de nuevo.")
+                    );
+                    return false;
+                }
+            },
+        });
+
+        if (!result.isConfirmed) return; // canceló o cerró el diálogo
+
+        // Antes borraba "token" y "user" (claves que no existen). logout() borra access, refresh y user.
+        logout();
+
+        await Swal.fire({
+            title: "Cuenta eliminada",
+            text: "Tu cuenta ha sido desactivada.", //se quitó lo de "reactivación": ese flujo no existe
+            icon: "success",
+            confirmButtonText: "Ir al Login",
+        });
+
+        navigate("/login", { replace: true }); // evita volver atrás a una pantalla protegida
     };
 
     return (
@@ -269,6 +305,26 @@ const UserProfileScreen = () => {
                                 </div>
                             </form>
                         )}
+                    </Card>
+
+                    {/* Zona de peligro: eliminar la cuenta (SCRUM-129) */}
+                    <Card title="Zona de Peligro" outline outlineColor="danger" className="mt-4">
+                        <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                            <div>
+                                <h6 className="fw-bold text-danger mb-1">Eliminar mi cuenta</h6>
+                                {/* se quitó "sin solicitar reactivación": no existe ese flujo */}
+                                <p className="text-muted small mb-0">
+                                    Una vez eliminada, tu cuenta se desactivará y no podrás volver a ingresar.
+                                </p>
+                            </div>
+                            <button 
+                                type="button" 
+                                className="btn btn-danger"
+                                onClick={handleDeleteAccount}
+                            >
+                                <i className="bi bi-trash me-1"></i> Eliminar mi cuenta
+                            </button>
+                        </div>
                     </Card>
                 </div>
             </div>
