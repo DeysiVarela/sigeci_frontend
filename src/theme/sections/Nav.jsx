@@ -1,7 +1,14 @@
 import { Link } from "react-router";
 import { canViewUsers } from "../../utils/userAccess";
+import { useContext } from "react";
+import { AppContext } from "../../context/AppContext";
 
 const Nav = ({ me }) => {
+
+  const { app } = useContext(AppContext);
+
+  console.log(app?.permissions?.length, "a")
+
   return (
     <aside className="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
       {/* Sidebar Brand */}
@@ -13,6 +20,34 @@ const Nav = ({ me }) => {
       {/* Sidebar Wrapper */}
       <div className="sidebar-wrapper">
         <nav className="mt-2" aria-label="Main navigation">
+          {/* {
+            app?.permissions?.length > 0 ?
+            <>
+              Empty State
+            </>
+            :
+            <ul
+              className="nav sidebar-menu flex-column"
+              data-lte-toggle="treeview"
+              data-accordion="false"
+              id="navigation"
+            >
+              { 
+                app?.permissions?.map(menu =>{
+                  if (menu.profile_action_visibility){
+
+                  return  <li className="nav-item">
+                      <Link to="/users" className="nav-link">
+                        <i className="nav-icon bi bi-people"></i>
+                        <p>Usuarios</p>
+                      </Link>
+                    </li>
+                  }
+                })
+              }
+            </ul>
+          } */}
+          
           <ul
             className="nav sidebar-menu flex-column"
             data-lte-toggle="treeview"

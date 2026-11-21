@@ -35,19 +35,17 @@ const Dashboard = () => {
 	};
 
 	return (
-		<AppContextProvider>
-			<LoaderContextProvider>
-				<div className="app-wrapper">
-					<Header onToggleSidebar={handleToggleSidebar} />
-					<Nav me={outletContext?.me} />
-					<main className="app-main">
-						<Outlet context={outletContext} />
-					</main>
-					<Footer />
-				</div>
-				<Loader />
-			</LoaderContextProvider>
-		</AppContextProvider>
+		<>
+			<div className="app-wrapper">
+				<Header onToggleSidebar={handleToggleSidebar} />
+				<Nav me={outletContext?.me} />
+				<main className="app-main">
+					<Outlet context={outletContext} />
+				</main>
+				<Footer />
+			</div>
+			<Loader />
+		</>
 	);
 };
 
