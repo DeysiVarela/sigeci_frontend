@@ -5,12 +5,10 @@ import Loader from "../../components/loaders/Loader";
 
 const Container = () => {
     return (
-        <AppContextProvider>
-            <LoaderContextProvider>
-                <Outlet/>
-                <Loader/>
-            </LoaderContextProvider>
-        </AppContextProvider>
+        <>
+            <Outlet/>
+            <Loader/>
+        </>
     );
 };
 

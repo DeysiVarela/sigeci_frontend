@@ -5,5 +5,27 @@
     "catalog": {
         "title": "UI Component Catalog",
         "description": "Interactive gallery for developers. Visualize, test, and reuse the system's component library."
+    },
+    "users": "Users",
+    "event": "Events",
+    "article": "Articles",
+    "application": "Applications",
+    "dashboard": "Dashboard",
+    "setting": "Settings",
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "articleScreen": {
+        "title": "Scientific Article Management",
+        "description": "Academic publications, peer reviews, and SIGECI research documents.",
+         "table": {
+            "title": "Article Title",
+            "topic": "Topic",
+            "author": "Author",
+            "actions": "Actions",
+            "state": "State",
+            "version": "PDF/Version",
+            "date": "Date"
+        }
     }
 }

@@ -1,5 +1,6 @@
 import { createBrowserRouter } from "react-router";
-import LoginScreen from "../pages/login/LoginScreen";
+// import LoginScreen from "../pages/login/LoginScreen";
+import LoginScreen from "../pages/auth/LoginScreen";
 import ForgotPasswordScreen from "../pages/auth/ForgotPasswordScreen";
 import ResetPinScreen from "../pages/auth/ResetPinScreen";
 import RegisterScreen from "../pages/auth/RegisterScreen";
@@ -17,6 +18,7 @@ import PermissionRoute from "./PermissionRoute";
 import { canViewUsers } from "../utils/userAccess";
 import CreateArticlePDFScreen from "../pages/article/CreateArticlePDFScreen";
 import CreateArticleScreen from "../pages/article/CreateArticleScreen";
+import ArticleFormScreen from "../pages/article/ArticleFormScreen";
 import CreateUserScreen from "../pages/users/CreateUserScreen";
 import EditUserScreen from "../pages/users/EditUserScreen";
 import UserProfileScreen from "../pages/users/UserProfileScreen";
@@ -65,16 +67,20 @@ const router = createBrowserRouter([
                     { path: "/home", element: <DashboardScreen /> },
                     { path: "/article", element: <ArticleScreen /> },
                     { path: "/article/:id", element: <ArticleViewScreen /> },
-                    { path: "/article/edit/:id", element: <ArticleEditGuard><ArticleEditScreen /></ArticleEditGuard> },
-                    { path: "/article/create", element: <CreateArticleScreen /> },
+                    // { path: "/article/edit/:id", element: <ArticleEditGuard><ArticleEditScreen /></ArticleEditGuard> },
+                    // { path: "/article/create", element: <CreateArticleScreen /> },
+                    { path: "/article/edit/:id", element: <ArticleFormScreen /> },
+                    { path: "/article/create", element: <ArticleFormScreen /> },
                     { path: "/article/postulate", element: <CreateArticlePDFScreen /> },
                     { path: "/topics/:topicId/articles", element: <TopicArticlesScreen /> },
-                    {
-                        element: <PermissionRoute allow={canViewUsers} />, children: [
-                            { path: "/users", element: <UserScreen /> },
-                            { path: "/users/create", element: <CreateUserScreen /> },
-                        ]
-                    },
+                    { path: "/users", element: <UserScreen /> },
+                    { path: "/users/create", element: <CreateUserScreen /> },
+                    // {
+                    //     element: <PermissionRoute allow={canViewUsers} />, children: [
+                    //         { path: "/users", element: <UserScreen /> },
+                    //         { path: "/users/create", element: <CreateUserScreen /> },
+                    //     ]
+                    // },
                     { path: "/users/edit/:id", element: <EditUserScreen /> },
                     { path: "/profile", element: <UserProfileScreen /> }
                 ]

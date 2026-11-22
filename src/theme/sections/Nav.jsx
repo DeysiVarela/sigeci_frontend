@@ -1,7 +1,17 @@
 import { Link } from "react-router";
 import { canViewUsers } from "../../utils/userAccess";
+import { useContext } from "react";
+import { AppContext } from "../../context/AppContext";
+import { useTranslation } from "react-i18next";
 
 const Nav = ({ me }) => {
+
+  const { app } = useContext(AppContext);
+
+  const { t } = useTranslation();
+
+  console.log(app?.permissions?.length, "a")
+
   return (
     <aside className="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
       {/* Sidebar Brand */}
@@ -12,8 +22,42 @@ const Nav = ({ me }) => {
       </div>
       {/* Sidebar Wrapper */}
       <div className="sidebar-wrapper">
-        <nav className="mt-2" aria-label="Main navigation">
+        <nav className="mt-2 container-menu" aria-label="Main navigation">
+          {
+            app?.permissions?.length > 0 ?
+            <ul
+              className="nav sidebar-menu menu-list"
+              data-lte-toggle="treeview"
+              data-accordion="false"
+              id="navigation"
+            >
+              { app?.permissions?.filter(p => p.profile_action_visibility).sort((a, b) => a.profile_action_order - b.profile_action_order).map((menu, i) => (
+                <li className="nav-item" key={i}>
+                    <Link to={menu.profile_action_action} className="nav-link">
+                      <i className={`nav-icon bi ${menu.profile_action_icon}`}></i>
+                      <p>{t(menu.profile_action_title)}</p>
+                    </Link>
+                  </li>
+              ))}
+            </ul>
+            :
+            <p className="nav-link text-center text-muted">No hay permisos</p>
+          }
           <ul
+            className="nav sidebar-menu menu-list-2"
+            data-lte-toggle="treeview"
+            data-accordion="false"
+            id="navigation"
+          >
+            <li className="nav-item">
+              <Link to="/settings" className="nav-link">
+                <i className="nav-icon bi bi-gear"></i>
+                <p>{t("setting")}</p>
+              </Link>
+            </li>
+          </ul>
+          
+          {/* <ul
             className="nav sidebar-menu flex-column"
             data-lte-toggle="treeview"
             data-accordion="false"
@@ -56,7 +100,7 @@ const Nav = ({ me }) => {
                 <p>Configuración</p>
               </Link>
             </li>
-          </ul>
+          </ul> */}
         </nav>
       </div>
     </aside>

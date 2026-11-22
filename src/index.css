@@ -1,0 +1,25 @@
+
+/* Menu */
+.container-menu{
+    display: flex;
+    flex-wrap: wrap;
+    padding: 2px;
+    height: 100%;
+    flex-direction: column;
+}
+
+.menu-list{
+    flex-grow: 1;
+    flex-direction: column;
+    width: 100%;
+}
+
+.menu-list-2{
+    flex-shrink: 1;
+    padding-bottom: 20px;
+    border-top: 1px solid var(--bs-border-color);
+}
+
+.nav-item{
+    width: 100%;
+}
