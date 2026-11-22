@@ -5,5 +5,27 @@
     "catalog": {
         "title": "Catálogo de Componentes UI",
         "description": "Galería interactiva para desarrolladores. Visualiza, prueba y reutiliza la librería de componentes del sistema."
+    },
+    "users": "Usuarios",
+    "event": "Eventos",
+    "article": "Artículos",
+    "application": "Postulaciones",
+    "dashboard": "Dashboard",
+    "setting": "Configuración",
+    "add": "Agregar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "articleScreen": {
+        "title": "Gestión de Artículos Científicos",
+        "description": "Publicaciones académicas, revisiones por pares y documentos de investigación SIGECI.",
+        "table": {
+            "title": "Título del artículo",
+            "topic": "Tópico",
+            "author": "Autor",
+            "actions": "Acciones",
+            "state": "Estado",
+            "version": "PDF/Versión",
+            "date": "Fecha"
+        }
     }
 }

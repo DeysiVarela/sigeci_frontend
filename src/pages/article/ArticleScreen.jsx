@@ -9,12 +9,14 @@ import DataTable from "react-data-table-component";
 import ButtonLink from "../../components/buttons/ButtonLink";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import ButtonSecondary from "../../components/buttons/ButtonSecondary";
+import { useTranslation } from "react-i18next";
 
 const ArticleScreen = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const api = useFetch();
     const handlerApp = HandlerApp();
+    const {t} = useTranslation();
 
     const [articles, setArticles] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -115,7 +117,7 @@ const ArticleScreen = () => {
             cell: row => <span className="badge bg-light text-secondary border">#{row.article_id}</span>
         },
         {
-            name: "Título del Artículo",
+            name: t("articleScreen.table.title"),
             selector: row => row.article_subject,
             sortable: true,
             cell: row => (
@@ -135,7 +137,7 @@ const ArticleScreen = () => {
             )
         },
         {
-            name: "Tópico",
+            name: t("articleScreen.table.topic"),
             selector: row => row.topic_name || "",
             sortable: true,
             width: "180px",
@@ -146,7 +148,7 @@ const ArticleScreen = () => {
             )
         },
         {
-            name: "Creado por",
+            name: t("articleScreen.table.author"),
             selector: row => row.article_created_by_name || "",
             sortable: true,
             width: "160px",
@@ -157,7 +159,7 @@ const ArticleScreen = () => {
             )
         },
         {
-            name: "PDF / Versión",
+            name: t("articleScreen.table.version"),
             selector: row => row.article_attached_version || "",
             sortable: true,
             width: "130px",
@@ -172,7 +174,7 @@ const ArticleScreen = () => {
             )
         },
         {
-            name: "Fecha",
+            name: t("articleScreen.table.date"),
             selector: row => row.article_date || row.article_created_at || "",
             sortable: true,
             width: "120px",
@@ -183,7 +185,7 @@ const ArticleScreen = () => {
             )
         },
         {
-            name: "Estado",
+            name: t("articleScreen.table.state"),
             selector: row => row.article_active,
             sortable: true,
             width: "120px",
@@ -197,7 +199,7 @@ const ArticleScreen = () => {
             )
         },
         {
-            name: "Acciones",
+            name: t("articleScreen.table.actions"),
             width: "230px",
             allowOverflow: true,
             ignoreRowClick: true,
@@ -257,10 +259,10 @@ const ArticleScreen = () => {
                 <div>
                     <h2 className="fw-bold mb-1 d-flex align-items-center gap-2">
                         <i className="bi bi-file-earmark-text-fill text-primary"></i>
-                        Gestión de Artículos Científicos
+                        {t("articleScreen.title")}
                     </h2>
                     <p className="text-secondary mb-0">
-                        Publicaciones académicas, revisiones por pares y documentos de investigación SIGECI.
+                        {t("articleScreen.description")}
                     </p>
                 </div>
                 <div className="d-flex gap-2">
@@ -387,8 +389,8 @@ const ArticleScreen = () => {
                         columns={columns}
                         data={filteredArticles}
                         pagination
-                        paginationPerPage={5}
-                        paginationRowsPerPageOptions={[5, 10, 15, 20]}
+                        paginationPerPage={10}
+                        paginationRowsPerPageOptions={[10, 50, 100]}
                         responsive
                         highlightOnHover
                         noDataComponent={

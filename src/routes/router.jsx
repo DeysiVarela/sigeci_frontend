@@ -71,12 +71,14 @@ const router = createBrowserRouter([
                     { path: "/article/edit/:id", element: <ArticleFormScreen /> },
                     { path: "/article/create", element: <ArticleFormScreen /> },
                     { path: "/article/postulate", element: <CreateArticlePDFScreen /> },
-                    {
-                        element: <PermissionRoute allow={canViewUsers} />, children: [
-                            { path: "/users", element: <UserScreen /> },
-                            { path: "/users/create", element: <CreateUserScreen /> },
-                        ]
-                    },
+                    { path: "/users", element: <UserScreen /> },
+                    { path: "/users/create", element: <CreateUserScreen /> },
+                    // {
+                    //     element: <PermissionRoute allow={canViewUsers} />, children: [
+                    //         { path: "/users", element: <UserScreen /> },
+                    //         { path: "/users/create", element: <CreateUserScreen /> },
+                    //     ]
+                    // },
                     { path: "/users/edit/:id", element: <EditUserScreen /> },
                     { path: "/profile", element: <UserProfileScreen /> }
                 ]
