@@ -20,6 +20,7 @@ import CreateArticleScreen from "../pages/article/CreateArticleScreen";
 import CreateUserScreen from "../pages/users/CreateUserScreen";
 import EditUserScreen from "../pages/users/EditUserScreen";
 import UserProfileScreen from "../pages/users/UserProfileScreen";
+import TopicArticlesScreen from "../pages/article/TopicArticlesScreen";
 
 const router = createBrowserRouter([
     {
@@ -67,6 +68,7 @@ const router = createBrowserRouter([
                     { path: "/article/edit/:id", element: <ArticleEditGuard><ArticleEditScreen /></ArticleEditGuard> },
                     { path: "/article/create", element: <CreateArticleScreen /> },
                     { path: "/article/postulate", element: <CreateArticlePDFScreen /> },
+                    { path: "/topics/:topicId/articles", element: <TopicArticlesScreen /> },
                     {
                         element: <PermissionRoute allow={canViewUsers} />, children: [
                             { path: "/users", element: <UserScreen /> },

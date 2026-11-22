@@ -19,3 +19,18 @@ export const submitFinalVersion = (articleId, { finalPdf, copyrightFile }, optio
     formData.append("copyright_pdf", copyrightFile);
     return uploadRequest(`/api/articles/${articleId}/final-submission/`, formData, options);
 };
+
+// SCRUM-176: Obtener los artículos de un tópico específico para la pantalla de Drag & Drop
+export const getArticlesByTopic = (topicId) => {
+    return request(`/api/articles/topics/${topicId}/articles/`, {
+        method: "GET",
+    });
+};
+
+// SCRUM-176: Guardar el nuevo orden de los artículos después de arrastrarlos
+export const reorderArticles = (orderedIds) => {
+    return request("/api/articles/reorder/", {
+        method: "POST",
+        body: { ordered_ids: orderedIds },
+    });
+};
