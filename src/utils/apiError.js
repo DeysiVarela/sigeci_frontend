@@ -7,6 +7,8 @@ const FIELD_LABELS = {
     password: "Contraseña",
     profiles: "Roles",
     active: "Estado",
+    final_pdf: "PDF final",
+    copyright_pdf: "Copyright",
 };
 
 const flatten = (data) => {

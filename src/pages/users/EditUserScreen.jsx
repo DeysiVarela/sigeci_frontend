@@ -25,7 +25,7 @@ const EditUserScreen = () => {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [rolesOptions, setRolesOptions] = useState([]);
   const [manager, setManager] = useState(false);
-  const [original, setOriginal] = useState(null); // rol y estado originales del usuario
+  const [original, setOriginal] = useState(null);
 
   const {
     control,
@@ -33,10 +33,9 @@ const EditUserScreen = () => {
     formState: { errors },
     reset,
   } = useForm({
-    mode: "onChange", // Valida mientras escribes
+    mode: "onChange",
   });
 
-  // Carga el usuario y los roles; el formulario se muestra cuando ya están ambos
   useEffect(() => {
     let cancelled = false;
     let denied = false;
@@ -45,12 +44,11 @@ const EditUserScreen = () => {
       .then(([user, profileRes, me]) => {
         if (cancelled) return;
 
-        // Un usuario que no es gestor solo puede editar sus propios datos
-        if (!canEditUser(me, id)) {
+        if (!canEditUser(me, id, user)) {
           denied = true;
           Swal.fire({
             title: "Sin permisos",
-            text: "Solo puedes editar tus propios datos.",
+            text: "No tienes permisos para editar a este usuario.",
             icon: "warning",
           }).then(() => nav("/users"));
           return;
@@ -71,7 +69,7 @@ const EditUserScreen = () => {
           nombre: user.name,
           apellido: user.lastname,
           email: user.email,
-          roles: user.profiles ? user.profiles.map(p => String(p.id)) : [], 
+          roles: user.profiles ? user.profiles.map(p => String(p.id)) : [],
           estado: String(user.active),
         });
       })
@@ -181,16 +179,16 @@ const EditUserScreen = () => {
                 {manager && (
                   <>
 
-                <InputMultiSelect
-                  control={control}
-                  label="Roles del Usuario"
-                  name="roles"
-                  options={rolesOptions}
-                  errors={errors.roles}
-                  required={true}
-                  />
-                
-                
+                    <InputMultiSelect
+                      control={control}
+                      label="Roles del Usuario"
+                      name="roles"
+                      options={rolesOptions}
+                      errors={errors.roles}
+                      required={true}
+                    />
+
+
 
                     {/* NUEVO: Restauramos el InputSelect para el Estado */}
                     <InputSelect

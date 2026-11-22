@@ -41,8 +41,9 @@ Este artículo presenta una evaluación de curvas elípticas Ed25519 frente a RS
         author: "Laura Gómez",
         topic: "educacion_informatica",
         submittedAt: "2026-08-19",
-        status: "EN_REVISION",
+        status: "ACEPTADO",
         views: 640,
+        testOwner: true,
         summary:
             "Propuesta de integración del marco Scrum y Kanban para la actualización semestral de programas académicos en ingeniería.",
         content: `El diseño curricular tradicional suele responder con lentitud a las demandas del sector tecnológico.
@@ -52,12 +53,13 @@ Se implementó un plan piloto basado en iteraciones quincenales tipo Scrum, logr
     {
         id: 4,
         title: "Internet de las Cosas y Redes LoRaWAN para el Monitoreo Agrícola",
-        authorId: 105,
+        authorId: 16,
         author: "Dr. Julián Castro",
         topic: "software_practica",
         submittedAt: "2026-09-02",
-        status: "POSTULADO",
+        status: "CON_AVAL_PRESENTACION",
         views: 210,
+        testOwner: true,
         summary:
             "Diseño y despliegue de sensores de humedad y temperatura de bajo consumo para cultivos de caña de azúcar en zonas rurales.",
         content: `El monitoreo eficiente de variables agroclimáticas permite optimizar el consumo hídrico en el sector azucarero.
