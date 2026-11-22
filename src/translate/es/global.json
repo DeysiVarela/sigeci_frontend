@@ -1,7 +1,7 @@
 {
     "0000": "Error 1",
-	"0001": "Error 2",
-	"0002": "Success 1",
+    "0001": "Error 2",
+    "0002": "Success 1",
     "catalog": {
         "title": "Catálogo de Componentes UI",
         "description": "Galería interactiva para desarrolladores. Visualiza, prueba y reutiliza la librería de componentes del sistema."
@@ -27,5 +27,16 @@
             "version": "PDF/Versión",
             "date": "Fecha"
         }
+    },
+    "topicArticlesScreen": {
+        "title": "Organizar Artículos del Tópico",
+        "description": "Arrastra y suelta las tarjetas para definir el orden de presentación.",
+        "back": "Volver",
+        "cardTitle": "Lista de Artículos (Arrastrables)",
+        "loading": "Cargando artículos...",
+        "empty": "No hay artículos en este tópico todavía.",
+        "authorId": "Autor ID",
+        "loadError": "No se pudieron cargar los artículos.",
+        "reorderError": "No se pudo guardar el nuevo orden. Revisa tu conexión."
     }
 }
