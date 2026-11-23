@@ -9,7 +9,7 @@ import DataTable from "react-data-table-component";
 import ButtonLink from "../../components/buttons/ButtonLink";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import ButtonSecondary from "../../components/buttons/ButtonSecondary";
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
 import { AppContext } from "../../context/AppContext";
 
 const ArticleScreen = () => {
@@ -37,7 +37,7 @@ const ArticleScreen = () => {
             if (res.data) setArticles(res.data);
         } catch {
             setArticles([]);
-            triggerAlert("danger", "No pudimos cargar los artículos desde el servidor.", "Error");
+            triggerAlert("danger", t("articleScreen.alerts.loadError"), t("articleScreen.alerts.errorTitle"));
         } finally {
             setLoading(false);
             handlerApp.setLoader(false);
@@ -57,14 +57,14 @@ const ArticleScreen = () => {
         if (location.state?.message) {
             return {
                 type: location.state.type || "success",
-                title: location.state.title || "Operación exitosa",
+                title: location.state.title || t("articleScreen.alerts.successTitle"),
                 message: location.state.message
             };
         }
         return null;
     });
 
-    const triggerAlert = (type, message, title = "Operación exitosa") => {
+    const triggerAlert = (type, message, title = t("articleScreen.alerts.successTitle")) => {
         setAlertNotification({ type, title, message });
         setTimeout(() => {
             setAlertNotification(null);
@@ -85,12 +85,12 @@ const ArticleScreen = () => {
             setDeleteModalOpen(false);
             triggerAlert(
                 "danger",
-                `El artículo "${selectedArticle.article_subject}" (ID: #${selectedArticle.article_id}) ha sido eliminado con éxito.`,
-                "¡Artículo Eliminado!"
+                t("articleScreen.alerts.deleted", { title: selectedArticle.article_subject, id: selectedArticle.article_id }),
+                t("articleScreen.alerts.deletedTitle")
             );
         } catch (error) {
             console.error("Error al eliminar artículo:", error);
-            triggerAlert("danger", "No fue posible eliminar el artículo.", "Error");
+            triggerAlert("danger", t("articleScreen.alerts.deleteError"), t("articleScreen.alerts.errorTitle"));
         } finally {
             handlerApp.setLoader(false);
             setSelectedArticle(null);
@@ -153,14 +153,14 @@ const ArticleScreen = () => {
                         className="badge bg-primary-subtle text-primary border border-primary-subtle text-truncate"
                         style={{ cursor: "pointer", maxWidth: "185px" }}
                         onClick={() => navigate(`/topics/${row.topic_id}/articles`)}
-                        title={`Organizar artículos de "${topicLabel || `Tópico #${row.topic_id}`}"`}
+                        title={t("articleScreen.topicTooltip", { topic: topicLabel || t("articleScreen.topicFallback", { id: row.topic_id }) })}
                     >
                         <i className="bi bi-list-task me-1"></i>
-                        {topicLabel || `Tópico #${row.topic_id}`}
+                        {topicLabel || t("articleScreen.topicFallback", { id: row.topic_id })}
                     </span>
                 ) : (
                     <span className="badge bg-light text-dark border text-truncate" style={{ maxWidth: "185px" }}>
-                        {topicLabel || (row.topic_id ? `Tópico #${row.topic_id}` : "—")}
+                        {topicLabel || (row.topic_id ? t("articleScreen.topicFallback", { id: row.topic_id }) : "—")}
                     </span>
                 );
             }
@@ -211,7 +211,7 @@ const ArticleScreen = () => {
             cell: row => (
                 <Badge
                     type={row.article_active ? "Success" : "Secondary"}
-                    text={row.article_active ? "Activo" : "Inactivo"}
+                    text={row.article_active ? t("articleScreen.state.active") : t("articleScreen.state.inactive")}
                     pill
                 />
             )
@@ -225,17 +225,17 @@ const ArticleScreen = () => {
             cell: row => (
                 <div className="d-flex align-items-center gap-2 justify-content-end py-1 flex-nowrap">
                     <ButtonSecondary
-                        label="Ver"
+                        label={t("articleScreen.actions.view")}
                         className="btn-sm py-1 px-2 text-nowrap"
                         onClick={() => navigate(`/article/${row.article_id}`)}
                     />
                     <ButtonPrimary
-                        label="Editar"
+                        label={t("articleScreen.actions.edit")}
                         className="btn-sm py-1 px-2 text-nowrap"
                         onClick={() => navigate(`/article/edit/${row.article_id}`)}
                     />
                     <ButtonLink
-                        label="Eliminar"
+                        label={t("articleScreen.actions.delete")}
                         className="text-danger fw-semibold small text-nowrap px-1"
                         onClick={() => handleOpenDelete(row)}
                     />
@@ -253,11 +253,10 @@ const ArticleScreen = () => {
                     role="alert"
                 >
                     <div className="d-flex align-items-center">
-                        <i className={`bi fs-4 me-2 ${
-                            alertNotification.type === "danger"
-                                ? "bi-check-circle-fill"
-                                : "bi-info-circle-fill"
-                        }`}></i>
+                        <i className={`bi fs-4 me-2 ${alertNotification.type === "danger"
+                            ? "bi-check-circle-fill"
+                            : "bi-info-circle-fill"
+                            }`}></i>
                         <div>
                             <strong className="d-block">{alertNotification.title}</strong>
                             <span>{alertNotification.message}</span>
@@ -289,7 +288,7 @@ const ArticleScreen = () => {
                         onClick={() => navigate("/article/create")}
                     >
                         <i className="bi bi-plus-circle"></i>
-                        <span>Nuevo Artículo</span>
+                        <span>{t("articleScreen.newArticle")}</span>
                     </button>
                 </div>
             </div>
@@ -300,7 +299,7 @@ const ArticleScreen = () => {
                     <div className="card shadow-sm border-0 border-start border-primary border-4">
                         <div className="card-body d-flex align-items-center justify-content-between py-3">
                             <div>
-                                <span className="text-muted small text-uppercase fw-bold">Total Publicaciones</span>
+                                <span className="text-muted small text-uppercase fw-bold">{t("articleScreen.stats.total")}</span>
                                 <h3 className="fw-bold mb-0 text-dark">{articles.length}</h3>
                             </div>
                             <div className="bg-primary-subtle p-3 rounded-circle text-primary">
@@ -313,7 +312,7 @@ const ArticleScreen = () => {
                     <div className="card shadow-sm border-0 border-start border-success border-4">
                         <div className="card-body d-flex align-items-center justify-content-between py-3">
                             <div>
-                                <span className="text-muted small text-uppercase fw-bold">Publicados</span>
+                                <span className="text-muted small text-uppercase fw-bold">{t("articleScreen.stats.published")}</span>
                                 <h3 className="fw-bold mb-0 text-success">
                                     {articles.filter(a => a.status === "Publicado").length}
                                 </h3>
@@ -328,7 +327,7 @@ const ArticleScreen = () => {
                     <div className="card shadow-sm border-0 border-start border-warning border-4">
                         <div className="card-body d-flex align-items-center justify-content-between py-3">
                             <div>
-                                <span className="text-muted small text-uppercase fw-bold">En Revisión</span>
+                                <span className="text-muted small text-uppercase fw-bold">{t("articleScreen.stats.inReview")}</span>
                                 <h3 className="fw-bold mb-0 text-warning">
                                     {articles.filter(a => a.status === "En Revisión").length}
                                 </h3>
@@ -343,7 +342,7 @@ const ArticleScreen = () => {
                     <div className="card shadow-sm border-0 border-start border-secondary border-4">
                         <div className="card-body d-flex align-items-center justify-content-between py-3">
                             <div>
-                                <span className="text-muted small text-uppercase fw-bold">Borradores</span>
+                                <span className="text-muted small text-uppercase fw-bold">{t("articleScreen.stats.drafts")}</span>
                                 <h3 className="fw-bold mb-0 text-secondary">
                                     {articles.filter(a => a.status === "Borrador").length}
                                 </h3>
@@ -357,7 +356,7 @@ const ArticleScreen = () => {
             </div>
 
             {/* Contenedor Principal de la Tabla */}
-            <Card title="Repositorio de Artículos" outline outlineColor="primary">
+            <Card title={t("articleScreen.repository")} outline outlineColor="primary">
                 {/* Filtros y Buscador */}
                 <div className="row g-2 mb-3 align-items-center">
                     <div className="col-12 col-md-6 col-lg-5">
@@ -368,7 +367,7 @@ const ArticleScreen = () => {
                             <input
                                 type="text"
                                 className="form-control border-start-0 ps-0"
-                                placeholder="Buscar por título, autor o categoría..."
+                                placeholder={t("articleScreen.searchPlaceholder")}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -389,14 +388,18 @@ const ArticleScreen = () => {
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
                         >
-                            <option value="TODOS">Todos los estados</option>
-                            <option value="Publicado">Publicados</option>
-                            <option value="En Revisión">En Revisión</option>
-                            <option value="Borrador">Borradores</option>
+                            <option value="TODOS">{t("articleScreen.filters.all")}</option>
+                            <option value="Publicado">{t("articleScreen.stats.published")}</option>
+                            <option value="En Revisión">{t("articleScreen.stats.inReview")}</option>
+                            <option value="Borrador">{t("articleScreen.stats.drafts")}</option>
                         </select>
                     </div>
                     <div className="col-12 col-md-2 col-lg-4 text-md-end text-muted small">
-                        Mostrando <strong>{filteredArticles.length}</strong> de <strong>{articles.length}</strong> artículos
+                        <Trans
+                            i18nKey="articleScreen.showing"
+                            values={{ shown: filteredArticles.length, total: articles.length }}
+                            components={{ b: <strong /> }}
+                        />
                     </div>
                 </div>
 
@@ -410,10 +413,14 @@ const ArticleScreen = () => {
                         paginationRowsPerPageOptions={[10, 50, 100]}
                         responsive
                         highlightOnHover
+                        paginationComponentOptions={{
+                            rowsPerPageText: t("articleScreen.pagination.rowsPerPage"),
+                            rangeSeparatorText: t("articleScreen.pagination.of")
+                        }}
                         noDataComponent={
                             <div className="py-5 text-center text-muted">
                                 <i className="bi bi-file-earmark-x fs-1 d-block mb-2 text-secondary opacity-50"></i>
-                                <p className="mb-0">No se encontraron artículos con los criterios indicados.</p>
+                                <p className="mb-0">{t("articleScreen.empty")}</p>
                             </div>
                         }
                     />
@@ -424,18 +431,18 @@ const ArticleScreen = () => {
             <Modal
                 show={deleteModalOpen}
                 onClose={() => setDeleteModalOpen(false)}
-                title="Confirmar Eliminación de Artículo"
+                title={t("articleScreen.deleteModal.title")}
                 size="md"
                 footer={
                     <>
-                        <ButtonSecondary label="Cancelar" onClick={() => setDeleteModalOpen(false)} />
+                        <ButtonSecondary label={t("articleScreen.deleteModal.cancel")} onClick={() => setDeleteModalOpen(false)} />
                         <button
                             type="button"
                             className="btn btn-danger d-flex align-items-center gap-1 shadow-sm"
                             onClick={handleConfirmDelete}
                         >
                             <i className="bi bi-trash-fill"></i>
-                            <span>Sí, Eliminar Artículo</span>
+                            <span>{t("articleScreen.deleteModal.confirm")}</span>
                         </button>
                     </>
                 }
@@ -445,12 +452,20 @@ const ArticleScreen = () => {
                         <div className="text-danger mb-3">
                             <i className="bi bi-exclamation-octagon-fill" style={{ fontSize: "3rem" }}></i>
                         </div>
-                        <h5 className="fw-bold text-dark">¿Deseas eliminar este artículo permanentemente?</h5>
+                        <h5 className="fw-bold text-dark">{t("articleScreen.deleteModal.question")}</h5>
                         <p className="text-muted px-2 mb-2">
-                            Estás a punto de remover <strong>&quot;{selectedArticle.title}&quot;</strong> de la base de datos de publicaciones.
+                            <Trans
+                                i18nKey="articleScreen.deleteModal.warning"
+                                values={{ title: selectedArticle.article_subject || selectedArticle.title }}
+                                components={{ b: <strong /> }}
+                            />
                         </p>
                         <div className="alert alert-warning py-2 small mb-0">
-                            <i className="bi bi-info-circle me-1"></i> Autor: {selectedArticle.author} · Categoría: {selectedArticle.category}
+                            <i className="bi bi-info-circle me-1"></i>{" "}
+                            {t("articleScreen.deleteModal.meta", {
+                                author: selectedArticle.article_created_by_name || selectedArticle.author || "—",
+                                category: selectedArticle.topic_subject || selectedArticle.topic_name || selectedArticle.category || "—"
+                            })}
                         </div>
                     </div>
                 )}
