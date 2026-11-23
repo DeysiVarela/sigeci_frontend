@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { arrayMove, SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useFetch } from "../../hooks/useFetch";
+import { AppContext } from "../../context/AppContext";
 import Card from "../../components/cards/Card";
 
 // --- Componente de tarjeta arrastrable ---
@@ -47,6 +48,10 @@ const TopicArticlesScreen = () => {
     const navigate = useNavigate();
     const { t } = useTranslation();
     const api = useFetch();
+    const { app } = useContext(AppContext);
+
+    const activeProfile = String(app?.profile || localStorage.getItem("profile") || "").toUpperCase();
+    const isAuthorOnly = activeProfile === "3" || activeProfile === "AUTHOR";
 
     const [articles, setArticles] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -62,6 +67,11 @@ const TopicArticlesScreen = () => {
     );
 
     useEffect(() => {
+        if (isAuthorOnly) {
+            navigate("/article", { replace: true });
+            return;
+        }
+
         setLoading(true);
         setError("");
         api.get(`article/topics/${topicId}/articles/`)
@@ -73,7 +83,11 @@ const TopicArticlesScreen = () => {
                 setError(t("topicArticlesScreen.loadError"));
                 setLoading(false);
             });
-    }, [topicId]);
+    }, [topicId, isAuthorOnly]);
+
+    if (isAuthorOnly) {
+        return null;
+    }
 
     const handleDragEnd = async (event) => {
         const { active, over } = event;

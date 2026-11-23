@@ -1,5 +1,5 @@
 import { useFetch } from "../../hooks/useFetch";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useContext } from "react";
 import { useNavigate, useLocation } from "react-router";
 import Card from "../../components/cards/Card";
 import HandlerApp from "../../utils/HandlerApp";
@@ -10,13 +10,18 @@ import ButtonLink from "../../components/buttons/ButtonLink";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import ButtonSecondary from "../../components/buttons/ButtonSecondary";
 import { useTranslation } from "react-i18next";
+import { AppContext } from "../../context/AppContext";
 
 const ArticleScreen = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const api = useFetch();
     const handlerApp = HandlerApp();
-    const {t} = useTranslation();
+    const { t } = useTranslation();
+    const { app } = useContext(AppContext);
+
+    const activeProfile = String(app?.profile || localStorage.getItem("profile") || "").toUpperCase();
+    const isAuthorOnly = activeProfile === "3" || activeProfile === "AUTHOR";
 
     const [articles, setArticles] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -143,7 +148,7 @@ const ArticleScreen = () => {
             width: "210px",
             cell: row => {
                 const topicLabel = row.topic_subject || row.topic_name;
-                return row.topic_id ? (
+                return row.topic_id && !isAuthorOnly ? (
                     <span
                         className="badge bg-primary-subtle text-primary border border-primary-subtle text-truncate"
                         style={{ cursor: "pointer", maxWidth: "185px" }}
@@ -154,8 +159,8 @@ const ArticleScreen = () => {
                         {topicLabel || `Tópico #${row.topic_id}`}
                     </span>
                 ) : (
-                    <span className="badge bg-light text-dark border text-truncate">
-                        {topicLabel || "—"}
+                    <span className="badge bg-light text-dark border text-truncate" style={{ maxWidth: "185px" }}>
+                        {topicLabel || (row.topic_id ? `Tópico #${row.topic_id}` : "—")}
                     </span>
                 );
             }
@@ -281,7 +286,6 @@ const ArticleScreen = () => {
                 <div className="d-flex gap-2">
                     <button
                         className="btn btn-primary shadow-sm d-flex align-items-center gap-2"
-                        // onClick={() => navigate("/article/postulate")}
                         onClick={() => navigate("/article/create")}
                     >
                         <i className="bi bi-plus-circle"></i>

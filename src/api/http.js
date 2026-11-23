@@ -1,6 +1,14 @@
 const backendUrl = (import.meta.env.VITE_BACKEND_URL || "").replace(/\/$/, "");
 const ACCESS_TOKEN_KEY = "token";
 const REFRESH_TOKEN_KEY = "refreshToken";
+const PROFILE_KEY = "profile";
+
+const getStoredProfile = () => {
+    const rawProfile = localStorage.getItem(PROFILE_KEY);
+    if (!rawProfile || rawProfile === "undefined" || rawProfile === "null") return "1";
+    const parsed = parseInt(rawProfile, 10);
+    return Number.isNaN(parsed) ? rawProfile : String(parsed);
+};
 
 const buildApiUrl = (path) => {
     const cleanPath = path.startsWith("/") ? path : `/${path}`;
@@ -57,6 +65,10 @@ export const request = async (path, options = {}) => {
     const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
     if (accessToken) {
         headers.Authorization = `Bearer ${accessToken}`;
+    }
+    const profile = getStoredProfile();
+    if (profile && !headers.profile) {
+        headers.profile = profile;
     }
     const body = hasBody && typeof fetchOptions.body !== "string" && !isFormData(fetchOptions.body)
         ? JSON.stringify(fetchOptions.body)
@@ -142,6 +154,8 @@ export const uploadRequest = (path, formData, { onProgress, signal, skipAuthRefr
         xhr.setRequestHeader("Accept", "application/json");
         const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
         if (accessToken) xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
+        const profile = getStoredProfile();
+        if (profile) xhr.setRequestHeader("profile", profile);
 
         xhr.upload.onprogress = (event) => {
             if (event.lengthComputable && onProgress) {
