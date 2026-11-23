@@ -1,6 +1,19 @@
-const backendUrl = import.meta.env.VITE_BACKEND_URL || "";
+const backendUrl = (import.meta.env.VITE_BACKEND_URL || "").replace(/\/$/, "");
 const ACCESS_TOKEN_KEY = "token";
 const REFRESH_TOKEN_KEY = "refreshToken";
+
+const buildApiUrl = (path) => {
+    const cleanPath = path.startsWith("/") ? path : `/${path}`;
+    const rootUrl = backendUrl.replace(/\/api\/v1$/, "");
+
+    // Si la ruta ya empieza por /api/ (ej. /api/auth/password/forgot/, /api/users/), apunta a http://localhost:8000/api/...
+    if (cleanPath.startsWith("/api/")) {
+        return `${rootUrl}${cleanPath}`;
+    }
+
+    // Si la ruta no empieza por /api/ (ej. /auth/refresh/), usa http://localhost:8000/api/v1/...
+    return `${rootUrl}/api/v1${cleanPath}`;
+};
 
 export class ApiError extends Error {
     constructor(status, message, data = null) {
@@ -48,7 +61,7 @@ export const request = async (path, options = {}) => {
     const body = hasBody && typeof fetchOptions.body !== "string" && !isFormData(fetchOptions.body)
         ? JSON.stringify(fetchOptions.body)
         : fetchOptions.body;
-    const url = new URL(`${backendUrl}${path}`);
+    const url = new URL(buildApiUrl(path));
 
     Object.entries(fetchOptions.params || {}).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== "") {
@@ -125,7 +138,7 @@ const tryRefreshToken = async () => {
 export const uploadRequest = (path, formData, { onProgress, signal, skipAuthRefresh = false } = {}) =>
     new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.open("POST", `${backendUrl}${path}`);
+        xhr.open("POST", buildApiUrl(path));
         xhr.setRequestHeader("Accept", "application/json");
         const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
         if (accessToken) xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
