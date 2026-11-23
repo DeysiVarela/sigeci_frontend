@@ -160,6 +160,155 @@
         "pinLength": "El PIN debe tener {{length}} dígitos",
         "selectAtLeastOne": "Debes seleccionar al menos una opción"
     },
+    "userScreen": {
+        "title": "Gestión de Usuarios",
+        "description": "Administra roles, accesos y estado del personal universitario registrado en SIGECI.",
+        "newUser": "Nuevo Usuario",
+        "stats": {
+            "total": "Total Usuarios",
+            "active": "Activos",
+            "inactive": "Inactivos"
+        },
+        "status": {
+            "active": "Activo",
+            "inactive": "Inactivo"
+        },
+        "columns": {
+            "user": "Usuario",
+            "role": "Rol",
+            "status": "Estado",
+            "actions": "Acciones"
+        },
+        "actions": {
+            "view": "Ver",
+            "edit": "Editar",
+            "delete": "Eliminar"
+        },
+        "loading": "Cargando usuarios...",
+        "empty": {
+            "search": "Ningún usuario coincide con la búsqueda.",
+            "filters": "Ningún usuario coincide con los filtros seleccionados.",
+            "none": "Aún no hay usuarios registrados."
+        },
+        "pagination": {
+            "rowsPerPage": "Filas por página:",
+            "of": "de"
+        },
+        "alerts": {
+            "successTitle": "Operación exitosa",
+            "close": "Cerrar",
+            "loadError": "No fue posible cargar los usuarios.",
+            "deletedTitle": "Usuario eliminado",
+            "deleted": "El usuario \"{{name}}\" ({{email}}) fue eliminado.",
+            "deleteErrorTitle": "No se pudo eliminar",
+            "deleteError": "No se pudo eliminar el usuario.",
+            "retry": "Reintentar",
+            "roleError": "No se pudo verificar tu rol; las acciones de edición están ocultas."
+        },
+        "list": {
+            "title": "Listado Oficial de Usuarios",
+            "filterRole": "Filtrar por rol",
+            "allRoles": "Todos los roles",
+            "filterStatus": "Filtrar por estado",
+            "allStatuses": "Todos los estados",
+            "onlyActive": "Solo Activos",
+            "onlyInactive": "Solo Inactivos",
+            "search": "Buscar por nombre o correo",
+            "clearFilters": "Limpiar filtros",
+            "ofTotal": "{{shown}} de {{total}}",
+            "userCount_one": "usuario",
+            "userCount_other": "usuarios",
+            "searchHint": "La búsqueda por texto se habilita cuando los filtros dejan {{max}} usuarios o menos."
+        },
+        "viewModal": {
+            "title": "Detalles del Usuario",
+            "close": "Cerrar",
+            "id": "ID de Registro:",
+            "role": "Rol Asignado:",
+            "status": "Estado de Cuenta:"
+        },
+        "deleteModal": {
+            "title": "Confirmar Eliminación",
+            "cancel": "Cancelar",
+            "confirm": "Sí, Eliminar",
+            "question": "¿Estás seguro de eliminar este usuario?",
+            "warning": "Se eliminará a <b>{{name}}</b> (<code>{{email}}</code>) de forma permanente. Esta acción no se puede deshacer."
+        }
+    },
+    "userForm": {
+        "fields": {
+            "name": "Nombre",
+            "lastname": "Apellido",
+            "email": "Correo electrónico",
+            "password": "Contraseña",
+            "passwordPlaceholder": "Mínimo 8 caracteres",
+            "confirmPassword": "Confirmar contraseña",
+            "confirmPasswordPlaceholder": "Repite la contraseña",
+            "roles": "Roles del Usuario",
+            "status": "Estado de la cuenta"
+        },
+        "passwordsMismatch": "Las contraseñas no coinciden",
+        "cancel": "Cancelar",
+        "ok": "Aceptar",
+        "create": {
+            "title": "Crear Nuevo Usuario",
+            "save": "Guardar Usuario",
+            "profilesError": "No se pudieron cargar los roles. Recarga la página para intentarlo de nuevo.",
+            "successTitle": "¡Usuario creado!",
+            "successText": "El usuario se registró correctamente.",
+            "errorTitle": "No se pudo crear el usuario",
+            "errorText": "No se pudo crear el usuario."
+        },
+        "edit": {
+            "title": "Editar Usuario",
+            "save": "Actualizar Usuario",
+            "loading": "Cargando datos del usuario...",
+            "loadingShort": "Cargando datos...",
+            "passwordNote": "La contraseña no se edita desde este formulario.",
+            "noPermissionTitle": "Sin permisos",
+            "noPermissionText": "No tienes permisos para editar a este usuario.",
+            "loadErrorTitle": "Error",
+            "loadError": "No se pudo cargar el usuario.",
+            "successTitle": "¡Actualizado!",
+            "successText": "Los datos del usuario se guardaron correctamente.",
+            "errorTitle": "No se pudo actualizar",
+            "errorText": "No se pudo actualizar el usuario."
+        }
+    },
+    "userProfile": {
+        "title": "Mi Perfil",
+        "loading": "Cargando datos del perfil...",
+        "loadingShort": "Cargando...",
+        "save": "Guardar cambios",
+        "loadErrorTitle": "No se pudo cargar tu perfil",
+        "loadErrorText": "Intenta de nuevo en unos minutos.",
+        "updatedTitle": "Perfil actualizado",
+        "updatedText": "Tus datos se guardaron correctamente.",
+        "updateErrorTitle": "No se pudo actualizar el perfil",
+        "updateErrorText": "Revisa los datos e intenta de nuevo.",
+        "password": {
+            "title": "Cambiar Contraseña",
+            "intro": "Por seguridad, puedes cambiar tu contraseña desde aquí.",
+            "open": "Cambiar mi contraseña",
+            "current": "Contraseña actual",
+            "new": "Nueva contraseña",
+            "confirm": "Confirmar nueva contraseña",
+            "save": "Actualizar contraseña",
+            "updatedTitle": "Contraseña actualizada",
+            "updatedText": "Tu contraseña ha sido cambiada exitosamente.",
+            "tooManyTitle": "Demasiados intentos",
+            "tooManyText": "Espera un minuto antes de volver a intentarlo.",
+            "errorTitle": "No se pudo cambiar la contraseña",
+            "errorText": "Intenta de nuevo."
+        }
+    },
+    "userMenu": {
+        "demoUser": "Usuario X",
+        "demoRole": "Desarrollador",
+        "memberSince": "Miembro desde {{date}}",
+        "profile": "Perfil",
+        "logout": "Cerrar sesión"
+    },
     "topicArticlesScreen": {
         "title": "Organizar Artículos del Tópico",
         "description": "Arrastra y suelta las tarjetas para definir el orden de presentación.",
