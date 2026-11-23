@@ -45,7 +45,7 @@ const LoginScreen = () => {
         handlerApp.setLoader(true);
         try {
             let body = {...data};
-            let res = await api.post('auth/login', body, null, captchaToken);
+            let res = await api.post('/api/auth/login/', body, null, captchaToken);
             if(res.success){
                 let data = res.data;
                 localStorage.setItem("token", data.token);
