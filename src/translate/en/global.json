@@ -26,6 +26,51 @@
             "state": "State",
             "version": "PDF/Version",
             "date": "Date"
+        },
+        "newArticle": "New Article",
+        "repository": "Article Repository",
+        "searchPlaceholder": "Search by title, author or category...",
+        "showing": "Showing <b>{{shown}}</b> of <b>{{total}}</b> articles",
+        "empty": "No articles match the selected criteria.",
+        "topicTooltip": "Organize articles in \"{{topic}}\"",
+        "topicFallback": "Topic #{{id}}",
+        "stats": {
+            "total": "Total Publications",
+            "published": "Published",
+            "inReview": "In Review",
+            "drafts": "Drafts"
+        },
+        "filters": {
+            "all": "All statuses"
+        },
+        "state": {
+            "active": "Active",
+            "inactive": "Inactive"
+        },
+        "actions": {
+            "view": "View",
+            "edit": "Edit",
+            "delete": "Delete"
+        },
+        "pagination": {
+            "rowsPerPage": "Rows per page:",
+            "of": "of"
+        },
+        "alerts": {
+            "successTitle": "Success",
+            "errorTitle": "Error",
+            "loadError": "We couldn't load the articles from the server.",
+            "deleteError": "The article could not be deleted.",
+            "deletedTitle": "Article Deleted!",
+            "deleted": "The article \"{{title}}\" (ID: #{{id}}) was deleted successfully."
+        },
+        "deleteModal": {
+            "title": "Confirm Article Deletion",
+            "cancel": "Cancel",
+            "confirm": "Yes, Delete Article",
+            "question": "Do you want to permanently delete this article?",
+            "warning": "You are about to remove <b>\"{{title}}\"</b> from the publications database.",
+            "meta": "Author: {{author}} · Category: {{category}}"
         }
     },
     "topicArticlesScreen": {

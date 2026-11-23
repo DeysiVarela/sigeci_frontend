@@ -26,6 +26,51 @@
             "state": "Estado",
             "version": "PDF/Versión",
             "date": "Fecha"
+        },
+        "newArticle": "Nuevo Artículo",
+        "repository": "Repositorio de Artículos",
+        "searchPlaceholder": "Buscar por título, autor o categoría...",
+        "showing": "Mostrando <b>{{shown}}</b> de <b>{{total}}</b> artículos",
+        "empty": "No se encontraron artículos con los criterios indicados.",
+        "topicTooltip": "Organizar artículos de \"{{topic}}\"",
+        "topicFallback": "Tópico #{{id}}",
+        "stats": {
+            "total": "Total Publicaciones",
+            "published": "Publicados",
+            "inReview": "En Revisión",
+            "drafts": "Borradores"
+        },
+        "filters": {
+            "all": "Todos los estados"
+        },
+        "state": {
+            "active": "Activo",
+            "inactive": "Inactivo"
+        },
+        "actions": {
+            "view": "Ver",
+            "edit": "Editar",
+            "delete": "Eliminar"
+        },
+        "pagination": {
+            "rowsPerPage": "Filas por página:",
+            "of": "de"
+        },
+        "alerts": {
+            "successTitle": "Operación exitosa",
+            "errorTitle": "Error",
+            "loadError": "No pudimos cargar los artículos desde el servidor.",
+            "deleteError": "No fue posible eliminar el artículo.",
+            "deletedTitle": "¡Artículo Eliminado!",
+            "deleted": "El artículo \"{{title}}\" (ID: #{{id}}) ha sido eliminado con éxito."
+        },
+        "deleteModal": {
+            "title": "Confirmar Eliminación de Artículo",
+            "cancel": "Cancelar",
+            "confirm": "Sí, Eliminar Artículo",
+            "question": "¿Deseas eliminar este artículo permanentemente?",
+            "warning": "Estás a punto de remover <b>\"{{title}}\"</b> de la base de datos de publicaciones.",
+            "meta": "Autor: {{author}} · Categoría: {{category}}"
         }
     },
     "topicArticlesScreen": {
