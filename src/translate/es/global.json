@@ -143,6 +143,15 @@
         "onlyPdf": "Solo se permiten archivos en formato PDF",
         "tooLarge": "El archivo no puede superar los {{size}} MB"
     },
+    "validation": {
+        "required": "Este campo es obligatorio",
+        "min": "El valor de {{field}} es menor al requerido",
+        "max": "El valor de {{field}} supera el máximo permitido",
+        "minLength": "Este campo debe tener al menos {{min}} caracteres",
+        "email": "Este campo debe ser un correo electrónico válido",
+        "pattern": "Este campo no tiene un formato válido",
+        "selectPlaceholder": "Seleccione una opción"
+    },
     "topicArticlesScreen": {
         "title": "Organizar Artículos del Tópico",
         "description": "Arrastra y suelta las tarjetas para definir el orden de presentación.",
