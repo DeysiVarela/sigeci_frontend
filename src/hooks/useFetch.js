@@ -28,10 +28,20 @@ export const useFetch = () => {
     
     const instance = axios.create({
         baseURL: `${import.meta.env.VITE_BACKEND_URL}`,
-        headers: {
-            Authorization: (app.token) ? app.token : (localStorage.getItem("token") || ""),
-            profile: (app.profile) ? app.profile : (parseInt(localStorage.getItem("profile")) || 0)
+    });
+
+    instance.interceptors.request.use((config) => {
+        const storedToken = localStorage.getItem("token");
+        const validToken = (storedToken && storedToken !== "undefined" && storedToken !== "null")
+            ? storedToken
+            : (app.token || "");
+        const profile = app.profile || parseInt(localStorage.getItem("profile")) || 0;
+
+        if (validToken) {
+            config.headers.Authorization = validToken;
         }
+        config.headers.profile = profile;
+        return config;
     });
     
     const logout = async () => {
@@ -92,14 +102,13 @@ export const useFetch = () => {
 
                 const storedRefreshToken = localStorage.getItem("refreshToken");
 
-                if (!storedRefreshToken) {
+                if (!storedRefreshToken || storedRefreshToken === "undefined" || storedRefreshToken === "null") {
                     isRefreshing = false;
                     await logout();
                     return Promise.reject(error);
                 }
 
                 try {
-                    // Petición al endpoint /refresh o /refresh-token
                     const baseUrl = import.meta.env.VITE_BACKEND_URL.replace(/\/$/, "");
                     const refreshUrl = baseUrl.includes("/api/v1") 
                         ? `${baseUrl}/auth/refresh/` 
@@ -111,8 +120,12 @@ export const useFetch = () => {
 
                     if (response.data?.success) {
                         const responseData = response.data?.data || response.data;
-                        const newAccessToken = responseData.token;
-                        const newRefreshToken = responseData.refresh_token;
+                        const newAccessToken = responseData.token || responseData.access || responseData.access_token;
+                        const newRefreshToken = responseData.refresh_token || responseData.refresh;
+
+                        if (!newAccessToken) {
+                            throw new Error("El servidor no devolvió un token válido");
+                        }
 
                         // 1. Guardar en localStorage
                         localStorage.setItem("token", newAccessToken);
