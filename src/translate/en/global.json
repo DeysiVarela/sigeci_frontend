@@ -73,6 +73,76 @@
             "meta": "Author: {{author}} · Category: {{category}}"
         }
     },
+    "articleView": {
+        "header": "Article Details #{{id}}",
+        "back": "Back",
+        "backToList": "Back to List",
+        "edit": "Edit Article",
+        "notFound": "No article was found with ID <b>#{{id}}</b>.",
+        "loadError": "The article was not found.",
+        "connectionError": "Could not connect to the server.",
+        "content": "Publication Content",
+        "summary": "Summary / Description",
+        "body": "Article Body",
+        "license": "License / Rights:",
+        "metadata": "Metadata and Record",
+        "fields": {
+            "state": "Status:",
+            "topic": "Topic:",
+            "createdBy": "Created by:",
+            "date": "Date:",
+            "pdfVersion": "PDF Version:",
+            "pdfFile": "PDF File:",
+            "noFile": "No attached file",
+            "updatedAt": "Last Updated:"
+        },
+        "quickActions": "Quick Actions:",
+        "modify": "Edit Information",
+        "print": "Print / Export Record"
+    },
+    "articleForm": {
+        "back": "Back",
+        "createTitle": "Create Article",
+        "editTitle": "Edit Article #{{id}}",
+        "fields": {
+            "subject": "Article Title",
+            "subjectPlaceholder": "Enter the article title",
+            "topic": "Thematic Line",
+            "topicPlaceholder": "Select a thematic line",
+            "description": "Description / Summary",
+            "descriptionPlaceholder": "Short description or summary of the article",
+            "content": "Article Content",
+            "contentPlaceholder": "Write the main content of the article",
+            "currentPdf": "Current PDF (v{{version}}):",
+            "viewCurrentPdf": "View current document",
+            "pdf": "PDF Document",
+            "replacePdf": "Replace PDF Document (optional)"
+        },
+        "buttons": {
+            "cancel": "Cancel",
+            "saveChanges": "Save Changes",
+            "saveArticle": "Save Article"
+        },
+        "alerts": {
+            "ok": "OK",
+            "errorTitle": "Error",
+            "loadError": "The article could not be loaded.",
+            "createdTitle": "Article created!",
+            "createdText": "The article was registered successfully.",
+            "updatedTitle": "Article updated!",
+            "updatedText": "The article was updated successfully.",
+            "createErrorTitle": "The article could not be created",
+            "updateErrorTitle": "The article could not be updated",
+            "saveError": "An error occurred while saving the article."
+        }
+    },
+    "inputPdf": {
+        "label": "PDF File",
+        "hint": "PDF format. Maximum size: {{size}} MB.",
+        "required": "The PDF file is required",
+        "onlyPdf": "Only PDF files are allowed",
+        "tooLarge": "The file cannot exceed {{size}} MB"
+    },
     "topicArticlesScreen": {
         "title": "Organize Topic Articles",
         "description": "Drag and drop the cards to define the presentation order.",
