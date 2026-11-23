@@ -138,14 +138,27 @@ const ArticleScreen = () => {
         },
         {
             name: t("articleScreen.table.topic"),
-            selector: row => row.topic_name || "",
+            selector: row => row.topic_subject || row.topic_name || "",
             sortable: true,
-            width: "180px",
-            cell: row => (
-                <span className="badge bg-light text-dark border text-truncate" title={row.topic_name || ""}>
-                    {row.topic_name || "—"}
-                </span>
-            )
+            width: "210px",
+            cell: row => {
+                const topicLabel = row.topic_subject || row.topic_name;
+                return row.topic_id ? (
+                    <span
+                        className="badge bg-primary-subtle text-primary border border-primary-subtle text-truncate"
+                        style={{ cursor: "pointer", maxWidth: "185px" }}
+                        onClick={() => navigate(`/topics/${row.topic_id}/articles`)}
+                        title={`Organizar artículos de "${topicLabel || `Tópico #${row.topic_id}`}"`}
+                    >
+                        <i className="bi bi-list-task me-1"></i>
+                        {topicLabel || `Tópico #${row.topic_id}`}
+                    </span>
+                ) : (
+                    <span className="badge bg-light text-dark border text-truncate">
+                        {topicLabel || "—"}
+                    </span>
+                );
+            }
         },
         {
             name: t("articleScreen.table.author"),

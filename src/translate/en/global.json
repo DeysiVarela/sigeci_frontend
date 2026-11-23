@@ -1,7 +1,7 @@
 {
     "0000": "Error 1",
-	"0001": "Error 2",
-	"0002": "Success 1",
+    "0001": "Error 2",
+    "0002": "Success 1",
     "catalog": {
         "title": "UI Component Catalog",
         "description": "Interactive gallery for developers. Visualize, test, and reuse the system's component library."
@@ -18,7 +18,7 @@
     "articleScreen": {
         "title": "Scientific Article Management",
         "description": "Academic publications, peer reviews, and SIGECI research documents.",
-         "table": {
+        "table": {
             "title": "Article Title",
             "topic": "Topic",
             "author": "Author",
@@ -27,5 +27,16 @@
             "version": "PDF/Version",
             "date": "Date"
         }
+    },
+    "topicArticlesScreen": {
+        "title": "Organize Topic Articles",
+        "description": "Drag and drop the cards to define the presentation order.",
+        "back": "Back",
+        "cardTitle": "Article List (Draggable)",
+        "loading": "Loading articles...",
+        "empty": "There are no articles in this topic yet.",
+        "authorId": "Author ID",
+        "loadError": "Could not load articles.",
+        "reorderError": "Could not save the new order. Check your connection."
     }
 }

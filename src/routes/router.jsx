@@ -22,6 +22,7 @@ import ArticleFormScreen from "../pages/article/ArticleFormScreen";
 import CreateUserScreen from "../pages/users/CreateUserScreen";
 import EditUserScreen from "../pages/users/EditUserScreen";
 import UserProfileScreen from "../pages/users/UserProfileScreen";
+import TopicArticlesScreen from "../pages/article/TopicArticlesScreen";
 
 const router = createBrowserRouter([
     {
@@ -71,6 +72,7 @@ const router = createBrowserRouter([
                     { path: "/article/edit/:id", element: <ArticleFormScreen /> },
                     { path: "/article/create", element: <ArticleFormScreen /> },
                     { path: "/article/postulate", element: <CreateArticlePDFScreen /> },
+                    { path: "/topics/:topicId/articles", element: <TopicArticlesScreen /> },
                     { path: "/users", element: <UserScreen /> },
                     { path: "/users/create", element: <CreateUserScreen /> },
                     // {
