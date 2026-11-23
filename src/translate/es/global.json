@@ -73,6 +73,76 @@
             "meta": "Autor: {{author}} · Categoría: {{category}}"
         }
     },
+    "articleView": {
+        "header": "Detalles del Artículo #{{id}}",
+        "back": "Volver",
+        "backToList": "Volver al Listado",
+        "edit": "Editar Artículo",
+        "notFound": "No se encontró ningún artículo con el identificador <b>#{{id}}</b>.",
+        "loadError": "No se encontró el artículo.",
+        "connectionError": "Error al conectar con el servidor.",
+        "content": "Contenido de la Publicación",
+        "summary": "Resumen / Descripción",
+        "body": "Cuerpo del Artículo",
+        "license": "Licencia / Derechos:",
+        "metadata": "Metadatos y Registro",
+        "fields": {
+            "state": "Estado:",
+            "topic": "Tópico:",
+            "createdBy": "Creado por:",
+            "date": "Fecha:",
+            "pdfVersion": "Versión PDF:",
+            "pdfFile": "Archivo PDF:",
+            "noFile": "Sin archivo adjunto",
+            "updatedAt": "Última Actualización:"
+        },
+        "quickActions": "Acciones Rápidas:",
+        "modify": "Modificar Información",
+        "print": "Imprimir / Exportar Ficha"
+    },
+    "articleForm": {
+        "back": "Volver",
+        "createTitle": "Crear Artículo",
+        "editTitle": "Editar Artículo #{{id}}",
+        "fields": {
+            "subject": "Título del Artículo",
+            "subjectPlaceholder": "Escribe el título del artículo",
+            "topic": "Línea Temática",
+            "topicPlaceholder": "Selecciona una línea temática",
+            "description": "Descripción / Resumen",
+            "descriptionPlaceholder": "Breve descripción o resumen del artículo",
+            "content": "Contenido del Artículo",
+            "contentPlaceholder": "Escribe el contenido principal del artículo",
+            "currentPdf": "PDF actual (v{{version}}):",
+            "viewCurrentPdf": "Ver documento actual",
+            "pdf": "Documento PDF",
+            "replacePdf": "Reemplazar Documento PDF (opcional)"
+        },
+        "buttons": {
+            "cancel": "Cancelar",
+            "saveChanges": "Guardar Cambios",
+            "saveArticle": "Guardar Artículo"
+        },
+        "alerts": {
+            "ok": "Aceptar",
+            "errorTitle": "Error",
+            "loadError": "No se pudo cargar el artículo.",
+            "createdTitle": "¡Artículo creado!",
+            "createdText": "El artículo se registró correctamente.",
+            "updatedTitle": "¡Artículo actualizado!",
+            "updatedText": "El artículo se actualizó correctamente.",
+            "createErrorTitle": "No se pudo crear el artículo",
+            "updateErrorTitle": "No se pudo actualizar el artículo",
+            "saveError": "Ocurrió un error al guardar el artículo."
+        }
+    },
+    "inputPdf": {
+        "label": "Archivo PDF",
+        "hint": "Formato PDF. Tamaño máximo: {{size}} MB.",
+        "required": "El archivo PDF es requerido",
+        "onlyPdf": "Solo se permiten archivos en formato PDF",
+        "tooLarge": "El archivo no puede superar los {{size}} MB"
+    },
     "topicArticlesScreen": {
         "title": "Organizar Artículos del Tópico",
         "description": "Arrastra y suelta las tarjetas para definir el orden de presentación.",
