@@ -1,4 +1,5 @@
 import { Controller } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 const InputTextArea = ({
     control,
@@ -11,6 +12,7 @@ const InputTextArea = ({
     required = false,
     rows = 4
 }) => {
+    const { t } = useTranslation();
     return (
         <Controller
             control={control}
@@ -36,7 +38,7 @@ const InputTextArea = ({
                     />
                     {errors?.type === "required" && (
                         <p className="small text-danger mt-1">
-                            <span className="me-1">⚠️</span>Este campo es obligatorio
+                            <span className="me-1">⚠️</span>{t("validation.required")}
                         </p>
                     )}
                 </div>

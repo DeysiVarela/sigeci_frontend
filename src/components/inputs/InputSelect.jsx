@@ -1,4 +1,5 @@
 import { Controller } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 const InputSelect = ({
     control,
@@ -9,8 +10,9 @@ const InputSelect = ({
     rules = {},
     errors = {},
     required = false,
-    placeholder = "Seleccione una opción"
+    placeholder
 }) => {
+    const { t } = useTranslation();
     return (
         <Controller
             control={control}
@@ -32,7 +34,7 @@ const InputSelect = ({
                             field.onBlur(e);
                         }}
                     >
-                        <option value="" disabled>{placeholder}</option>
+                        <option value="" disabled>{placeholder ?? t("validation.selectPlaceholder")}</option>
                         {options.map((opt) => (
                             <option key={opt.value} value={opt.value}>
                                 {opt.label}
@@ -41,7 +43,7 @@ const InputSelect = ({
                     </select>
                     {errors?.type === "required" && (
                         <p className="small text-danger mt-1">
-                            <span className="me-1">⚠️</span>Este campo es obligatorio
+                            <span className="me-1">⚠️</span>{t("validation.required")}
                         </p>
                     )}
                 </div>

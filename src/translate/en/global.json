@@ -143,6 +143,15 @@
         "onlyPdf": "Only PDF files are allowed",
         "tooLarge": "The file cannot exceed {{size}} MB"
     },
+    "validation": {
+        "required": "This field is required",
+        "min": "The value of {{field}} is below the minimum",
+        "max": "The value of {{field}} exceeds the maximum allowed",
+        "minLength": "This field must have at least {{min}} characters",
+        "email": "This field must be a valid email address",
+        "pattern": "This field does not have a valid format",
+        "selectPlaceholder": "Select an option"
+    },
     "topicArticlesScreen": {
         "title": "Organize Topic Articles",
         "description": "Drag and drop the cards to define the presentation order.",
