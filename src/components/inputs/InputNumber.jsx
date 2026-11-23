@@ -1,4 +1,5 @@
 import { Controller } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 const InputNumber = ({
     control,
@@ -13,6 +14,7 @@ const InputNumber = ({
     max = undefined,
     step = "any"
 }) => {
+    const { t } = useTranslation();
     return (
         <Controller
             control={control}
@@ -57,17 +59,17 @@ const InputNumber = ({
                     />
                     {errors?.type === "required" && (
                         <p className="small text-danger">
-                            <span className="mr-1">⚠️</span>Este campo es obligatorio
+                            <span className="mr-1">⚠️</span>{t("validation.required")}
                         </p>
                     )}
                     {errors?.type === "min" && (
                         <p className="small text-danger">
-                            <span className="mr-1">⚠️</span>El valor debe ser como mínimo {min ?? rules.min?.value ?? rules.min}
+                            <span className="mr-1">⚠️</span>{t("validation.numberMin", { min: min ?? rules.min?.value ?? rules.min })}
                         </p>
                     )}
                     {errors?.type === "max" && (
                         <p className="small text-danger">
-                            <span className="mr-1">⚠️</span>El valor no puede superar {max ?? rules.max?.value ?? rules.max}
+                            <span className="mr-1">⚠️</span>{t("validation.numberMax", { max: max ?? rules.max?.value ?? rules.max })}
                         </p>
                     )}
                     {errors?.type === "validate" && (
