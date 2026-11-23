@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { Controller } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 const InputPin = ({
     control,
@@ -9,6 +10,7 @@ const InputPin = ({
     required = false,
     length = 6
 }) => {
+    const { t } = useTranslation();
     const inputsRef = useRef([]);
 
     // Maneja el cambio en cada caja
@@ -65,7 +67,7 @@ const InputPin = ({
                 validate: (value) =>
                     value && value.length === length
                         ? true
-                        : `El PIN debe tener ${length} dígitos`
+                        : t("validation.pinLength", { length })
             }}
             defaultValue=""
             render={({ field }) => {
@@ -86,9 +88,8 @@ const InputPin = ({
                                     type="text"
                                     inputMode="numeric"
                                     maxLength={1}
-                                    className={`form-control text-center fw-bold ${
-                                        errors?.type ? "is-invalid" : ""
-                                    }`}
+                                    className={`form-control text-center fw-bold ${errors?.type ? "is-invalid" : ""
+                                        }`}
                                     style={{
                                         width: "48px",
                                         height: "56px",
@@ -106,7 +107,7 @@ const InputPin = ({
 
                         {errors?.type === "required" && (
                             <p className="small text-danger text-center mt-2 mb-0">
-                                <span className="me-1">⚠️</span>Este campo es obligatorio
+                                <span className="me-1">⚠️</span>{t("validation.required")}
                             </p>
                         )}
                         {errors?.type === "validate" && (

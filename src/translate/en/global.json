@@ -150,7 +150,15 @@
         "minLength": "This field must have at least {{min}} characters",
         "email": "This field must be a valid email address",
         "pattern": "This field does not have a valid format",
-        "selectPlaceholder": "Select an option"
+        "selectPlaceholder": "Select an option",
+        "passwordMinLength": "The password must have at least {{min}} characters",
+        "passwordStrong": "It must contain at least 8 characters, one uppercase letter, one lowercase letter, one number and one special character",
+        "showPassword": "Show password",
+        "hidePassword": "Hide password",
+        "numberMin": "The value must be at least {{min}}",
+        "numberMax": "The value cannot exceed {{max}}",
+        "pinLength": "The PIN must have {{length}} digits",
+        "selectAtLeastOne": "You must select at least one option"
     },
     "topicArticlesScreen": {
         "title": "Organize Topic Articles",

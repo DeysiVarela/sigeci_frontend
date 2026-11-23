@@ -150,7 +150,15 @@
         "minLength": "Este campo debe tener al menos {{min}} caracteres",
         "email": "Este campo debe ser un correo electrónico válido",
         "pattern": "Este campo no tiene un formato válido",
-        "selectPlaceholder": "Seleccione una opción"
+        "selectPlaceholder": "Seleccione una opción",
+        "passwordMinLength": "La contraseña debe tener al menos {{min}} caracteres",
+        "passwordStrong": "Debe contener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial",
+        "showPassword": "Ver contraseña",
+        "hidePassword": "Ocultar contraseña",
+        "numberMin": "El valor debe ser como mínimo {{min}}",
+        "numberMax": "El valor no puede superar {{max}}",
+        "pinLength": "El PIN debe tener {{length}} dígitos",
+        "selectAtLeastOne": "Debes seleccionar al menos una opción"
     },
     "topicArticlesScreen": {
         "title": "Organizar Artículos del Tópico",

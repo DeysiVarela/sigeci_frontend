@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Controller } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 const InputPassword = ({
     control,
@@ -11,6 +12,7 @@ const InputPassword = ({
     placeholder = null,
     required = false
 }) => {
+    const { t } = useTranslation();
     const [showPassword, setShowPassword] = useState(false);
 
     // Contraseña segura: al menos 8 caracteres, al menos 1 mayúscula, 1 minúscula, 1 número y 1 carácter especial
@@ -25,11 +27,11 @@ const InputPassword = ({
                 required: required,
                 minLength: rules.minLength || {
                     value: 8,
-                    message: "La contraseña debe tener al menos 8 caracteres"
+                    message: t("validation.passwordMinLength", { min: 8 })
                 },
                 pattern: rules.pattern || {
                     value: strongPasswordRegex,
-                    message: "Debe contener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial"
+                    message: t("validation.passwordStrong")
                 }
             }}
             defaultValue=""
@@ -57,7 +59,7 @@ const InputPassword = ({
                             onClick={() => setShowPassword(prev => !prev)}
                             tabIndex={-1}
                             style={{ cursor: "pointer" }}
-                            title={showPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                            title={showPassword ? t("validation.hidePassword") : t("validation.showPassword")}
                         >
                             <i className={`bi ${showPassword ? "bi-eye-slash-fill" : "bi-eye-fill"}`}></i>
                         </button>
@@ -65,17 +67,17 @@ const InputPassword = ({
 
                     {errors?.type === "required" && (
                         <p className="small text-danger mt-1 mb-0">
-                            <span className="me-1">⚠️</span>Este campo es obligatorio
+                            <span className="me-1">⚠️</span>{t("validation.required")}
                         </p>
                     )}
                     {errors?.type === "minLength" && (
                         <p className="small text-danger mt-1 mb-0">
-                            <span className="me-1">⚠️</span>{errors?.message || "La contraseña debe tener al menos 8 caracteres"}
+                            <span className="me-1">⚠️</span>{errors?.message || t("validation.passwordMinLength", { min: 8 })}
                         </p>
                     )}
                     {errors?.type === "pattern" && (
                         <p className="small text-danger mt-1 mb-0">
-                            <span className="me-1">⚠️</span>{errors?.message || "La contraseña debe ser segura (mayúscula, minúscula, número y símbolo)"}
+                            <span className="me-1">⚠️</span>{errors?.message || t("validation.passwordStrong")}
                         </p>
                     )}
                     {errors?.type === "validate" && (
