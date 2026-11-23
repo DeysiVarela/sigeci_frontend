@@ -12,10 +12,12 @@ import { createUser, listProfiles, getMe } from "../../api/users";
 import { isManager } from "../../utils/userAccess";
 import { getErrorMessage } from "../../utils/apiError";
 import Swal from "sweetalert2";
+import { useTranslation } from "react-i18next";
 
 const CreateUserScreen = () => {
   const nav = useNavigate();
   const handlerApp = HandlerApp();
+  const { t } = useTranslation();
   const [rolesOptions, setRolesOptions] = useState([]);
   const [profilesError, setProfilesError] = useState(false);
 
@@ -74,10 +76,10 @@ const CreateUserScreen = () => {
       handlerApp.setLoader(false);
 
       await Swal.fire({
-        title: "¡Usuario creado!",
-        text: "El usuario se registró correctamente.",
+        title: t("userForm.create.successTitle"),
+        text: t("userForm.create.successText"),
         icon: "success",
-        confirmButtonText: "Aceptar",
+        confirmButtonText: t("userForm.ok"),
       });
 
       reset();
@@ -85,10 +87,10 @@ const CreateUserScreen = () => {
     } catch (err) {
       handlerApp.setLoader(false); // También apagamos si hay error
       Swal.fire({
-        title: "No se pudo crear el usuario",
-        text: getErrorMessage(err, "No se pudo crear el usuario."),
+        title: t("userForm.create.errorTitle"),
+        text: getErrorMessage(err, t("userForm.create.errorText")),
         icon: "error",
-        confirmButtonText: "Aceptar",
+        confirmButtonText: t("userForm.ok"),
       });
     }
   };
@@ -97,11 +99,10 @@ const CreateUserScreen = () => {
     <div className="container-fluid pt-4">
       <div className="row justify-content-center">
         <div className="col-md-8 col-lg-6">
-          <Card title="Crear Nuevo Usuario">
+          <Card title={t("userForm.create.title")}>
             {profilesError && (
               <div className="alert alert-warning py-2" role="alert">
-                No se pudieron cargar los roles. Recarga la página para
-                intentarlo de nuevo.
+                {t("userForm.create.profilesError")}
               </div>
             )}
             <form>
@@ -109,7 +110,7 @@ const CreateUserScreen = () => {
                 <div className="col-md-6">
                   <InputText
                     control={control}
-                    label="Nombre"
+                    label={t("userForm.fields.name")}
                     name="nombre"
                     errors={errors.nombre}
                     required={true}
@@ -118,7 +119,7 @@ const CreateUserScreen = () => {
                 <div className="col-md-6">
                   <InputText
                     control={control}
-                    label="Apellido"
+                    label={t("userForm.fields.lastname")}
                     name="apellido"
                     errors={errors.apellido}
                     required={true}
@@ -129,7 +130,7 @@ const CreateUserScreen = () => {
               {/* Usamos InputEmail que ya tiene la validación regex del template */}
               <InputEmail
                 control={control}
-                label="Correo electrónico"
+                label={t("userForm.fields.email")}
                 name="email"
                 errors={errors.email}
                 required={true}
@@ -138,9 +139,9 @@ const CreateUserScreen = () => {
               {/* Usamos InputPassword que ya tiene la validación de contraseña fuerte */}
               <InputPassword
                 control={control}
-                label="Contraseña"
+                label={t("userForm.fields.password")}
                 name="password"
-                placeholder="Mínimo 8 caracteres"
+                placeholder={t("userForm.fields.passwordPlaceholder")}
                 errors={errors.password}
                 required={true}
               />
@@ -149,22 +150,22 @@ const CreateUserScreen = () => {
                   Solo se valida la coincidencia; la fortaleza ya se exige en "Contraseña". */}
               <InputPassword
                 control={control}
-                label="Confirmar contraseña"
+                label={t("userForm.fields.confirmPassword")}
                 name="confirmPassword"
-                placeholder="Repite la contraseña"
+                placeholder={t("userForm.fields.confirmPasswordPlaceholder")}
                 errors={errors.confirmPassword}
                 required={true}
                 rules={{
                   minLength: { value: 0, message: "" },
                   pattern: { value: /^[\s\S]*$/, message: "" },
                   validate: (value) =>
-                    value === getValues("password") || "Las contraseñas no coinciden",
+                    value === getValues("password") || t("userForm.passwordsMismatch"),
                 }}
               />
 
               <InputMultiSelect
                   control={control}
-                  label="Roles del Usuario"
+                  label={t("userForm.fields.roles")}
                   name="roles" 
                   options={rolesOptions}
                   errors={errors.roles}
@@ -177,10 +178,10 @@ const CreateUserScreen = () => {
                   className="btn btn-secondary"
                   onClick={() => nav("/users")}
                 >
-                  Cancelar
+                  {t("userForm.cancel")}
                 </button>
                 <ButtonPrimary
-                  label="Guardar Usuario"
+                  label={t("userForm.create.save")}
                   onClick={handleSubmit(submitData)}
                 />
               </div>
