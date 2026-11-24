@@ -301,6 +301,24 @@
             "tooManyText": "Wait a minute before trying again.",
             "errorTitle": "The password could not be changed",
             "errorText": "Try again."
+        },
+        "danger": {
+            "title": "Danger Zone",
+            "heading": "Delete my account",
+            "intro": "Once deleted, your account will be deactivated and you will not be able to sign in again.",
+            "button": "Delete my account",
+            "confirmTitle": "Are you sure?",
+            "confirmText": "This will deactivate your account. Your articles will be kept, but you will not be able to sign in again.",
+            "passwordLabel": "Enter your password to confirm",
+            "passwordPlaceholder": "Your current password",
+            "passwordRequired": "You must enter your password",
+            "confirmButton": "Yes, delete my account",
+            "forbidden": "You do not have permission to delete your account.",
+            "tooMany": "Too many attempts. Wait a minute before trying again.",
+            "error": "The account could not be deleted. Try again.",
+            "doneTitle": "Account deleted",
+            "doneText": "Your account has been deactivated.",
+            "goToLogin": "Go to Login"
         }
     },
     "userMenu": {

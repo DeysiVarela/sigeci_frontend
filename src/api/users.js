@@ -19,3 +19,8 @@ export const updateMyProfile = ({ name, lastname, email }) =>
     request("/api/users/me", { method: "PATCH", body: { name, lastname, email } });
 export const changeMyPassword = ({ currentPassword, newPassword }) =>
     request("/api/users/me/password/", { method: "PUT", body: { currentPassword, newPassword } });
+
+// SCRUM-129: desactiva MI cuenta (borrado lógico). Pide la contraseña actual.
+// El backend exige sesión + permiso de matriz "me:delete" (403 si el rol no lo tiene) + contraseña (400 si falla).
+export const deleteMyAccount = ({ password }) =>
+    request("/api/users/me/delete/", { method: "POST", body: { password } });

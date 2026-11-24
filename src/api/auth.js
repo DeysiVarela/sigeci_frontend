@@ -45,10 +45,15 @@ export const register = ({ name, lastname, email, password, captchaToken }) =>
 
 export const getCurrentUser = () => request("/auth/me/");
 
+// Claves de sesión: las actuales (login con /api/v1: token, refreshToken, profile...) y las legacy (access, refresh).
+// Se conserva "language": es una preferencia de la persona, no de la sesión.
+const SESSION_KEYS = [
+    "token", "refreshToken", "name", "lastname", "email", "id", "permissions", "profiles", "profile",
+    "user", "user_uuid", "photo", "auth", "access", "refresh",
+];
+
 export const logout = () => {
-    localStorage.removeItem("access");
-    localStorage.removeItem("refresh");
-    localStorage.removeItem("user");
+    SESSION_KEYS.forEach((key) => localStorage.removeItem(key));
 };
 
 export const forgotPassword = (email) =>

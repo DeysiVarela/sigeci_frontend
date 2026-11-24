@@ -7,7 +7,9 @@ import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import Card from "../../components/cards/Card";
 import HandlerApp from "../../utils/HandlerApp";
 import Swal from "sweetalert2";
-import { getMyProfile, updateMyProfile, changeMyPassword } from "../../api/users";
+import { getMyProfile, updateMyProfile, changeMyPassword, deleteMyAccount } from "../../api/users";
+import { logout } from "../../api/auth";
+import { hasPermission } from "../../utils/userAccess";
 import { getErrorMessage } from "../../utils/apiError";
 import { useTranslation } from "react-i18next";
 
@@ -28,6 +30,9 @@ const UserProfileScreen = () => {
 
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [showPasswordSection, setShowPasswordSection] = useState(false);
+    // Permiso de matriz "me:delete" (lo entrega GET /api/users/me). Solo oculta/muestra la zona de peligro:
+    // la autorización real la hace el backend en cada petición.
+    const [canDeleteAccount, setCanDeleteAccount] = useState(false);
 
     // Formulario separado para los datos del perfil
     const {
@@ -57,6 +62,7 @@ const UserProfileScreen = () => {
                 const me = await getMyProfile();
                 if (cancelled) return;
                 resetProfile({ name: me.name, lastname: me.lastname, email: me.email });
+                setCanDeleteAccount(hasPermission(me, "me", "delete"));
             } catch (err) {
                 if (cancelled) return;
                 Swal.fire({
@@ -163,6 +169,60 @@ const UserProfileScreen = () => {
         } finally {
             handlerApp.setLoader(false);
         }
+    };
+
+    // SCRUM-129: mensaje legible según el código que devuelve el backend
+    const deleteErrorMessage = (err) => {
+        if (err?.status === 403) return t("userProfile.danger.forbidden");
+        if (err?.status === 429) return t("userProfile.danger.tooMany");
+        return getErrorMessage(err, t("userProfile.danger.error"));
+    };
+
+    // SCRUM-129: eliminar mi cuenta (POST /api/users/me/delete/)
+    const handleDeleteAccount = async () => {
+        if (!canDeleteAccount) return; // defensa en la interfaz; el backend valida me:delete igualmente
+
+        const result = await Swal.fire({
+            title: t("userProfile.danger.confirmTitle"),
+            text: t("userProfile.danger.confirmText"),
+            icon: "warning",
+            input: "password",
+            inputLabel: t("userProfile.danger.passwordLabel"),
+            inputPlaceholder: t("userProfile.danger.passwordPlaceholder"),
+            showCancelButton: true,
+            confirmButtonColor: "#dc3545",
+            cancelButtonColor: "#6c757d",
+            confirmButtonText: t("userProfile.danger.confirmButton"),
+            cancelButtonText: t("userForm.cancel"),
+            showLoaderOnConfirm: true,                  // spinner mientras llama al backend
+            allowOutsideClick: () => !Swal.isLoading(), // no se puede cerrar mientras carga
+            inputValidator: (value) => (value ? undefined : t("userProfile.danger.passwordRequired")),
+            preConfirm: async (password) => {
+                try {
+                    await deleteMyAccount({ password });
+                    return true;
+                } catch (err) {
+                    // 400 (clave incorrecta / único admin), 403 (sin permiso) o 429: el error se ve dentro
+                    // del diálogo y este sigue abierto
+                    Swal.showValidationMessage(deleteErrorMessage(err));
+                    return false;
+                }
+            },
+        });
+
+        if (!result.isConfirmed) return; // canceló o cerró el diálogo
+
+        logout(); // borra token, refreshToken y datos de sesión
+
+        await Swal.fire({
+            title: t("userProfile.danger.doneTitle"),
+            text: t("userProfile.danger.doneText"),
+            icon: "success",
+            confirmButtonText: t("userProfile.danger.goToLogin"),
+        });
+
+        // Recarga completa: reinicia también el estado en memoria (AppContext) y evita volver atrás a una pantalla protegida
+        window.location.replace("/login");
     };
 
     return (
@@ -272,6 +332,21 @@ const UserProfileScreen = () => {
                             </form>
                         )}
                     </Card>
+
+                    {/* Zona de peligro: eliminar la cuenta (SCRUM-129). Solo con el permiso me:delete */}
+                    {canDeleteAccount && (
+                        <Card title={t("userProfile.danger.title")} outline outlineColor="danger" className="mt-4">
+                            <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                <div>
+                                    <h6 className="fw-bold text-danger mb-1">{t("userProfile.danger.heading")}</h6>
+                                    <p className="text-muted small mb-0">{t("userProfile.danger.intro")}</p>
+                                </div>
+                                <button type="button" className="btn btn-danger" onClick={handleDeleteAccount}>
+                                    <i className="bi bi-trash me-1"></i> {t("userProfile.danger.button")}
+                                </button>
+                            </div>
+                        </Card>
+                    )}
                 </div>
             </div>
         </div>
