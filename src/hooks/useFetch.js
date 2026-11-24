@@ -6,19 +6,28 @@ import { useNavigate } from "react-router";
 import { AppContext } from "../context/AppContext";
 // import { logoutGoogle } from "../utils/authGoogle";
 
-// Variables fuera del hook para compartir el estado de refresh entre peticiones concurrentes
-let isRefreshing = false;
-let failedQueue = [];
+const refreshState = {
+    isRefreshing: false,
+    failedQueue: [],
+};
+
+const setRefreshInProgress = (isRefreshing) => {
+    refreshState.isRefreshing = isRefreshing;
+};
+
+const enqueueRefreshRequest = (resolve, reject) => {
+    refreshState.failedQueue.push({ resolve, reject });
+};
 
 const processQueue = (error, token = null) => {
-    failedQueue.forEach(prom => {
+    refreshState.failedQueue.forEach(prom => {
         if (error) {
             prom.reject(error);
         } else {
             prom.resolve(token);
         }
     });
-    failedQueue = [];
+    refreshState.failedQueue = [];
 };
 
 export const useFetch = () => {
@@ -89,9 +98,9 @@ export const useFetch = () => {
             if (isTokenExpired && !originalRequest._retry && !isAuthEndpoint) {
                 
                 // Si ya hay un refresco en curso, encolamos la petición
-                if (isRefreshing) {
+                if (refreshState.isRefreshing) {
                     return new Promise((resolve, reject) => {
-                        failedQueue.push({ resolve, reject });
+                        enqueueRefreshRequest(resolve, reject);
                     })
                     .then((newToken) => {
                         originalRequest.headers.Authorization = `Bearer ${newToken}`;
@@ -101,12 +110,13 @@ export const useFetch = () => {
                 }
 
                 originalRequest._retry = true;
-                isRefreshing = true;
+                setRefreshInProgress(true);
 
                 const storedRefreshToken = localStorage.getItem("refreshToken");
 
                 if (!storedRefreshToken || storedRefreshToken === "undefined" || storedRefreshToken === "null") {
-                    isRefreshing = false;
+                    processQueue(error, null);
+                    setRefreshInProgress(false);
                     await logout();
                     return Promise.reject(error);
                 }
@@ -151,7 +161,7 @@ export const useFetch = () => {
                     await logout();
                     return Promise.reject(refreshError);
                 } finally {
-                    isRefreshing = false;
+                    setRefreshInProgress(false);
                 }
             }
 
