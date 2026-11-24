@@ -18,33 +18,53 @@ const ArticleViewScreen = () => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        const fetchArticle = async () => {
-            setLoading(true);
-            handlerApp.setLoader(true);
-            try {
-                const res = await api.get(`article/${id}`);
-                if (res.data) {
-                    setArticle(res.data);
-                } else {
-                    setError("No se encontró el artículo.");
-                }
-            } catch (err) {
-                console.error("Error al cargar el artículo:", err);
-                setError(err.message || "Error al conectar con el servidor.");
-            } finally {
-                setLoading(false);
-                handlerApp.setLoader(false);
+        sendRequest();
+    }, [])
+
+    const sendRequest = async () => {
+        handlerApp.setLoader(true);
+        api.get(`article/${id}`)
+        .then((response) => {
+            console.log(response, "res")
+            if(response.success){
+                setArticle(response.data);
             }
-        };
-
-        if (id) {
-            fetchArticle();
-        }
-    }, [id]);
-
-    if (loading) {
-        return null;
+            else{
+                setArticle(null);
+                handlerApp.showError(response.message);
+            }
+        })
+        .catch((error) => {
+            handlerApp.showError(error.message);
+        })
+        .finally(() => {
+            handlerApp.setLoader(false);
+        });
     }
+    // useEffect(() => {
+    //     const fetchArticle = async () => {
+    //         setLoading(true);
+    //         handlerApp.setLoader(true);
+    //         try {
+    //             const res = await api.get(`article/${id}`);
+    //             if (res.data) {
+    //                 setArticle(res.data);
+    //             } else {
+    //                 setError("No se encontró el artículo.");
+    //             }
+    //         } catch (err) {
+    //             console.error("Error al cargar el artículo:", err);
+    //             setError(err.message || "Error al conectar con el servidor.");
+    //         } finally {
+    //             setLoading(false);
+    //             handlerApp.setLoader(false);
+    //         }
+    //     };
+
+    //     if (id) {
+    //         fetchArticle();
+    //     }
+    // }, [id]);
 
     if (error || !article) {
         return (

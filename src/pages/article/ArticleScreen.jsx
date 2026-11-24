@@ -1,5 +1,5 @@
 import { useFetch } from "../../hooks/useFetch";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useContext } from "react";
 import { useNavigate, useLocation } from "react-router";
 import Card from "../../components/cards/Card";
 import HandlerApp from "../../utils/HandlerApp";
@@ -10,6 +10,7 @@ import ButtonLink from "../../components/buttons/ButtonLink";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import ButtonSecondary from "../../components/buttons/ButtonSecondary";
 import { useTranslation } from "react-i18next";
+import { AppContext } from "../../context/AppContext";
 
 const ArticleScreen = () => {
     const navigate = useNavigate();
@@ -23,6 +24,10 @@ const ArticleScreen = () => {
 
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("TODOS");
+
+    const { app } = useContext(AppContext);
+
+    console.log(app.permission, app.permissionObject, "permissions")
 
     const loadArticles = async () => {
         setLoading(true);
@@ -206,21 +211,30 @@ const ArticleScreen = () => {
             button: true,
             cell: row => (
                 <div className="d-flex align-items-center gap-2 justify-content-end py-1 flex-nowrap">
-                    <ButtonSecondary
-                        label="Ver"
-                        className="btn-sm py-1 px-2 text-nowrap"
-                        onClick={() => navigate(`/article/${row.article_id}`)}
-                    />
-                    <ButtonPrimary
-                        label="Editar"
-                        className="btn-sm py-1 px-2 text-nowrap"
-                        onClick={() => navigate(`/article/edit/${row.article_id}`)}
-                    />
-                    <ButtonLink
-                        label="Eliminar"
-                        className="text-danger fw-semibold small text-nowrap px-1"
-                        onClick={() => handleOpenDelete(row)}
-                    />
+                    {
+                        app?.permissionObject?.['article']?.includes('view') &&
+                        <ButtonSecondary
+                            label="Ver"
+                            className="btn-sm py-1 px-2 text-nowrap"
+                            onClick={() => navigate(`/article/${row.article_id}`)}
+                        />
+                    }
+                    {
+                        app?.permissionObject?.['article']?.includes('update') &&
+                        <ButtonPrimary
+                            label="Editar"
+                            className="btn-sm py-1 px-2 text-nowrap"
+                            onClick={() => navigate(`/article/edit/${row.article_id}`)}
+                        />
+                    }
+                    {
+                        app?.permissionObject?.['article']?.includes('delete') &&
+                        <ButtonLink
+                            label="Eliminar"
+                            className="text-danger fw-semibold small text-nowrap px-1"
+                            onClick={() => handleOpenDelete(row)}
+                        />
+                    }
                 </div>
             )
         }
@@ -266,14 +280,16 @@ const ArticleScreen = () => {
                     </p>
                 </div>
                 <div className="d-flex gap-2">
-                    <button
-                        className="btn btn-primary shadow-sm d-flex align-items-center gap-2"
-                        // onClick={() => navigate("/article/postulate")}
-                        onClick={() => navigate("/article/create")}
-                    >
-                        <i className="bi bi-plus-circle"></i>
-                        <span>Nuevo Artículo</span>
-                    </button>
+                    {
+                        app?.permissionObject?.['article']?.includes('create') &&
+                        <button
+                            className="btn btn-primary shadow-sm d-flex align-items-center gap-2"
+                            onClick={() => navigate("/article/create")}
+                        >
+                            <i className="bi bi-plus-circle"></i>
+                            <span>Nuevo Artículo</span>
+                        </button>
+                    }
                 </div>
             </div>
 

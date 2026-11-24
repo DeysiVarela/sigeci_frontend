@@ -28,9 +28,13 @@ const ProtectedRoute = () => {
 
         api.get("auth/me")
         .then(res =>{
-            console.log(res, "Response");
+            let permission = res.data;
+            let permissionObject = {} 
+            permission.map((item) => {
+                permissionObject[item.profile_action_action] = item.profile_action_permissions.split("|")
+            })
             if(res.success){
-                setApp({...app, permissions: res.data});
+                setApp({...app, permissions: permission, permissionObject});
             }
         })
         .catch(err=>{
