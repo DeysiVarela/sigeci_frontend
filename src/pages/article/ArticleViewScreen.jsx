@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import Card from "../../components/cards/Card";
 import Badge from "../../components/badges/Badge";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
@@ -7,15 +7,21 @@ import ButtonSecondary from "../../components/buttons/ButtonSecondary";
 import { useFetch } from "../../hooks/useFetch";
 import HandlerApp from "../../utils/HandlerApp";
 import { useTranslation, Trans } from "react-i18next";
+import { AppContext } from "../../context/AppContext";
+import ArticleVersionManager from "./components/ArticleVersionManager";
+import { getCorrectedVersion } from "../../api/articles";
+import { hasPermission } from "../../utils/userAccess";
 
 const ArticleViewScreen = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { app } = useContext(AppContext);
     const api = useFetch();
     const handlerApp = HandlerApp();
     const { t } = useTranslation();
 
     const [article, setArticle] = useState(null);
+    const [editorialStatus, setEditorialStatus] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -27,6 +33,26 @@ const ArticleViewScreen = () => {
                 const res = await api.get(`article/${id}`);
                 if (res.data) {
                     setArticle(res.data);
+                    const attachments = Array.isArray(res.data.attachments) ? res.data.attachments : [];
+                    const hasCorrected = attachments.some(
+                        (att) => String(att?.article_attached_version || "").toLowerCase().includes("corregida")
+                    );
+                    const fallbackStatus = res.data.status || res.data.article_status || (hasCorrected ? "CON_AVAL_PRESENTACION" : "ACEPTADO");
+                    setEditorialStatus(fallbackStatus);
+
+                    try {
+                        const versionData = await getCorrectedVersion(res.data.article_id);
+                        const fetchedStatus =
+                            versionData?.status ||
+                            versionData?.article_status ||
+                            versionData?.data?.status ||
+                            versionData?.data?.article_status;
+                        if (fetchedStatus) {
+                            setEditorialStatus(fetchedStatus);
+                        }
+                    } catch {
+                        // Conserva el estado derivado de los adjuntos del artículo
+                    }
                 } else {
                     setError(t("articleView.loadError"));
                 }
@@ -61,6 +87,30 @@ const ArticleViewScreen = () => {
             </div>
         );
     }
+
+    const currentUserId =
+        app?.user_id ??
+        app?.id ??
+        app?.user?.user_id ??
+        app?.user?.id ??
+        localStorage.getItem("user_id");
+
+    const hasUpdatePermission =
+        hasPermission({ permissions: app?.permissions }, "article", "update") ||
+        hasPermission({ permissions: app?.permissions }, "article", "updates");
+
+    const isOwner =
+        currentUserId == null ||
+        currentUserId === "" ||
+        Number(currentUserId) === Number(article.article_created_by);
+
+    const canUploadVersions = Boolean(hasUpdatePermission && isOwner);
+
+    const versionManagerArticle = {
+        ...article,
+        id: article.article_id,
+        status: editorialStatus || article.status || article.article_status || "ACEPTADO",
+    };
 
     return (
         <div className="container-fluid p-3 p-md-4">
@@ -136,6 +186,14 @@ const ArticleViewScreen = () => {
                             )}
                         </div>
                     </Card>
+
+                    {/* Gestión de Versiones Corregidas y Entrega Final (SCRUM-30 / SCRUM-31) */}
+                    <div className="mt-4">
+                        <ArticleVersionManager
+                            article={versionManagerArticle}
+                            canUpload={canUploadVersions}
+                        />
+                    </div>
                 </div>
 
                 {/* Columna Lateral: Metadatos e Información */}
@@ -152,22 +210,22 @@ const ArticleViewScreen = () => {
                             </li>
                             <li className="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
                                 <span className="text-muted fw-semibold">{t("articleView.fields.topic")}</span>
-                                <span className="badge bg-light text-dark border">{article.topic_name || "—"}</span>
+                                <span className="badge bg-light text-dark border">{article.topic_name || "\u2014"}</span>
                             </li>
                             <li className="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
                                 <span className="text-muted fw-semibold">{t("articleView.fields.createdBy")}</span>
-                                <span className="text-dark fw-medium">{article.article_created_by_name || "—"}</span>
+                                <span className="text-dark fw-medium">{article.article_created_by_name || "\u2014"}</span>
                             </li>
                             <li className="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
                                 <span className="text-muted fw-semibold">{t("articleView.fields.date")}</span>
                                 <span className="text-dark fw-medium">
-                                    {article.article_date || (article.article_created_at ? article.article_created_at.split("T")[0] : "—")}
+                                    {article.article_date || (article.article_created_at ? article.article_created_at.split("T")[0] : "\u2014")}
                                 </span>
                             </li>
                             <li className="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
                                 <span className="text-muted fw-semibold">{t("articleView.fields.pdfVersion")}</span>
                                 <span className="badge bg-light text-dark border">
-                                    {article.article_attached_version ? `v${article.article_attached_version}` : "—"}
+                                    {article.article_attached_version ? `v${article.article_attached_version}` : "\u2014"}
                                 </span>
                             </li>
                             <li className="list-group-item px-0 py-3">
