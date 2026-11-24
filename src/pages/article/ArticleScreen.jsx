@@ -11,6 +11,7 @@ import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import ButtonSecondary from "../../components/buttons/ButtonSecondary";
 import { useTranslation, Trans } from "react-i18next";
 import { AppContext } from "../../context/AppContext";
+import { hasPermission } from "../../utils/userAccess";
 
 const ArticleScreen = () => {
     const navigate = useNavigate();
@@ -19,6 +20,7 @@ const ArticleScreen = () => {
     const handlerApp = HandlerApp();
     const { t } = useTranslation();
     const { app } = useContext(AppContext);
+    const canCreate = hasPermission({ permissions: app?.permissions }, "article", "create");
 
     const activeProfile = String(app?.profile || localStorage.getItem("profile") || "").toUpperCase();
     const isAuthorOnly = activeProfile === "3" || activeProfile === "AUTHOR";
@@ -283,13 +285,24 @@ const ArticleScreen = () => {
                     </p>
                 </div>
                 <div className="d-flex gap-2">
-                    <button
-                        className="btn btn-primary shadow-sm d-flex align-items-center gap-2"
-                        onClick={() => navigate("/article/create")}
-                    >
-                        <i className="bi bi-plus-circle"></i>
-                        <span>{t("articleScreen.newArticle")}</span>
-                    </button>
+                    {canCreate && (
+                        <>
+                            <button
+                                className="btn btn-outline-primary shadow-sm d-flex align-items-center gap-2"
+                                onClick={() => navigate("/article/postulate")}
+                            >
+                                <i className="bi bi-send"></i>
+                                <span>Postular artículo</span>
+                            </button>
+                            <button
+                                className="btn btn-primary shadow-sm d-flex align-items-center gap-2"
+                                onClick={() => navigate("/article/create")}
+                            >
+                                <i className="bi bi-plus-circle"></i>
+                                <span>{t("articleScreen.newArticle")}</span>
+                            </button>
+                        </>
+                    )}
                 </div>
             </div>
 
