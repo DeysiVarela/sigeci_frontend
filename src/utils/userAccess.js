@@ -1,7 +1,26 @@
 import { ROLES, normalizeRole } from "../pages/article/utils/constants";
 
-export const hasPermission = (me, resource, action) =>
-    Boolean(me?.permissions?.[resource]?.includes(action));
+export const hasPermission = (me, resource, action) => {
+    const permissions = me?.permissions;
+
+    if (Array.isArray(permissions)) {
+        return permissions.some((permission) => {
+            if (typeof permission === "string") {
+                return permission === `${resource}.${action}`;
+            }
+            const permissionResource = permission?.resource ?? permission?.profile_action_resource;
+            const permissionAction = permission?.action ?? permission?.profile_action_action;
+            const permissionPath = permission?.profile_action_action;
+            return (
+                (permissionResource === resource && permissionAction === action) ||
+                (resource === "user" && action === "view" &&
+                    typeof permissionPath === "string" && permissionPath.replace(/\/$/, "") === "/users")
+            );
+        });
+    }
+
+    return Boolean(permissions?.[resource]?.includes(action));
+};
 
 export const hasAdminProfile = (user) =>
     (user?.profiles ?? []).some((p) => normalizeRole(p?.name ?? p) === ROLES.ADMIN);
