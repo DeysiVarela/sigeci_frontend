@@ -9,15 +9,11 @@ import ComponentsScreen from "../pages/components/ComponentsScreen";
 import Dashboard from "../theme/containers/Dashboard";
 import ArticleScreen from "../pages/article/ArticleScreen";
 import ArticleViewScreen from "../pages/article/ArticleViewScreen";
-import ArticleEditScreen from "../pages/article/ArticleEditScreen";
-import ArticleEditGuard from "../pages/article/components/ArticleEditGuard";
 import UserScreen from "../pages/users/UserScreen";
 import Container from "../theme/containers/Container";
 import ProtectedRoute from "./ProtectedRoute";
 import PermissionRoute from "./PermissionRoute";
 import { canViewUsers } from "../utils/userAccess";
-import CreateArticlePDFScreen from "../pages/article/CreateArticlePDFScreen";
-import CreateArticleScreen from "../pages/article/CreateArticleScreen";
 import ArticleFormScreen from "../pages/article/ArticleFormScreen";
 import CreateUserScreen from "../pages/users/CreateUserScreen";
 import EditUserScreen from "../pages/users/EditUserScreen";
@@ -25,6 +21,8 @@ import EvaluationListScreen from "../pages/evaluation/EvaluationListScreen";
 import EvaluationDetailScreen from "../pages/evaluation/EvaluationDetailScreen";
 import UserProfileScreen from "../pages/users/UserProfileScreen";
 import AgendaScreen from "../pages/agenda/AgendaScreen";
+import EventDetailScreen from "../pages/agenda/EventDetailScreen";
+import EventFormScreen from "../pages/agenda/EventFormScreen";
 import TopicArticlesScreen from "../pages/article/TopicArticlesScreen";
 
 const router = createBrowserRouter([
@@ -69,6 +67,10 @@ const router = createBrowserRouter([
                     { path: "/components", element: <ComponentsScreen /> },
                     { path: "/home", element: <DashboardScreen /> },
                     { path: "/agenda", element: <AgendaScreen /> },
+                    { path: "/agenda/:id", element: <EventDetailScreen /> },
+                    { path: "/event/new", element: <EventFormScreen /> },
+                    { path: "/event/:id/edit", element: <EventFormScreen /> },
+                    { path: "/event/:id", element: <EventDetailScreen /> },
                     { path: "/article", element: <ArticleScreen /> },
                     { path: "/article/:id", element: <ArticleViewScreen /> },
                     // { path: "/article/edit/:id", element: <ArticleEditGuard><ArticleEditScreen /></ArticleEditGuard> },
