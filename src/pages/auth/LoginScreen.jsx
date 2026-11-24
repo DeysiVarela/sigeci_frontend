@@ -83,7 +83,15 @@ const LoginScreen = () => {
                 localStorage.setItem("profiles", JSON.stringify(profiles));
                 localStorage.setItem("profile", profile);
 
-                setApp((app) => ({ ...app, profile, profiles, user: data.user, token: data.token, isAuthenticated: true }));
+                setApp((app) => ({
+                    ...app,
+                    profile,
+                    profiles,
+                    permissions: data.permissions,
+                    user: data.user,
+                    token: data.token,
+                    isAuthenticated: true
+                }));
                 nav("/home");
             }else{
                 setSubmitError(res.message);
