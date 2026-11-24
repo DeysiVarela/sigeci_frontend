@@ -6,15 +6,13 @@ import InputEmail from "../../components/inputs/InputEmail";
 import InputPassword from "../../components/inputs/InputPassword";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import HandlerApp from "../../utils/HandlerApp";
-// import { login } from "../../api/auth";
-import { useFetch } from "../../hooks/useFetch";
+import { login } from "../../api/auth";
 import { AppContext } from "../../context/AppContext";
 import Swal from "sweetalert2";
 
 const LoginScreen = () => {
     const nav               = useNavigate();
     const handlerApp        = HandlerApp();
-    const api               = useFetch();
     const captchaRef        = useRef(null);
 
     const {setApp} = useContext(AppContext);
@@ -44,8 +42,11 @@ const LoginScreen = () => {
         setIsSubmitting(true);
         handlerApp.setLoader(true);
         try {
-            let body = {...data};
-            let res = await api.post('auth/login', body, null, captchaToken);
+            let res = await login({
+                identifier: data.email,
+                password: data.password,
+                captchaToken
+            });
             if(res.success){
                 let data = res.data;
                 localStorage.setItem("token", data.token);
