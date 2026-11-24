@@ -6,7 +6,6 @@ import InputEmail from "../../components/inputs/InputEmail";
 import InputPassword from "../../components/inputs/InputPassword";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import HandlerApp from "../../utils/HandlerApp";
-// import { login } from "../../api/auth";
 import { useFetch } from "../../hooks/useFetch";
 import { AppContext } from "../../context/AppContext";
 import Swal from "sweetalert2";
