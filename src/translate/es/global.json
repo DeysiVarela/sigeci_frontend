@@ -300,6 +300,24 @@
             "tooManyText": "Espera un minuto antes de volver a intentarlo.",
             "errorTitle": "No se pudo cambiar la contraseña",
             "errorText": "Intenta de nuevo."
+        },
+        "danger": {
+            "title": "Zona de Peligro",
+            "heading": "Eliminar mi cuenta",
+            "intro": "Una vez eliminada, tu cuenta se desactivará y no podrás volver a ingresar.",
+            "button": "Eliminar mi cuenta",
+            "confirmTitle": "¿Estás seguro?",
+            "confirmText": "Esta acción desactivará tu cuenta. Tus artículos se conservarán, pero no podrás volver a ingresar.",
+            "passwordLabel": "Ingresa tu contraseña para confirmar",
+            "passwordPlaceholder": "Tu contraseña actual",
+            "passwordRequired": "Debes ingresar tu contraseña",
+            "confirmButton": "Sí, eliminar mi cuenta",
+            "forbidden": "No tienes permiso para eliminar tu cuenta.",
+            "tooMany": "Demasiados intentos. Espera un minuto antes de volver a intentarlo.",
+            "error": "No se pudo eliminar la cuenta. Intenta de nuevo.",
+            "doneTitle": "Cuenta eliminada",
+            "doneText": "Tu cuenta ha sido desactivada.",
+            "goToLogin": "Ir al Login"
         }
     },
     "userMenu": {
