@@ -6,19 +6,28 @@ import { useNavigate } from "react-router";
 import { AppContext } from "../context/AppContext";
 // import { logoutGoogle } from "../utils/authGoogle";
 
-// Variables fuera del hook para compartir el estado de refresh entre peticiones concurrentes
-let isRefreshing = false;
-let failedQueue = [];
+const refreshState = {
+    isRefreshing: false,
+    failedQueue: [],
+};
+
+const setRefreshInProgress = (isRefreshing) => {
+    refreshState.isRefreshing = isRefreshing;
+};
+
+const enqueueRefreshRequest = (resolve, reject) => {
+    refreshState.failedQueue.push({ resolve, reject });
+};
 
 const processQueue = (error, token = null) => {
-    failedQueue.forEach(prom => {
+    refreshState.failedQueue.forEach(prom => {
         if (error) {
             prom.reject(error);
         } else {
             prom.resolve(token);
         }
     });
-    failedQueue = [];
+    refreshState.failedQueue = [];
 };
 
 export const useFetch = () => {
@@ -26,12 +35,25 @@ export const useFetch = () => {
     const handlerApp    = HandlerApp();
     const { app, setApp } = useContext(AppContext);
     
+    const backendUrl = (import.meta.env.VITE_BACKEND_URL || "")
+        .replace(/\/$/, "")
+        .replace(/\/api\/v1$/, "");
     const instance = axios.create({
-        baseURL: `${import.meta.env.VITE_BACKEND_URL}`,
-        headers: {
-            Authorization: (app.token) ? app.token : (localStorage.getItem("token") || ""),
-            profile: (app.profile) ? app.profile : (parseInt(localStorage.getItem("profile")) || 0)
+        baseURL: `${backendUrl}/api/v1`,
+    });
+
+    instance.interceptors.request.use((config) => {
+        const storedToken = localStorage.getItem("token");
+        const validToken = (storedToken && storedToken !== "undefined" && storedToken !== "null")
+            ? storedToken
+            : (app.token || "");
+        const profile = app.profile || parseInt(localStorage.getItem("profile")) || 0;
+
+        if (validToken) {
+            config.headers.Authorization = `Bearer ${validToken}`;
         }
+        config.headers.profile = profile;
+        return config;
     });
     
     const logout = async () => {
@@ -76,49 +98,45 @@ export const useFetch = () => {
             if (isTokenExpired && !originalRequest._retry && !isAuthEndpoint) {
                 
                 // Si ya hay un refresco en curso, encolamos la petición
-                if (isRefreshing) {
+                if (refreshState.isRefreshing) {
                     return new Promise((resolve, reject) => {
-                        failedQueue.push({ resolve, reject });
+                        enqueueRefreshRequest(resolve, reject);
                     })
                     .then((newToken) => {
-                        originalRequest.headers.Authorization = newToken;
+                        originalRequest.headers.Authorization = `Bearer ${newToken}`;
                         return instance(originalRequest);
                     })
                     .catch((err) => Promise.reject(err));
                 }
 
                 originalRequest._retry = true;
-                isRefreshing = true;
+                setRefreshInProgress(true);
 
                 const storedRefreshToken = localStorage.getItem("refreshToken");
 
-                if (!storedRefreshToken) {
-                    isRefreshing = false;
+                if (!storedRefreshToken || storedRefreshToken === "undefined" || storedRefreshToken === "null") {
+                    processQueue(error, null);
+                    setRefreshInProgress(false);
                     await logout();
                     return Promise.reject(error);
                 }
 
                 try {
-                    // Petición al endpoint /refresh o /refresh-token
-                    const baseUrl = import.meta.env.VITE_BACKEND_URL.replace(/\/$/, "");
-                    const refreshUrl = baseUrl.includes("/api/v1") 
-                        ? `${baseUrl}/auth/refresh/` 
-                        : `${baseUrl}/api/v1/auth/refresh/`;
+                    const refreshUrl = `${backendUrl}/api/auth/refresh/`;
 
                     const response = await axios.post(refreshUrl, {
-                        refresh_token: storedRefreshToken
+                        refresh: storedRefreshToken
                     });
 
-                    if (response.data?.success) {
-                        const responseData = response.data?.data || response.data;
-                        const newAccessToken = responseData.token;
-                        const newRefreshToken = responseData.refresh_token;
+                    if (response.data?.access) {
+                        const newAccessToken = response.data.access;
+
+                        if (!newAccessToken) {
+                            throw new Error("El servidor no devolvió un token válido");
+                        }
 
                         // 1. Guardar en localStorage
                         localStorage.setItem("token", newAccessToken);
-                        if (newRefreshToken) {
-                            localStorage.setItem("refreshToken", newRefreshToken);
-                        }
 
                         // 2. Actualizar estado en AppContext
                         setApp(prev => ({
@@ -127,8 +145,8 @@ export const useFetch = () => {
                         }));
 
                         // 3. Actualizar headers de la instancia y de la petición fallida
-                        instance.defaults.headers.Authorization = newAccessToken;
-                        originalRequest.headers.Authorization = newAccessToken;
+                        instance.defaults.headers.Authorization = `Bearer ${newAccessToken}`;
+                        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
                         // 4. Despachar las peticiones encoladas
                         processQueue(null, newAccessToken);
@@ -143,7 +161,7 @@ export const useFetch = () => {
                     await logout();
                     return Promise.reject(refreshError);
                 } finally {
-                    isRefreshing = false;
+                    setRefreshInProgress(false);
                 }
             }
 

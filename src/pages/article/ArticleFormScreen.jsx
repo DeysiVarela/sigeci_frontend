@@ -13,11 +13,13 @@ import HandlerApp from "../../utils/HandlerApp";
 import { useFetch } from "../../hooks/useFetch";
 import { uploadFile } from "../../utils/uploadFiles";
 import { getErrorMessage } from "../../utils/apiError";
+import { useTranslation } from "react-i18next";
 
 const ArticleFormScreen = () => {
     const { id } = useParams();
     const isEdit = Boolean(id);
     const nav = useNavigate();
+    const { t } = useTranslation();
     const handlerApp = HandlerApp();
     const api = useFetch();
     const [topics, setTopics] = useState([]);
@@ -65,10 +67,10 @@ const ArticleFormScreen = () => {
             } catch (err) {
                 if (isEdit) {
                     Swal.fire({
-                        title: "Error",
-                        text: getErrorMessage(err, "No se pudo cargar el artículo."),
+                        title: t("articleForm.alerts.errorTitle"),
+                        text: getErrorMessage(err, t("articleForm.alerts.loadError")),
                         icon: "error",
-                        confirmButtonText: "Aceptar",
+                        confirmButtonText: t("articleForm.alerts.ok"),
                     });
                 }
             } finally {
@@ -105,12 +107,12 @@ const ArticleFormScreen = () => {
             handlerApp.setLoader(false);
 
             await Swal.fire({
-                title: isEdit ? "¡Artículo actualizado!" : "¡Artículo creado!",
+                title: isEdit ? t("articleForm.alerts.updatedTitle") : t("articleForm.alerts.createdTitle"),
                 text: isEdit
-                    ? "El artículo se actualizó correctamente."
-                    : "El artículo se registró correctamente.",
+                    ? t("articleForm.alerts.updatedText")
+                    : t("articleForm.alerts.createdText"),
                 icon: "success",
-                confirmButtonText: "Aceptar",
+                confirmButtonText: t("articleForm.alerts.ok"),
             });
 
             reset();
@@ -118,10 +120,10 @@ const ArticleFormScreen = () => {
         } catch (err) {
             handlerApp.setLoader(false);
             Swal.fire({
-                title: isEdit ? "No se pudo actualizar el artículo" : "No se pudo crear el artículo",
-                text: getErrorMessage(err, "Ocurrió un error al guardar el artículo."),
+                title: isEdit ? t("articleForm.alerts.updateErrorTitle") : t("articleForm.alerts.createErrorTitle"),
+                text: getErrorMessage(err, t("articleForm.alerts.saveError")),
                 icon: "error",
-                confirmButtonText: "Aceptar",
+                confirmButtonText: t("articleForm.alerts.ok"),
             });
         }
     };
@@ -136,60 +138,60 @@ const ArticleFormScreen = () => {
                             className="btn-sm"
                         >
                             <i className="bi bi-arrow-left me-1"></i>
-                            Volver
+                            {t("articleForm.back")}
                         </ButtonSecondary>
                     </div>
-                    <Card title={isEdit ? `Editar Artículo #${id}` : "Crear Artículo"} outline outlineColor="primary">
+                    <Card title={isEdit ? t("articleForm.editTitle", { id }) : t("articleForm.createTitle")} outline outlineColor="primary">
                         <form onSubmit={handleSubmit(submitData)}>
                             <div className="row">
                                 <div className="col-md-6">
                                     <InputText
                                         control={control}
-                                        label="Título del Artículo"
+                                        label={t("articleForm.fields.subject")}
                                         name="article_subject"
                                         errors={errors.article_subject}
                                         required={true}
                                         rules={{ minLength: 3 }}
-                                        placeholder="Escribe el título del artículo"
+                                        placeholder={t("articleForm.fields.subjectPlaceholder")}
                                     />
                                 </div>
                                 <div className="col-md-6">
                                     <InputSelect
                                         control={control}
-                                        label="Línea Temática"
+                                        label={t("articleForm.fields.topic")}
                                         name="topic_id"
                                         options={topics}
                                         errors={errors.topic_id}
                                         required={true}
-                                        placeholder="Selecciona una línea temática"
+                                        placeholder={t("articleForm.fields.topicPlaceholder")}
                                     />
                                 </div>
                             </div>
 
                             <InputTextArea
                                 control={control}
-                                label="Descripción / Resumen"
+                                label={t("articleForm.fields.description")}
                                 name="article_description"
                                 errors={errors.article_description}
                                 required={false}
                                 rows={3}
-                                placeholder="Breve descripción o resumen del artículo"
+                                placeholder={t("articleForm.fields.descriptionPlaceholder")}
                             />
 
                             <InputTextArea
                                 control={control}
-                                label="Contenido del Artículo"
+                                label={t("articleForm.fields.content")}
                                 name="article"
                                 errors={errors.article}
                                 required={true}
                                 rows={5}
-                                placeholder="Escribe el contenido principal del artículo"
+                                placeholder={t("articleForm.fields.contentPlaceholder")}
                             />
 
                             {isEdit && currentArticle?.article_attached_url && (
                                 <div className="mb-3">
                                     <span className="small text-muted d-block mb-1">
-                                        PDF actual (v{currentArticle.article_attached_version || "1.0"}):
+                                        {t("articleForm.fields.currentPdf", { version: currentArticle.article_attached_version || "1.0" })}
                                     </span>
                                     <a
                                         href={currentArticle.article_attached_url}
@@ -198,14 +200,14 @@ const ArticleFormScreen = () => {
                                         className="small text-decoration-none d-inline-flex align-items-center gap-1"
                                     >
                                         <i className="bi bi-file-earmark-pdf text-danger"></i>
-                                        <span>Ver documento actual</span>
+                                        <span>{t("articleForm.fields.viewCurrentPdf")}</span>
                                     </a>
                                 </div>
                             )}
 
                             <InputPdf
                                 name="pdfFile"
-                                label={isEdit ? "Reemplazar Documento PDF (opcional)" : "Documento PDF"}
+                                label={isEdit ? t("articleForm.fields.replacePdf") : t("articleForm.fields.pdf")}
                                 register={register}
                                 errors={errors}
                                 maxSizeMB={20}
@@ -214,12 +216,12 @@ const ArticleFormScreen = () => {
 
                             <div className="d-flex justify-content-end gap-2 mt-4">
                                 <ButtonSecondary
-                                    label="Cancelar"
+                                    label={t("articleForm.buttons.cancel")}
                                     onClick={() => nav("/article")}
                                 />
                                 <ButtonPrimary
                                     type="submit"
-                                    label={isEdit ? "Guardar Cambios" : "Guardar Artículo"}
+                                    label={isEdit ? t("articleForm.buttons.saveChanges") : t("articleForm.buttons.saveArticle")}
                                 />
                             </div>
                         </form>

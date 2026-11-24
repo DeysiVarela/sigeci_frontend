@@ -1,4 +1,5 @@
 import { Controller } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 const InputMultiSelect = ({
     control,
@@ -8,12 +9,13 @@ const InputMultiSelect = ({
     errors = {},
     required = false,
 }) => {
+    const { t } = useTranslation();
     return (
         <Controller
             control={control}
             name={name}
             rules={{
-                required: required ? "Debes seleccionar al menos un rol" : false,
+                required: required ? t("validation.selectAtLeastOne") : false,
             }}
             defaultValue={[]} // Arreglo vacío por defecto
             render={({ field }) => {
@@ -25,7 +27,7 @@ const InputMultiSelect = ({
                     const newValue = selectedValues.includes(value)
                         ? selectedValues.filter((v) => v !== value)
                         : [...selectedValues, value];
-                    
+
                     field.onChange(newValue);
                 };
 
@@ -34,7 +36,7 @@ const InputMultiSelect = ({
                         <label className="form-label fw-semibold d-block mb-2">
                             {label} {required && "*"}
                         </label>
-                        
+
                         <div className="d-flex flex-wrap gap-3 p-3 border rounded bg-light">
                             {options.map((opt) => (
                                 <div className="form-check" key={opt.value}>
@@ -47,8 +49,8 @@ const InputMultiSelect = ({
                                         onChange={() => handleCheckboxChange(opt.value)}
                                         onBlur={field.onBlur}
                                     />
-                                    <label 
-                                        className="form-check-label user-select-none" 
+                                    <label
+                                        className="form-check-label user-select-none"
                                         htmlFor={`${name}-${opt.value}`}
                                         style={{ cursor: "pointer" }}
                                     >

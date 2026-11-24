@@ -1,13 +1,14 @@
 {
     "0000": "Error 1",
-	"0001": "Error 2",
-	"0002": "Success 1",
+    "0001": "Error 2",
+    "0002": "Success 1",
     "catalog": {
         "title": "UI Component Catalog",
         "description": "Interactive gallery for developers. Visualize, test, and reuse the system's component library."
     },
     "users": "Users",
     "event": "Events",
+    "agenda": "Agenda",
     "article": "Articles",
     "application": "Applications",
     "dashboard": "Dashboard",
@@ -18,7 +19,7 @@
     "articleScreen": {
         "title": "Scientific Article Management",
         "description": "Academic publications, peer reviews, and SIGECI research documents.",
-         "table": {
+        "table": {
             "title": "Article Title",
             "topic": "Topic",
             "author": "Author",
@@ -26,6 +27,316 @@
             "state": "State",
             "version": "PDF/Version",
             "date": "Date"
+        },
+        "newArticle": "New Article",
+        "repository": "Article Repository",
+        "searchPlaceholder": "Search by title, author or category...",
+        "showing": "Showing <b>{{shown}}</b> of <b>{{total}}</b> articles",
+        "empty": "No articles match the selected criteria.",
+        "topicTooltip": "Organize articles in \"{{topic}}\"",
+        "topicFallback": "Topic #{{id}}",
+        "stats": {
+            "total": "Total Publications",
+            "published": "Published",
+            "inReview": "In Review",
+            "drafts": "Drafts"
+        },
+        "filters": {
+            "all": "All statuses"
+        },
+        "state": {
+            "active": "Active",
+            "inactive": "Inactive"
+        },
+        "actions": {
+            "view": "View",
+            "edit": "Edit",
+            "delete": "Delete"
+        },
+        "pagination": {
+            "rowsPerPage": "Rows per page:",
+            "of": "of"
+        },
+        "alerts": {
+            "successTitle": "Success",
+            "errorTitle": "Error",
+            "loadError": "We couldn't load the articles from the server.",
+            "deleteError": "The article could not be deleted.",
+            "deletedTitle": "Article Deleted!",
+            "deleted": "The article \"{{title}}\" (ID: #{{id}}) was deleted successfully."
+        },
+        "deleteModal": {
+            "title": "Confirm Article Deletion",
+            "cancel": "Cancel",
+            "confirm": "Yes, Delete Article",
+            "question": "Do you want to permanently delete this article?",
+            "warning": "You are about to remove <b>\"{{title}}\"</b> from the publications database.",
+            "meta": "Author: {{author}} · Category: {{category}}"
         }
+    },
+    "articleView": {
+        "header": "Article Details #{{id}}",
+        "back": "Back",
+        "backToList": "Back to List",
+        "edit": "Edit Article",
+        "notFound": "No article was found with ID <b>#{{id}}</b>.",
+        "loadError": "The article was not found.",
+        "connectionError": "Could not connect to the server.",
+        "content": "Publication Content",
+        "summary": "Summary / Description",
+        "body": "Article Body",
+        "license": "License / Rights:",
+        "metadata": "Metadata and Record",
+        "fields": {
+            "state": "Status:",
+            "topic": "Topic:",
+            "createdBy": "Created by:",
+            "date": "Date:",
+            "pdfVersion": "PDF Version:",
+            "pdfFile": "PDF File:",
+            "noFile": "No attached file",
+            "updatedAt": "Last Updated:"
+        },
+        "quickActions": "Quick Actions:",
+        "modify": "Edit Information",
+        "print": "Print / Export Record"
+    },
+    "articleForm": {
+        "back": "Back",
+        "createTitle": "Create Article",
+        "editTitle": "Edit Article #{{id}}",
+        "fields": {
+            "subject": "Article Title",
+            "subjectPlaceholder": "Enter the article title",
+            "topic": "Thematic Line",
+            "topicPlaceholder": "Select a thematic line",
+            "description": "Description / Summary",
+            "descriptionPlaceholder": "Short description or summary of the article",
+            "content": "Article Content",
+            "contentPlaceholder": "Write the main content of the article",
+            "currentPdf": "Current PDF (v{{version}}):",
+            "viewCurrentPdf": "View current document",
+            "pdf": "PDF Document",
+            "replacePdf": "Replace PDF Document (optional)"
+        },
+        "buttons": {
+            "cancel": "Cancel",
+            "saveChanges": "Save Changes",
+            "saveArticle": "Save Article"
+        },
+        "alerts": {
+            "ok": "OK",
+            "errorTitle": "Error",
+            "loadError": "The article could not be loaded.",
+            "createdTitle": "Article created!",
+            "createdText": "The article was registered successfully.",
+            "updatedTitle": "Article updated!",
+            "updatedText": "The article was updated successfully.",
+            "createErrorTitle": "The article could not be created",
+            "updateErrorTitle": "The article could not be updated",
+            "saveError": "An error occurred while saving the article."
+        }
+    },
+    "inputPdf": {
+        "label": "PDF File",
+        "hint": "PDF format. Maximum size: {{size}} MB.",
+        "required": "The PDF file is required",
+        "onlyPdf": "Only PDF files are allowed",
+        "tooLarge": "The file cannot exceed {{size}} MB"
+    },
+    "validation": {
+        "required": "This field is required",
+        "min": "The value of {{field}} is below the minimum",
+        "max": "The value of {{field}} exceeds the maximum allowed",
+        "minLength": "This field must have at least {{min}} characters",
+        "email": "This field must be a valid email address",
+        "pattern": "This field does not have a valid format",
+        "selectPlaceholder": "Select an option",
+        "passwordMinLength": "The password must have at least {{min}} characters",
+        "passwordStrong": "It must contain at least 8 characters, one uppercase letter, one lowercase letter, one number and one special character",
+        "showPassword": "Show password",
+        "hidePassword": "Hide password",
+        "numberMin": "The value must be at least {{min}}",
+        "numberMax": "The value cannot exceed {{max}}",
+        "pinLength": "The PIN must have {{length}} digits",
+        "selectAtLeastOne": "You must select at least one option"
+    },
+    "userScreen": {
+        "title": "User Management",
+        "description": "Manage roles, access and status of the university staff registered in SIGECI.",
+        "newUser": "New User",
+        "stats": {
+            "total": "Total Users",
+            "active": "Active",
+            "inactive": "Inactive"
+        },
+        "status": {
+            "active": "Active",
+            "inactive": "Inactive"
+        },
+        "columns": {
+            "user": "User",
+            "role": "Role",
+            "status": "Status",
+            "actions": "Actions"
+        },
+        "actions": {
+            "view": "View",
+            "edit": "Edit",
+            "delete": "Delete"
+        },
+        "loading": "Loading users...",
+        "empty": {
+            "search": "No user matches the search.",
+            "filters": "No user matches the selected filters.",
+            "none": "There are no registered users yet."
+        },
+        "pagination": {
+            "rowsPerPage": "Rows per page:",
+            "of": "of"
+        },
+        "alerts": {
+            "successTitle": "Success",
+            "close": "Close",
+            "loadError": "The users could not be loaded.",
+            "deletedTitle": "User deleted",
+            "deleted": "The user \"{{name}}\" ({{email}}) was deleted.",
+            "deleteErrorTitle": "Could not delete",
+            "deleteError": "The user could not be deleted.",
+            "retry": "Retry",
+            "roleError": "Your role could not be verified; editing actions are hidden."
+        },
+        "list": {
+            "title": "Official User List",
+            "filterRole": "Filter by role",
+            "allRoles": "All roles",
+            "filterStatus": "Filter by status",
+            "allStatuses": "All statuses",
+            "onlyActive": "Active only",
+            "onlyInactive": "Inactive only",
+            "search": "Search by name or email",
+            "clearFilters": "Clear filters",
+            "ofTotal": "{{shown}} of {{total}}",
+            "userCount_one": "user",
+            "userCount_other": "users",
+            "searchHint": "Text search is enabled when the filters leave {{max}} users or fewer."
+        },
+        "viewModal": {
+            "title": "User Details",
+            "close": "Close",
+            "id": "Registration ID:",
+            "role": "Assigned Role:",
+            "status": "Account Status:"
+        },
+        "deleteModal": {
+            "title": "Confirm Deletion",
+            "cancel": "Cancel",
+            "confirm": "Yes, Delete",
+            "question": "Are you sure you want to delete this user?",
+            "warning": "<b>{{name}}</b> (<code>{{email}}</code>) will be permanently deleted. This action cannot be undone."
+        }
+    },
+    "userForm": {
+        "fields": {
+            "name": "First Name",
+            "lastname": "Last Name",
+            "email": "Email",
+            "password": "Password",
+            "passwordPlaceholder": "At least 8 characters",
+            "confirmPassword": "Confirm password",
+            "confirmPasswordPlaceholder": "Repeat the password",
+            "roles": "User Roles",
+            "status": "Account status"
+        },
+        "passwordsMismatch": "Passwords do not match",
+        "cancel": "Cancel",
+        "ok": "OK",
+        "create": {
+            "title": "Create New User",
+            "save": "Save User",
+            "profilesError": "The roles could not be loaded. Reload the page to try again.",
+            "successTitle": "User created!",
+            "successText": "The user was registered successfully.",
+            "errorTitle": "The user could not be created",
+            "errorText": "The user could not be created."
+        },
+        "edit": {
+            "title": "Edit User",
+            "save": "Update User",
+            "loading": "Loading user data...",
+            "loadingShort": "Loading data...",
+            "passwordNote": "The password is not edited from this form.",
+            "noPermissionTitle": "No permission",
+            "noPermissionText": "You do not have permission to edit this user.",
+            "loadErrorTitle": "Error",
+            "loadError": "The user could not be loaded.",
+            "successTitle": "Updated!",
+            "successText": "The user data was saved successfully.",
+            "errorTitle": "Could not update",
+            "errorText": "The user could not be updated."
+        }
+    },
+    "userProfile": {
+        "title": "My Profile",
+        "loading": "Loading profile data...",
+        "loadingShort": "Loading...",
+        "save": "Save changes",
+        "loadErrorTitle": "Your profile could not be loaded",
+        "loadErrorText": "Try again in a few minutes.",
+        "updatedTitle": "Profile updated",
+        "updatedText": "Your data was saved successfully.",
+        "updateErrorTitle": "The profile could not be updated",
+        "updateErrorText": "Check the data and try again.",
+        "password": {
+            "title": "Change Password",
+            "intro": "For security, you can change your password here.",
+            "open": "Change my password",
+            "current": "Current password",
+            "new": "New password",
+            "confirm": "Confirm new password",
+            "save": "Update password",
+            "updatedTitle": "Password updated",
+            "updatedText": "Your password was changed successfully.",
+            "tooManyTitle": "Too many attempts",
+            "tooManyText": "Wait a minute before trying again.",
+            "errorTitle": "The password could not be changed",
+            "errorText": "Try again."
+        },
+        "danger": {
+            "title": "Danger Zone",
+            "heading": "Delete my account",
+            "intro": "Once deleted, your account will be deactivated and you will not be able to sign in again.",
+            "button": "Delete my account",
+            "confirmTitle": "Are you sure?",
+            "confirmText": "This will deactivate your account. Your articles will be kept, but you will not be able to sign in again.",
+            "passwordLabel": "Enter your password to confirm",
+            "passwordPlaceholder": "Your current password",
+            "passwordRequired": "You must enter your password",
+            "confirmButton": "Yes, delete my account",
+            "forbidden": "You do not have permission to delete your account.",
+            "tooMany": "Too many attempts. Wait a minute before trying again.",
+            "error": "The account could not be deleted. Try again.",
+            "doneTitle": "Account deleted",
+            "doneText": "Your account has been deactivated.",
+            "goToLogin": "Go to Login"
+        }
+    },
+    "userMenu": {
+        "demoUser": "User X",
+        "demoRole": "Developer",
+        "memberSince": "Member since {{date}}",
+        "profile": "Profile",
+        "logout": "Log out"
+    },
+    "topicArticlesScreen": {
+        "title": "Organize Topic Articles",
+        "description": "Drag and drop the cards to define the presentation order.",
+        "back": "Back",
+        "cardTitle": "Article List (Draggable)",
+        "loading": "Loading articles...",
+        "empty": "There are no articles in this topic yet.",
+        "authorId": "Author ID",
+        "loadError": "Could not load articles.",
+        "reorderError": "Could not save the new order. Check your connection."
     }
 }

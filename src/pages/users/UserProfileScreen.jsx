@@ -7,8 +7,11 @@ import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import Card from "../../components/cards/Card";
 import HandlerApp from "../../utils/HandlerApp";
 import Swal from "sweetalert2";
-import { getMyProfile, updateMyProfile, changeMyPassword } from "../../api/users";
+import { getMyProfile, updateMyProfile, changeMyPassword, deleteMyAccount } from "../../api/users";
+import { logout } from "../../api/auth";
+import { hasPermission } from "../../utils/userAccess";
 import { getErrorMessage } from "../../utils/apiError";
+import { useTranslation } from "react-i18next";
 
 // El login guarda el usuario en localStorage["user"] (lo leen otras pantallas).
 // El PATCH devuelve la misma forma, así que se mezcla para no dejar la sesión desactualizada.
@@ -23,26 +26,30 @@ const syncSessionUser = (updatedUser) => {
 
 const UserProfileScreen = () => {
     const handlerApp = HandlerApp();
+    const { t, i18n } = useTranslation();
 
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [showPasswordSection, setShowPasswordSection] = useState(false);
+    // Permiso de matriz "me:delete" (lo entrega GET /api/users/me). Solo oculta/muestra la zona de peligro:
+    // la autorización real la hace el backend en cada petición.
+    const [canDeleteAccount, setCanDeleteAccount] = useState(false);
 
     // Formulario separado para los datos del perfil
-    const { 
-        control: profileControl, 
-        handleSubmit: handleProfileSubmit, 
-        formState: { errors: profileErrors }, 
-        reset: resetProfile 
+    const {
+        control: profileControl,
+        handleSubmit: handleProfileSubmit,
+        formState: { errors: profileErrors },
+        reset: resetProfile
     } = useForm({ mode: "onChange" });
 
     // Formulario separado para la contraseña
-    const { 
-        control: passwordControl, 
-        handleSubmit: handlePasswordSubmit, 
-        formState: { errors: passwordErrors }, 
+    const {
+        control: passwordControl,
+        handleSubmit: handlePasswordSubmit,
+        formState: { errors: passwordErrors },
         reset: resetPassword,
         setError: setPasswordError,
-        watch: watchPassword 
+        watch: watchPassword
     } = useForm({ mode: "onChange" });
 
     const newPassword = watchPassword("newPassword", "");
@@ -55,13 +62,14 @@ const UserProfileScreen = () => {
                 const me = await getMyProfile();
                 if (cancelled) return;
                 resetProfile({ name: me.name, lastname: me.lastname, email: me.email });
+                setCanDeleteAccount(hasPermission(me, "me", "delete"));
             } catch (err) {
                 if (cancelled) return;
                 Swal.fire({
-                    title: "No se pudo cargar tu perfil",
-                    text: getErrorMessage(err, "Intenta de nuevo en unos minutos."),
+                    title: i18n.t("userProfile.loadErrorTitle"),
+                    text: getErrorMessage(err, i18n.t("userProfile.loadErrorText")),
                     icon: "error",
-                    confirmButtonText: "Aceptar"
+                    confirmButtonText: i18n.t("userForm.ok")
                 });
             } finally {
                 if (!cancelled) setIsLoadingData(false);
@@ -87,7 +95,7 @@ const UserProfileScreen = () => {
         // --------------------------------------------------------
 
         return () => { cancelled = true; };
-    }, [resetProfile]);
+    }, [resetProfile, i18n]);
 
     // Funcion para guardar los datos personales (PATCH /api/users/me)
     const submitData = async (formData) => {
@@ -102,17 +110,17 @@ const UserProfileScreen = () => {
             // El backend normaliza el correo (minúsculas): se refleja en el formulario
             resetProfile({ name: updated.name, lastname: updated.lastname, email: updated.email });
             Swal.fire({
-                title: 'Perfil actualizado',
-                text: 'Tus datos se guardaron correctamente.',
+                title: t("userProfile.updatedTitle"),
+                text: t("userProfile.updatedText"),
                 icon: 'success',
-                confirmButtonText: 'Aceptar'
+                confirmButtonText: t("userForm.ok")
             });
         } catch (err) {
             Swal.fire({
-                title: 'No se pudo actualizar el perfil',
-                text: getErrorMessage(err, "Revisa los datos e intenta de nuevo."),
+                title: t("userProfile.updateErrorTitle"),
+                text: getErrorMessage(err, t("userProfile.updateErrorText")),
                 icon: 'error',
-                confirmButtonText: 'Aceptar'
+                confirmButtonText: t("userForm.ok")
             });
         } finally {
             handlerApp.setLoader(false);
@@ -126,10 +134,10 @@ const UserProfileScreen = () => {
         try {
             await changeMyPassword({ currentPassword, newPassword });
             Swal.fire({
-                title: 'Contraseña actualizada',
-                text: 'Tu contraseña ha sido cambiada exitosamente.',
+                title: t("userProfile.password.updatedTitle"),
+                text: t("userProfile.password.updatedText"),
                 icon: 'success',
-                confirmButtonText: 'Aceptar'
+                confirmButtonText: t("userForm.ok")
             }).then(() => {
                 setShowPasswordSection(false);
                 resetPassword();
@@ -141,10 +149,10 @@ const UserProfileScreen = () => {
 
             if (err?.status === 429) {
                 Swal.fire({
-                    title: 'Demasiados intentos',
-                    text: 'Espera un minuto antes de volver a intentarlo.',
+                    title: t("userProfile.password.tooManyTitle"),
+                    text: t("userProfile.password.tooManyText"),
                     icon: 'warning',
-                    confirmButtonText: 'Aceptar'
+                    confirmButtonText: t("userForm.ok")
                 });
             } else if (currentMsg || newMsg) {
                 // 400 con error por campo: se muestra debajo del input correspondiente
@@ -152,10 +160,10 @@ const UserProfileScreen = () => {
                 if (newMsg) setPasswordError("newPassword", { type: "validate", message: newMsg });
             } else {
                 Swal.fire({
-                    title: 'No se pudo cambiar la contraseña',
-                    text: getErrorMessage(err, "Intenta de nuevo."),
+                    title: t("userProfile.password.errorTitle"),
+                    text: getErrorMessage(err, t("userProfile.password.errorText")),
                     icon: 'error',
-                    confirmButtonText: 'Aceptar'
+                    confirmButtonText: t("userForm.ok")
                 });
             }
         } finally {
@@ -163,17 +171,71 @@ const UserProfileScreen = () => {
         }
     };
 
+    // SCRUM-129: mensaje legible según el código que devuelve el backend
+    const deleteErrorMessage = (err) => {
+        if (err?.status === 403) return t("userProfile.danger.forbidden");
+        if (err?.status === 429) return t("userProfile.danger.tooMany");
+        return getErrorMessage(err, t("userProfile.danger.error"));
+    };
+
+    // SCRUM-129: eliminar mi cuenta (POST /api/users/me/delete/)
+    const handleDeleteAccount = async () => {
+        if (!canDeleteAccount) return; // defensa en la interfaz; el backend valida me:delete igualmente
+
+        const result = await Swal.fire({
+            title: t("userProfile.danger.confirmTitle"),
+            text: t("userProfile.danger.confirmText"),
+            icon: "warning",
+            input: "password",
+            inputLabel: t("userProfile.danger.passwordLabel"),
+            inputPlaceholder: t("userProfile.danger.passwordPlaceholder"),
+            showCancelButton: true,
+            confirmButtonColor: "#dc3545",
+            cancelButtonColor: "#6c757d",
+            confirmButtonText: t("userProfile.danger.confirmButton"),
+            cancelButtonText: t("userForm.cancel"),
+            showLoaderOnConfirm: true,                  // spinner mientras llama al backend
+            allowOutsideClick: () => !Swal.isLoading(), // no se puede cerrar mientras carga
+            inputValidator: (value) => (value ? undefined : t("userProfile.danger.passwordRequired")),
+            preConfirm: async (password) => {
+                try {
+                    await deleteMyAccount({ password });
+                    return true;
+                } catch (err) {
+                    // 400 (clave incorrecta / único admin), 403 (sin permiso) o 429: el error se ve dentro
+                    // del diálogo y este sigue abierto
+                    Swal.showValidationMessage(deleteErrorMessage(err));
+                    return false;
+                }
+            },
+        });
+
+        if (!result.isConfirmed) return; // canceló o cerró el diálogo
+
+        logout(); // borra token, refreshToken y datos de sesión
+
+        await Swal.fire({
+            title: t("userProfile.danger.doneTitle"),
+            text: t("userProfile.danger.doneText"),
+            icon: "success",
+            confirmButtonText: t("userProfile.danger.goToLogin"),
+        });
+
+        // Recarga completa: reinicia también el estado en memoria (AppContext) y evita volver atrás a una pantalla protegida
+        window.location.replace("/login");
+    };
+
     return (
         <div className="container-fluid pt-4">
             <div className="row justify-content-center">
                 <div className="col-md-8 col-lg-7">
-                    <Card title="Mi Perfil">
+                    <Card title={t("userProfile.title")}>
                         {isLoadingData ? (
                             <div className="text-center py-5">
                                 <div className="spinner-border text-primary" role="status">
-                                    <span className="visually-hidden">Cargando...</span>
+                                    <span className="visually-hidden">{t("userProfile.loadingShort")}</span>
                                 </div>
-                                <p className="mt-2 text-muted">Cargando datos del perfil...</p>
+                                <p className="mt-2 text-muted">{t("userProfile.loading")}</p>
                             </div>
                         ) : (
                             <form>
@@ -181,7 +243,7 @@ const UserProfileScreen = () => {
                                     <div className="col-md-6">
                                         <InputText
                                             control={profileControl}
-                                            label="Nombre"
+                                            label={t("userForm.fields.name")}
                                             name="name"
                                             errors={profileErrors.name}
                                             required={true}
@@ -190,7 +252,7 @@ const UserProfileScreen = () => {
                                     <div className="col-md-6">
                                         <InputText
                                             control={profileControl}
-                                            label="Apellido"
+                                            label={t("userForm.fields.lastname")}
                                             name="lastname"
                                             errors={profileErrors.lastname}
                                             required={true}
@@ -200,7 +262,7 @@ const UserProfileScreen = () => {
 
                                 <InputEmail
                                     control={profileControl}
-                                    label="Correo electronico"
+                                    label={t("userForm.fields.email")}
                                     name="email"
                                     errors={profileErrors.email}
                                     required={true}
@@ -208,7 +270,7 @@ const UserProfileScreen = () => {
 
                                 <div className="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
                                     <ButtonPrimary
-                                        label="Guardar cambios"
+                                        label={t("userProfile.save")}
                                         onClick={handleProfileSubmit(submitData)}
                                     />
                                 </div>
@@ -216,60 +278,75 @@ const UserProfileScreen = () => {
                         )}
                     </Card>
 
-                    <Card title="Cambiar Contraseña">
+                    <Card title={t("userProfile.password.title")}>
                         {!showPasswordSection ? (
                             <div className="text-center py-3">
-                                <p className="text-muted mb-3">Por seguridad, puedes cambiar tu contraseña desde aqui.</p>
-                                <ButtonPrimary 
-                                    label="Cambiar mi contraseña" 
-                                    onClick={() => setShowPasswordSection(true)} 
+                                <p className="text-muted mb-3">{t("userProfile.password.intro")}</p>
+                                <ButtonPrimary
+                                    label={t("userProfile.password.open")}
+                                    onClick={() => setShowPasswordSection(true)}
                                 />
                             </div>
                         ) : (
                             <form>
                                 <InputPassword
                                     control={passwordControl}
-                                    label="Contraseña actual"
+                                    label={t("userProfile.password.current")}
                                     name="currentPassword"
                                     errors={passwordErrors.currentPassword}
                                     required={true}
                                 />
                                 <InputPassword
                                     control={passwordControl}
-                                    label="Nueva contraseña"
+                                    label={t("userProfile.password.new")}
                                     name="newPassword"
                                     errors={passwordErrors.newPassword}
                                     required={true}
                                 />
                                 <InputPassword
                                     control={passwordControl}
-                                    label="Confirmar nueva contraseña"
+                                    label={t("userProfile.password.confirm")}
                                     name="confirmPassword"
                                     errors={passwordErrors.confirmPassword}
                                     required={true}
                                     rules={{
-                                        validate: value => value === newPassword || "Las contraseñas no coinciden"
+                                        validate: value => value === newPassword || t("userForm.passwordsMismatch")
                                     }}
                                 />
                                 <div className="d-flex justify-content-end gap-2 mt-3">
-                                    <button 
-                                        type="button" 
-                                        className="btn btn-secondary" 
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary"
                                         onClick={() => {
                                             setShowPasswordSection(false);
                                             resetPassword();
                                         }}
                                     >
-                                        Cancelar
+                                        {t("userForm.cancel")}
                                     </button>
                                     <ButtonPrimary
-                                        label="Actualizar contraseña"
+                                        label={t("userProfile.password.save")}
                                         onClick={handlePasswordSubmit(submitPassword)}
                                     />
                                 </div>
                             </form>
                         )}
                     </Card>
+
+                    {/* Zona de peligro: eliminar la cuenta (SCRUM-129). Solo con el permiso me:delete */}
+                    {canDeleteAccount && (
+                        <Card title={t("userProfile.danger.title")} outline outlineColor="danger" className="mt-4">
+                            <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                <div>
+                                    <h6 className="fw-bold text-danger mb-1">{t("userProfile.danger.heading")}</h6>
+                                    <p className="text-muted small mb-0">{t("userProfile.danger.intro")}</p>
+                                </div>
+                                <button type="button" className="btn btn-danger" onClick={handleDeleteAccount}>
+                                    <i className="bi bi-trash me-1"></i> {t("userProfile.danger.button")}
+                                </button>
+                            </div>
+                        </Card>
+                    )}
                 </div>
             </div>
         </div>

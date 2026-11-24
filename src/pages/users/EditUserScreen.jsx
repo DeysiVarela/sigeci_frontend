@@ -12,16 +12,19 @@ import { getUser, updateUser, listProfiles, getMe } from "../../api/users";
 import { isManager, canEditUser } from "../../utils/userAccess";
 import { getErrorMessage } from "../../utils/apiError";
 import Swal from "sweetalert2";
+import { useTranslation } from "react-i18next";
 
+// Se guarda la clave de traducción; el texto se genera dentro del componente con t()
 const STATUS_OPTIONS = [
-  { value: "true", label: "Activo" },
-  { value: "false", label: "Inactivo" },
+  { value: "true", labelKey: "userScreen.status.active" },
+  { value: "false", labelKey: "userScreen.status.inactive" },
 ];
 
 const EditUserScreen = () => {
   const nav = useNavigate();
   const { id } = useParams(); // Obtenemos el ID de la URL
   const handlerApp = HandlerApp();
+  const { t, i18n } = useTranslation();
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [rolesOptions, setRolesOptions] = useState([]);
   const [manager, setManager] = useState(false);
@@ -47,8 +50,8 @@ const EditUserScreen = () => {
         if (!canEditUser(me, id, user)) {
           denied = true;
           Swal.fire({
-            title: "Sin permisos",
-            text: "No tienes permisos para editar a este usuario.",
+            title: i18n.t("userForm.edit.noPermissionTitle"),
+            text: i18n.t("userForm.edit.noPermissionText"),
             icon: "warning",
           }).then(() => nav("/users"));
           return;
@@ -76,8 +79,8 @@ const EditUserScreen = () => {
       .catch((err) => {
         if (cancelled) return;
         Swal.fire({
-          title: "Error",
-          text: getErrorMessage(err, "No se pudo cargar el usuario."),
+          title: i18n.t("userForm.edit.loadErrorTitle"),
+          text: getErrorMessage(err, i18n.t("userForm.edit.loadError")),
           icon: "error",
         }).then(() => nav("/users"));
       })
@@ -88,7 +91,7 @@ const EditUserScreen = () => {
     return () => {
       cancelled = true;
     };
-  }, [id, reset, nav]);
+  }, [id, reset, nav, i18n]);
 
   const submitData = async (data) => {
     handlerApp.setLoader(true);
@@ -116,19 +119,19 @@ const EditUserScreen = () => {
       handlerApp.setLoader(false);
 
       await Swal.fire({
-        title: "¡Actualizado!",
-        text: "Los datos del usuario se guardaron correctamente.",
+        title: t("userForm.edit.successTitle"),
+        text: t("userForm.edit.successText"),
         icon: "success",
-        confirmButtonText: "Aceptar",
+        confirmButtonText: t("userForm.ok"),
       });
       nav("/users");
     } catch (err) {
       handlerApp.setLoader(false); // También apagamos si hay error
       Swal.fire({
-        title: "No se pudo actualizar",
-        text: getErrorMessage(err, "No se pudo actualizar el usuario."),
+        title: t("userForm.edit.errorTitle"),
+        text: getErrorMessage(err, t("userForm.edit.errorText")),
         icon: "error",
-        confirmButtonText: "Aceptar",
+        confirmButtonText: t("userForm.ok"),
       });
     }
   };
@@ -137,13 +140,13 @@ const EditUserScreen = () => {
     <div className="container-fluid pt-4">
       <div className="row justify-content-center">
         <div className="col-md-8 col-lg-6">
-          <Card title={`Editar Usuario`}>
+          <Card title={t("userForm.edit.title")}>
             {isLoadingData ? (
               <div className="text-center py-5">
                 <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">Cargando datos...</span>
+                  <span className="visually-hidden">{t("userForm.edit.loadingShort")}</span>
                 </div>
-                <p className="mt-2 text-muted">Cargando datos del usuario...</p>
+                <p className="mt-2 text-muted">{t("userForm.edit.loading")}</p>
               </div>
             ) : (
               <form>
@@ -151,7 +154,7 @@ const EditUserScreen = () => {
                   <div className="col-md-6">
                     <InputText
                       control={control}
-                      label="Nombre"
+                      label={t("userForm.fields.name")}
                       name="nombre"
                       errors={errors.nombre}
                       required={true}
@@ -160,7 +163,7 @@ const EditUserScreen = () => {
                   <div className="col-md-6">
                     <InputText
                       control={control}
-                      label="Apellido"
+                      label={t("userForm.fields.lastname")}
                       name="apellido"
                       errors={errors.apellido}
                       required={true}
@@ -170,7 +173,7 @@ const EditUserScreen = () => {
 
                 <InputEmail
                   control={control}
-                  label="Correo electrónico"
+                  label={t("userForm.fields.email")}
                   name="email"
                   errors={errors.email}
                   required={true}
@@ -181,7 +184,7 @@ const EditUserScreen = () => {
 
                     <InputMultiSelect
                       control={control}
-                      label="Roles del Usuario"
+                      label={t("userForm.fields.roles")}
                       name="roles"
                       options={rolesOptions}
                       errors={errors.roles}
@@ -193,9 +196,9 @@ const EditUserScreen = () => {
                     {/* NUEVO: Restauramos el InputSelect para el Estado */}
                     <InputSelect
                       control={control}
-                      label="Estado de la cuenta"
+                      label={t("userForm.fields.status")}
                       name="estado"
-                      options={STATUS_OPTIONS}
+                      options={STATUS_OPTIONS.map((o) => ({ value: o.value, label: t(o.labelKey) }))}
                       errors={errors.estado}
                       required={true}
                     />
@@ -204,8 +207,8 @@ const EditUserScreen = () => {
 
                 <div className="alert alert-info py-2 mt-3">
                   <small>
-                    <i className="bi bi-info-circle me-2"></i>La contraseña no
-                    se edita desde este formulario.
+                    <i className="bi bi-info-circle me-2"></i>
+                    {t("userForm.edit.passwordNote")}
                   </small>
                 </div>
 
@@ -215,10 +218,10 @@ const EditUserScreen = () => {
                     className="btn btn-secondary"
                     onClick={() => nav("/users")}
                   >
-                    Cancelar
+                    {t("userForm.cancel")}
                   </button>
                   <ButtonPrimary
-                    label="Actualizar Usuario"
+                    label={t("userForm.edit.save")}
                     onClick={handleSubmit(submitData)}
                   />
                 </div>

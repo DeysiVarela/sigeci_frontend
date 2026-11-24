@@ -5,10 +5,36 @@ export const login = async ({ identifier, password, captchaToken }) => {
         method: "POST",
         body: { identifier, password, captchaToken }
     });
-    localStorage.setItem("access", response.access);
-    localStorage.setItem("refresh", response.refresh);
-    localStorage.setItem("user", JSON.stringify(response.user));
-    return response;
+    const access = response.access || response.token;
+    const refresh = response.refresh || response.refresh_token;
+    const user = response.user;
+    const permissions = response.permissions || user?.permissions;
+
+    if (!access || !refresh || !user) {
+        throw new Error("El servidor no devolvió una sesión válida.");
+    }
+
+    localStorage.setItem("token", access);
+    localStorage.setItem("refreshToken", refresh);
+    localStorage.setItem("access", access);
+    localStorage.setItem("refresh", refresh);
+    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("name", user.name);
+    localStorage.setItem("lastname", user.lastname);
+    localStorage.setItem("email", user.email);
+    localStorage.setItem("id", user.id);
+    localStorage.setItem("permissions", JSON.stringify(permissions || {}));
+    localStorage.setItem("profiles", JSON.stringify(user.profiles || []));
+
+    return {
+        success: true,
+        data: {
+            token: access,
+            refresh_token: refresh,
+            user,
+            permissions
+        }
+    };
 };
 
 export const register = ({ name, lastname, email, password, captchaToken }) =>
@@ -19,10 +45,15 @@ export const register = ({ name, lastname, email, password, captchaToken }) =>
 
 export const getCurrentUser = () => request("/auth/me/");
 
+// Claves de sesión: las actuales (login con /api/v1: token, refreshToken, profile...) y las legacy (access, refresh).
+// Se conserva "language": es una preferencia de la persona, no de la sesión.
+const SESSION_KEYS = [
+    "token", "refreshToken", "name", "lastname", "email", "id", "permissions", "profiles", "profile",
+    "user", "user_uuid", "photo", "auth", "access", "refresh",
+];
+
 export const logout = () => {
-    localStorage.removeItem("access");
-    localStorage.removeItem("refresh");
-    localStorage.removeItem("user");
+    SESSION_KEYS.forEach((key) => localStorage.removeItem(key));
 };
 
 export const forgotPassword = (email) =>

@@ -50,11 +50,21 @@ configuración de CORS debe permitir el origen del frontend
 - `/forgot-password`: recuperación de contraseña.
 - `/reset-pin`: restablecimiento con PIN.
 - `/home`: dashboard.
+- `/agenda`: listado de eventos de la conferencia.
+- `/event/new`: formulario de creación de eventos (Admin y Comité).
+- `/event/:id`: detalle del evento, sus tópicos y cronograma.
+- `/event/:id/edit`: edición de datos y cronograma (Admin y Comité).
+- `/agenda/:id`: alias de compatibilidad para el detalle del evento.
 - `/article`: artículos.
 - `/users`: usuarios.
 
 Las rutas se administran con React Router y la navegación ocurre sin recargar
 la aplicación. Las rutas no reconocidas muestran una vista 404 controlada.
+
+La agenda consume `GET /api/v1/events/` para el listado y
+`GET /api/v1/events/{id}/` para el detalle y el cronograma. Admin y Comité pueden
+crear eventos con `POST /api/v1/events/` y actualizarlos con
+`PUT /api/v1/events/{id}/`.
 
 ## Compilación y previsualización
 

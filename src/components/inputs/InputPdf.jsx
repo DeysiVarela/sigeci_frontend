@@ -1,27 +1,30 @@
+import { useTranslation } from "react-i18next";
+
 const InputPdf = ({
     name = "pdfFile",
-    label = "Archivo PDF",
+    label,
     register,
     errors,
     maxSizeMB = 10,
     required = false
 }) => {
+    const { t } = useTranslation();
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
     const validatePdf = (fileList) => {
         const file = fileList?.[0];
 
         if (!file) {
-            return required ? "El archivo PDF es requerido" : true;
+            return required ? t("inputPdf.required") : true;
         }
 
         const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
         if (!isPdf) {
-            return "Solo se permiten archivos en formato PDF";
+            return t("inputPdf.onlyPdf");
         }
 
         if (file.size > maxSizeBytes) {
-            return `El archivo no puede superar los ${maxSizeMB} MB`;
+            return t("inputPdf.tooLarge", { size: maxSizeMB });
         }
 
         return true;
@@ -31,7 +34,7 @@ const InputPdf = ({
 
     return (
         <div className="mb-3">
-            <label htmlFor={name} className="form-label fw-semibold">{label}</label>
+            <label htmlFor={name} className="form-label fw-semibold">{label ?? t("inputPdf.label")}</label>
             <input
                 id={name}
                 type="file"
@@ -39,7 +42,7 @@ const InputPdf = ({
                 className={`form-control ${fieldError ? "is-invalid" : ""}`}
                 {...register(name, { validate: validatePdf })}
             />
-            <div className="form-text">Formato PDF. Tamaño máximo: {maxSizeMB} MB.</div>
+            <div className="form-text">{t("inputPdf.hint", { size: maxSizeMB })}</div>
             {fieldError && (
                 <p className="small text-danger mt-1 mb-0">
                     <span className="me-1">⚠️</span>
