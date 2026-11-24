@@ -25,6 +25,11 @@ export const hasPermission = (me, resource, action) => {
 export const hasAdminProfile = (user) =>
     (user?.profiles ?? []).some((p) => normalizeRole(p?.name ?? p) === ROLES.ADMIN);
 
+export const canManageEvents = (user) =>
+    (user?.profiles ?? []).some((profile) =>
+        [ROLES.ADMIN, ROLES.MEMBER].includes(normalizeRole(profile?.name ?? profile))
+    );
+
 const isProtectedAdmin = (me, target) =>
     hasAdminProfile(target) && !hasAdminProfile(me);
 

@@ -26,7 +26,9 @@ export const useFetch = () => {
     const handlerApp    = HandlerApp();
     const { app, setApp } = useContext(AppContext);
     
-    const backendUrl = (import.meta.env.VITE_BACKEND_URL || "").replace(/\/$/, "");
+    const backendUrl = (import.meta.env.VITE_BACKEND_URL || "")
+        .replace(/\/$/, "")
+        .replace(/\/api\/v1$/, "");
     const instance = axios.create({
         baseURL: `${backendUrl}/api/v1`,
     });
