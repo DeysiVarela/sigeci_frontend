@@ -41,6 +41,14 @@ const Nav = ({ me }) => {
                 </Link>
               </li>
             )}
+            {hasPermission(menuUser, "event", "view") && (
+              <li className="nav-item">
+                <Link to="/agenda" className="nav-link">
+                  <i className="nav-icon bi bi-calendar3"></i>
+                  <p>{t("agenda")}</p>
+                </Link>
+              </li>
+            )}
             {hasPermission(menuUser, "evaluation", "view") && (
               <li className="nav-item">
                 <Link to="/evaluations" className="nav-link">

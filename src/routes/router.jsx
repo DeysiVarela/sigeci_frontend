@@ -75,7 +75,7 @@ const router = createBrowserRouter([
                     // { path: "/article/create", element: <CreateArticleScreen /> },
                     { path: "/article/edit/:id", element: <ArticleFormScreen /> },
                     { path: "/article/create", element: <ArticleFormScreen /> },
-                    { path: "/article/postulate", element: <CreateArticlePDFScreen /> },
+                    { path: "/article/postulate", element: <ArticleFormScreen /> },
                     { path: "/evaluations", element: <EvaluationListScreen /> },
                     { path: "/evaluations/:id", element: <EvaluationDetailScreen /> },
                     { path: "/topics/:topicId/articles", element: <TopicArticlesScreen /> },
