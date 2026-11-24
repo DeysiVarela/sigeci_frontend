@@ -26,8 +26,9 @@ export const useFetch = () => {
     const handlerApp    = HandlerApp();
     const { app, setApp } = useContext(AppContext);
     
+    const backendUrl = (import.meta.env.VITE_BACKEND_URL || "").replace(/\/$/, "");
     const instance = axios.create({
-        baseURL: `${import.meta.env.VITE_BACKEND_URL}`,
+        baseURL: `${backendUrl}/api/v1`,
     });
 
     instance.interceptors.request.use((config) => {
@@ -38,7 +39,7 @@ export const useFetch = () => {
         const profile = app.profile || parseInt(localStorage.getItem("profile")) || 0;
 
         if (validToken) {
-            config.headers.Authorization = validToken;
+            config.headers.Authorization = `Bearer ${validToken}`;
         }
         config.headers.profile = profile;
         return config;
@@ -91,7 +92,7 @@ export const useFetch = () => {
                         failedQueue.push({ resolve, reject });
                     })
                     .then((newToken) => {
-                        originalRequest.headers.Authorization = newToken;
+                        originalRequest.headers.Authorization = `Bearer ${newToken}`;
                         return instance(originalRequest);
                     })
                     .catch((err) => Promise.reject(err));
@@ -109,19 +110,14 @@ export const useFetch = () => {
                 }
 
                 try {
-                    const baseUrl = import.meta.env.VITE_BACKEND_URL.replace(/\/$/, "");
-                    const refreshUrl = baseUrl.includes("/api/v1") 
-                        ? `${baseUrl}/auth/refresh/` 
-                        : `${baseUrl}/api/v1/auth/refresh/`;
+                    const refreshUrl = `${backendUrl}/api/auth/refresh/`;
 
                     const response = await axios.post(refreshUrl, {
-                        refresh_token: storedRefreshToken
+                        refresh: storedRefreshToken
                     });
 
-                    if (response.data?.success) {
-                        const responseData = response.data?.data || response.data;
-                        const newAccessToken = responseData.token || responseData.access || responseData.access_token;
-                        const newRefreshToken = responseData.refresh_token || responseData.refresh;
+                    if (response.data?.access) {
+                        const newAccessToken = response.data.access;
 
                         if (!newAccessToken) {
                             throw new Error("El servidor no devolvió un token válido");
@@ -129,9 +125,6 @@ export const useFetch = () => {
 
                         // 1. Guardar en localStorage
                         localStorage.setItem("token", newAccessToken);
-                        if (newRefreshToken) {
-                            localStorage.setItem("refreshToken", newRefreshToken);
-                        }
 
                         // 2. Actualizar estado en AppContext
                         setApp(prev => ({
@@ -140,8 +133,8 @@ export const useFetch = () => {
                         }));
 
                         // 3. Actualizar headers de la instancia y de la petición fallida
-                        instance.defaults.headers.Authorization = newAccessToken;
-                        originalRequest.headers.Authorization = newAccessToken;
+                        instance.defaults.headers.Authorization = `Bearer ${newAccessToken}`;
+                        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
                         // 4. Despachar las peticiones encoladas
                         processQueue(null, newAccessToken);
