@@ -3,6 +3,13 @@ import { createContext, useMemo, useState } from "react";
 const AppContext = createContext();
 
 const AppContextProvider = ({ children }) => {
+    let initialPermissions = null;
+    try {
+        initialPermissions = JSON.parse(localStorage.getItem('permissions') || 'null');
+    } catch {
+        initialPermissions = null;
+    }
+
     const [app, setApp] = useState({
         token: localStorage.getItem('token'),
         profile: localStorage.getItem('profile'),
@@ -11,6 +18,7 @@ const AppContextProvider = ({ children }) => {
         user_uuid: localStorage.getItem('user_uuid'),
         image: localStorage.getItem('photo'),
         auth: localStorage.getItem('auth'),
+        permissions: initialPermissions,
         formatHour: 24,
         timezone: "America/Bogota"
     });
