@@ -286,13 +286,22 @@ const ArticleScreen = () => {
                 </div>
                 <div className="d-flex gap-2">
                     {canCreate && (
-                        <button
-                            className="btn btn-primary shadow-sm d-flex align-items-center gap-2"
-                            onClick={() => navigate("/article/create")}
-                        >
-                            <i className="bi bi-plus-circle"></i>
-                            <span>{t("articleScreen.newArticle")}</span>
-                        </button>
+                        <>
+                            <button
+                                className="btn btn-outline-primary shadow-sm d-flex align-items-center gap-2"
+                                onClick={() => navigate("/article/postulate")}
+                            >
+                                <i className="bi bi-send"></i>
+                                <span>Postular artículo</span>
+                            </button>
+                            <button
+                                className="btn btn-primary shadow-sm d-flex align-items-center gap-2"
+                                onClick={() => navigate("/article/create")}
+                            >
+                                <i className="bi bi-plus-circle"></i>
+                                <span>{t("articleScreen.newArticle")}</span>
+                            </button>
+                        </>
                     )}
                 </div>
             </div>
