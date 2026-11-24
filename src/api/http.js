@@ -1,6 +1,27 @@
-const backendUrl = import.meta.env.VITE_BACKEND_URL || "";
-const ACCESS_TOKEN_KEY = "access";
-const REFRESH_TOKEN_KEY = "refresh";
+const backendUrl = (import.meta.env.VITE_BACKEND_URL || "").replace(/\/$/, "");
+const ACCESS_TOKEN_KEY = "token";
+const REFRESH_TOKEN_KEY = "refreshToken";
+const PROFILE_KEY = "profile";
+
+const getStoredProfile = () => {
+    const rawProfile = localStorage.getItem(PROFILE_KEY);
+    if (!rawProfile || rawProfile === "undefined" || rawProfile === "null") return "1";
+    const parsed = parseInt(rawProfile, 10);
+    return Number.isNaN(parsed) ? rawProfile : String(parsed);
+};
+
+const buildApiUrl = (path) => {
+    const cleanPath = path.startsWith("/") ? path : `/${path}`;
+    const rootUrl = backendUrl.replace(/\/api\/v1$/, "");
+
+    // Si la ruta ya empieza por /api/ (ej. /api/auth/password/forgot/, /api/users/), apunta a http://localhost:8000/api/...
+    if (cleanPath.startsWith("/api/")) {
+        return `${rootUrl}${cleanPath}`;
+    }
+
+    // Si la ruta no empieza por /api/ (ej. /auth/refresh/), usa http://localhost:8000/api/v1/...
+    return `${rootUrl}/api/v1${cleanPath}`;
+};
 
 export class ApiError extends Error {
     constructor(status, message, data = null) {
@@ -45,10 +66,14 @@ export const request = async (path, options = {}) => {
     if (accessToken) {
         headers.Authorization = `Bearer ${accessToken}`;
     }
+    const profile = getStoredProfile();
+    if (profile && !headers.profile) {
+        headers.profile = profile;
+    }
     const body = hasBody && typeof fetchOptions.body !== "string" && !isFormData(fetchOptions.body)
         ? JSON.stringify(fetchOptions.body)
         : fetchOptions.body;
-    const url = new URL(`${backendUrl}${path}`);
+    const url = new URL(buildApiUrl(path));
 
     Object.entries(fetchOptions.params || {}).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== "") {
@@ -69,17 +94,20 @@ export const request = async (path, options = {}) => {
         payload = null;
     }
 
-    if (response.status === 401 && !skipAuthRefresh && path !== "/api/auth/refresh/") {
+    if (response.status === 401 && !skipAuthRefresh && !path.includes("/auth/refresh")) {
         const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
         if (refreshToken) {
             try {
-                const refreshResponse = await request("/api/auth/refresh/", {
+                const refreshResponse = await request("/auth/refresh/", {
                     method: "POST",
-                    body: { refresh: refreshToken },
+                    body: { refresh_token: refreshToken },
                     skipAuthRefresh: true
                 });
-                localStorage.setItem(ACCESS_TOKEN_KEY, refreshResponse.access);
-                return request(path, { ...fetchOptions, skipAuthRefresh: true });
+                const newToken = refreshResponse.data?.token || refreshResponse.token;
+                if (newToken) {
+                    localStorage.setItem(ACCESS_TOKEN_KEY, newToken);
+                    return request(path, { ...fetchOptions, skipAuthRefresh: true });
+                }
             } catch {
                 localStorage.removeItem(ACCESS_TOKEN_KEY);
                 localStorage.removeItem(REFRESH_TOKEN_KEY);
@@ -122,10 +150,12 @@ const tryRefreshToken = async () => {
 export const uploadRequest = (path, formData, { onProgress, signal, skipAuthRefresh = false } = {}) =>
     new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.open("POST", `${backendUrl}${path}`);
+        xhr.open("POST", buildApiUrl(path));
         xhr.setRequestHeader("Accept", "application/json");
         const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
         if (accessToken) xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
+        const profile = getStoredProfile();
+        if (profile) xhr.setRequestHeader("profile", profile);
 
         xhr.upload.onprogress = (event) => {
             if (event.lengthComputable && onProgress) {

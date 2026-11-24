@@ -5,7 +5,7 @@ import { logout } from "../../api/auth";
 
 const Header = ({ onToggleSidebar }) => {
 
-	const { i18n } = useTranslation();
+	const { t, i18n } = useTranslation();
 
 	const [languageSelected, setLanguageSelected] = useState(localStorage.getItem("language") || i18n.language);
 
@@ -90,27 +90,27 @@ const Header = ({ onToggleSidebar }) => {
 							<img
 								src="https://img.magnific.com/vector-gratis/establecimiento-circulos-usuarios_78370-4704.jpg"
 								className="user-image rounded-circle shadow"
-								alt="Usuario X"
+								alt={t("userMenu.demoUser")}
 								style={{ width: '35px', height: '35px' }}
 							/>
-							<span className="d-none d-xl-inline">Usuario X</span>
+							<span className="d-none d-xl-inline">{t("userMenu.demoUser")}</span>
 						</a>
 						<ul className="dropdown-menu dropdown-menu-lg dropdown-menu-end">
 							<li className="user-header text-bg-primary">
 								<img
 									src="https://img.magnific.com/vector-gratis/establecimiento-circulos-usuarios_78370-4704.jpg"
 									className="rounded-circle shadow"
-									alt="Usuario X"
+									alt={t("userMenu.demoUser")}
 									style={{ width: '45px', height: '45px', display: "block", marginLeft: "auto", marginRight: "auto" }}
 								/>
 								<p>
-									Usuario X - Desarrollador
-									<small>Miembro desde {new Date().toLocaleDateString()}</small>
+									{t("userMenu.demoUser")} - {t("userMenu.demoRole")}
+									<small>{t("userMenu.memberSince", { date: new Date().toLocaleDateString(i18n.language) })}</small>
 								</p>
 							</li>
 							<li className="user-footer">
-								<Link to="/profile" className="btn btn-outline-secondary">Perfil</Link>
-								<button type="button" className="btn btn-outline-danger float-end" onClick={async () => { await logout(); window.location.href = "/login"; }}>Cerrar sesión</button>
+								<Link to="/profile" className="btn btn-outline-secondary">{t("userMenu.profile")}</Link>
+								<button type="button" className="btn btn-outline-danger float-end" onClick={async () => { await logout(); window.location.href = "/login"; }}>{t("userMenu.logout")}</button>
 							</li>
 						</ul>
 					</li>

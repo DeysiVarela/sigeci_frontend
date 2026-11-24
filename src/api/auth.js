@@ -17,7 +17,7 @@ export const register = ({ name, lastname, email, password, captchaToken }) =>
         body: { name, lastname, email, password, captchaToken }
     });
 
-export const getCurrentUser = () => request("/api/auth/me/");
+export const getCurrentUser = () => request("/auth/me/");
 
 export const logout = () => {
     localStorage.removeItem("access");

@@ -1,322 +1,475 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate, useSearchParams } from "react-router";
-import DataTable from "react-data-table-component";
+import { useFetch } from "../../hooks/useFetch";
+import { useState, useMemo, useEffect, useContext } from "react";
+import { useNavigate, useLocation } from "react-router";
 import Card from "../../components/cards/Card";
+import HandlerApp from "../../utils/HandlerApp";
+import Badge from "../../components/badges/Badge";
+import Modal from "../../components/modals/Modal";
+import DataTable from "react-data-table-component";
+import ButtonLink from "../../components/buttons/ButtonLink";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import ButtonSecondary from "../../components/buttons/ButtonSecondary";
-import StatusBadge from "./components/StatusBadge";
-import ArticleFilters from "./components/ArticleFilters";
-import ArticleCardList from "./components/ArticleCardList";
-import CatalogPagination from "./components/CatalogPagination";
-import { CatalogEmptyState, CatalogError, TableSkeleton } from "./components/CatalogStates";
-import { useArticleCatalog } from "./hooks/useArticleCatalog";
-import { useCurrentUser } from "./hooks/useCurrentUser";
-import { CATALOG_SCOPE, getStatusOptionsForScope, getTopicLabel } from "./utils/constants";
-import { canCreateArticle, canEditArticle, getAllowedScopes } from "./utils/permissions";
-import { formatSubmittedDate } from "./utils/catalogFormat";
-import {
-    EMPTY_FILTERS,
-    hasActiveFilters,
-    mergeCatalog,
-    readCatalogParams,
-    toSearchParams
-} from "./utils/catalogParams";
-
-// Pestañas posibles del catálogo. Cada usuario ve las de sus vistas permitidas
-// (getAllowedScopes): autor -> mine + public; miembro -> assigned + public.
-const CATALOG_TABS = [
-    {
-        scope: CATALOG_SCOPE.MINE,
-        label: "Mis artículos",
-        shortLabel: "Mis artículos",
-        icon: "bi-person-lines-fill",
-        hint: "Artículos que has postulado y su estado actual de revisión."
-    },
-    {
-        scope: CATALOG_SCOPE.ASSIGNED,
-        label: "Asignados para evaluar",
-        shortLabel: "Por evaluar",
-        icon: "bi-clipboard-check",
-        hint: "Artículos que te asignaron para evaluar y su estado actual."
-    },
-    {
-        scope: CATALOG_SCOPE.PUBLIC,
-        label: "Artículos publicados",
-        shortLabel: "Publicados",
-        icon: "bi-globe2",
-        hint: "Artículos de dominio público publicados en las memorias de la conferencia."
-    }
-];
-
-// Textos de cabecera según la vista del usuario
-const SCOPE_SUBTITLE = {
-    all: "Todos los artículos postulados a la conferencia y su estado de postulación.",
-    assigned: "Consulta los artículos que te asignaron para evaluar y los publicados en las memorias.",
-    mine: "Consulta tus postulaciones y los artículos publicados en las memorias.",
-    public: "Consulta tus postulaciones y los artículos publicados en las memorias."
-};
-const SCOPE_TITLE = {
-    all: "Artículos postulados",
-    assigned: "Artículos asignados para evaluar"
-};
+import { useTranslation, Trans } from "react-i18next";
+import { AppContext } from "../../context/AppContext";
 
 const ArticleScreen = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [searchParams, setSearchParams] = useSearchParams();
-    const user = useCurrentUser();
-    // Vistas del usuario: la primera es la de inicio (define el subtítulo de la página)
-    const allowedScopes = getAllowedScopes(user);
-    const tabs = CATALOG_TABS.filter((t) => allowedScopes.includes(t.scope));
+    const api = useFetch();
+    const handlerApp = HandlerApp();
+    const { t } = useTranslation();
+    const { app } = useContext(AppContext);
 
-    // Estado del catálogo derivado de la URL (filtros + página + vista)
-    const catalog = useMemo(() => readCatalogParams(searchParams, user), [searchParams, user]);
-    const { items, total, loading, error, reload } = useArticleCatalog(catalog, user);
-    const filtersActive = hasActiveFilters(catalog);
+    const activeProfile = String(app?.profile || localStorage.getItem("profile") || "").toUpperCase();
+    const isAuthorOnly = activeProfile === "3" || activeProfile === "AUTHOR";
 
-    const updateCatalog = useCallback(
-        (patch) => setSearchParams(toSearchParams(mergeCatalog(catalog, patch)), { replace: true }),
-        [catalog, setSearchParams]
-    );
-    const clearFilters = () => updateCatalog({ ...EMPTY_FILTERS });
+    const [articles, setArticles] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // Si la página quedó fuera de rango (p. ej. tras filtrar), ir a la última disponible
+    const [searchTerm, setSearchTerm] = useState("");
+    const [statusFilter, setStatusFilter] = useState("TODOS");
+
+    const loadArticles = async () => {
+        setLoading(true);
+        handlerApp.setLoader(true);
+        try {
+            const res = await api.get("article");
+            if (res.data) setArticles(res.data);
+        } catch {
+            setArticles([]);
+            triggerAlert("danger", t("articleScreen.alerts.loadError"), t("articleScreen.alerts.errorTitle"));
+        } finally {
+            setLoading(false);
+            handlerApp.setLoader(false);
+        }
+    };
+
     useEffect(() => {
-        if (loading || error || total === 0) return;
-        const lastPage = Math.ceil(total / catalog.size);
-        if (catalog.page > lastPage) updateCatalog({ page: lastPage });
-    }, [loading, error, total, catalog.page, catalog.size, updateCatalog]);
+        loadArticles();
+    }, []);
 
-    // Mensaje de retroalimentación que llega desde crear/editar
-    const [alertNotification, setAlertNotification] = useState(() =>
-        location.state?.message
-            ? {
+    // Modal de confirmación para eliminar
+    const [selectedArticle, setSelectedArticle] = useState(null);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+
+    // Mensaje de alerta / feedback AdminLTE
+    const [alertNotification, setAlertNotification] = useState(() => {
+        if (location.state?.message) {
+            return {
                 type: location.state.type || "success",
-                title: location.state.title || "Operación exitosa",
+                title: location.state.title || t("articleScreen.alerts.successTitle"),
                 message: location.state.message
-            }
-            : null
-    );
+            };
+        }
+        return null;
+    });
 
-    const goToDetail = (article) =>
-        navigate(`/article/${article.id}`, { state: { from: `/article${location.search}` } });
+    const triggerAlert = (type, message, title = t("articleScreen.alerts.successTitle")) => {
+        setAlertNotification({ type, title, message });
+        setTimeout(() => {
+            setAlertNotification(null);
+        }, 4500);
+    };
 
-    const renderActions = (article, compact = false) => (
-        <>
-            <ButtonSecondary
-                label="Ver detalle"
-                className={`btn-sm py-1 px-2 text-nowrap ${compact ? "flex-fill" : ""}`}
-                onClick={() => goToDetail(article)}
-            />
-            {/* "Editar" solo en la pestaña "Mis artículos" del autor */}
-            {catalog.scope === CATALOG_SCOPE.MINE && canEditArticle(user, article) && (
-                <ButtonPrimary
-                />
-            )}
-        </>
-    );
+    const handleOpenDelete = (article) => {
+        setSelectedArticle(article);
+        setDeleteModalOpen(true);
+    };
 
-    const showAuthor = catalog.scope !== CATALOG_SCOPE.MINE;
+    const handleConfirmDelete = async () => {
+        if (!selectedArticle) return;
+        handlerApp.setLoader(true);
+        try {
+            await api.deleteMethod(`article/${selectedArticle.article_id}/delete`);
+            setArticles(prev => prev.filter(a => a.article_id !== selectedArticle.article_id));
+            setDeleteModalOpen(false);
+            triggerAlert(
+                "danger",
+                t("articleScreen.alerts.deleted", { title: selectedArticle.article_subject, id: selectedArticle.article_id }),
+                t("articleScreen.alerts.deletedTitle")
+            );
+        } catch (error) {
+            console.error("Error al eliminar artículo:", error);
+            triggerAlert("danger", t("articleScreen.alerts.deleteError"), t("articleScreen.alerts.errorTitle"));
+        } finally {
+            handlerApp.setLoader(false);
+            setSelectedArticle(null);
+        }
+    };
+
+    const filteredArticles = useMemo(() => {
+        return articles.filter(article => {
+            const subject = article.article_subject || "";
+            const desc = article.article_description || "";
+            const matchesSearch =
+                subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                desc.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesStatus =
+                statusFilter === "TODOS" ||
+                (statusFilter === "ACTIVO" && article.article_active) ||
+                (statusFilter === "INACTIVO" && !article.article_active);
+            return matchesSearch && matchesStatus;
+        });
+    }, [articles, searchTerm, statusFilter]);
 
     const columns = [
         {
-            name: "Título del artículo",
-            grow: 3,
-            cell: (row) => (
-                <div className="py-2 w-100" style={{ minWidth: 0 }}>
-                    <button
-                        type="button"
-                        className="btn btn-link p-0 fw-semibold text-start text-decoration-none d-block text-truncate w-100"
-                        onClick={() => goToDetail(row)}
-                        title={row.title}
+            name: "ID",
+            selector: row => row.article_id,
+            sortable: true,
+            width: "80px",
+            center: true,
+            cell: row => <span className="badge bg-light text-secondary border">#{row.article_id}</span>
+        },
+        {
+            name: t("articleScreen.table.title"),
+            selector: row => row.article_subject,
+            sortable: true,
+            cell: row => (
+                <div className="py-2 text-truncate" style={{ maxWidth: "100%" }}>
+                    <span
+                        className="fw-semibold text-primary d-block mb-1 text-truncate"
+                        style={{ cursor: "pointer" }}
+                        onClick={() => navigate(`/article/${row.article_id}`)}
+                        title={row.article_subject}
                     >
-                        {row.title}
-                    </button>
-                    {showAuthor && (
-                        <small className="text-muted d-block text-truncate">
-                            <i className="bi bi-person me-1" aria-hidden="true"></i>
-                            {row.author}
-                        </small>
-                    )}
+                        {row.article_subject}
+                    </span>
+                    <small className="text-muted d-block text-truncate" title={row.article_description}>
+                        {row.article_description}
+                    </small>
                 </div>
             )
         },
         {
-            name: "Línea temática",
-            minWidth: "190px",
-            cell: (row) => (
-                <span className="badge bg-light text-dark border fw-normal text-wrap text-start">
-                    {getTopicLabel(row.topic)}
+            name: t("articleScreen.table.topic"),
+            selector: row => row.topic_subject || row.topic_name || "",
+            sortable: true,
+            width: "210px",
+            cell: row => {
+                const topicLabel = row.topic_subject || row.topic_name;
+                return row.topic_id && !isAuthorOnly ? (
+                    <span
+                        className="badge bg-primary-subtle text-primary border border-primary-subtle text-truncate"
+                        style={{ cursor: "pointer", maxWidth: "185px" }}
+                        onClick={() => navigate(`/topics/${row.topic_id}/articles`)}
+                        title={t("articleScreen.topicTooltip", { topic: topicLabel || t("articleScreen.topicFallback", { id: row.topic_id }) })}
+                    >
+                        <i className="bi bi-list-task me-1"></i>
+                        {topicLabel || t("articleScreen.topicFallback", { id: row.topic_id })}
+                    </span>
+                ) : (
+                    <span className="badge bg-light text-dark border text-truncate" style={{ maxWidth: "185px" }}>
+                        {topicLabel || (row.topic_id ? t("articleScreen.topicFallback", { id: row.topic_id }) : "—")}
+                    </span>
+                );
+            }
+        },
+        {
+            name: t("articleScreen.table.author"),
+            selector: row => row.article_created_by_name || "",
+            sortable: true,
+            width: "160px",
+            cell: row => (
+                <span className="small text-dark text-truncate" title={row.article_created_by_name || ""}>
+                    {row.article_created_by_name || "—"}
                 </span>
             )
         },
         {
-            name: "Fecha de postulación",
-            width: "160px",
-            cell: (row) => <span className="small text-muted">{formatSubmittedDate(row.submittedAt)}</span>
+            name: t("articleScreen.table.version"),
+            selector: row => row.article_attached_version || "",
+            sortable: true,
+            width: "130px",
+            center: true,
+            cell: row => row.article_attached_url ? (
+                <span className="badge bg-danger-subtle text-danger border border-danger-subtle" title={`${row.article_subject}.pdf`}>
+                    <i className="bi bi-file-earmark-pdf me-1"></i>
+                    v{row.article_attached_version || "1.0"}
+                </span>
+            ) : (
+                <span className="small text-muted">—</span>
+            )
         },
         {
-            name: "Estado actual",
-            width: "200px",
-            cell: (row) => <StatusBadge status={row.status} />
+            name: t("articleScreen.table.date"),
+            selector: row => row.article_date || row.article_created_at || "",
+            sortable: true,
+            width: "120px",
+            cell: row => (
+                <span className="small text-muted">
+                    {row.article_date || (row.article_created_at ? row.article_created_at.split("T")[0] : "—")}
+                </span>
+            )
         },
         {
-            name: "Acciones",
-            width: "190px",
-            right: true,
+            name: t("articleScreen.table.state"),
+            selector: row => row.article_active,
+            sortable: true,
+            width: "120px",
+            center: true,
+            cell: row => (
+                <Badge
+                    type={row.article_active ? "Success" : "Secondary"}
+                    text={row.article_active ? t("articleScreen.state.active") : t("articleScreen.state.inactive")}
+                    pill
+                />
+            )
+        },
+        {
+            name: t("articleScreen.table.actions"),
+            width: "230px",
+            allowOverflow: true,
             ignoreRowClick: true,
-            cell: (row) => <div className="d-flex gap-2 py-1 flex-nowrap">{renderActions(row)}</div>
+            button: true,
+            cell: row => (
+                <div className="d-flex align-items-center gap-2 justify-content-end py-1 flex-nowrap">
+                    <ButtonSecondary
+                        label={t("articleScreen.actions.view")}
+                        className="btn-sm py-1 px-2 text-nowrap"
+                        onClick={() => navigate(`/article/${row.article_id}`)}
+                    />
+                    <ButtonPrimary
+                        label={t("articleScreen.actions.edit")}
+                        className="btn-sm py-1 px-2 text-nowrap"
+                        onClick={() => navigate(`/article/edit/${row.article_id}`)}
+                    />
+                    <ButtonLink
+                        label={t("articleScreen.actions.delete")}
+                        className="text-danger fw-semibold small text-nowrap px-1"
+                        onClick={() => handleOpenDelete(row)}
+                    />
+                </div>
+            )
         }
     ];
 
-    const emptyVariant = filtersActive ? "filtered" : catalog.scope;
-    const emptyState = (
-        <CatalogEmptyState
-            variant={emptyVariant}
-            onClear={clearFilters}
-            onCreate={canCreateArticle(user) ? () => navigate("/article/postulate") : undefined}
-        />
-    );
-
-    const activeTab = tabs.find((t) => t.scope === catalog.scope);
-
     return (
-        <div className="container-fluid p-3 p-md-4">
+        <div className="container-fluid p-4">
+            {/* Alert Banner AdminLTE */}
             {alertNotification && (
                 <div
                     className={`alert alert-${alertNotification.type} alert-dismissible fade show shadow-sm border-0 mb-4`}
                     role="alert"
                 >
-                    <strong className="d-block">{alertNotification.title}</strong>
-                    <span>{alertNotification.message}</span>
+                    <div className="d-flex align-items-center">
+                        <i className={`bi fs-4 me-2 ${alertNotification.type === "danger"
+                            ? "bi-check-circle-fill"
+                            : "bi-info-circle-fill"
+                            }`}></i>
+                        <div>
+                            <strong className="d-block">{alertNotification.title}</strong>
+                            <span>{alertNotification.message}</span>
+                        </div>
+                    </div>
                     <button
                         type="button"
                         className="btn-close"
-                        aria-label="Cerrar"
+                        aria-label="Close"
                         onClick={() => setAlertNotification(null)}
                     ></button>
                 </div>
             )}
 
-            {/* Cabecera */}
+            {/* Cabecera de la sección */}
             <div className="d-flex flex-wrap align-items-center justify-content-between mb-4 pb-2 border-bottom gap-3">
                 <div>
-                    <h2 className="fw-bold mb-1 d-flex align-items-center gap-2 h3">
-                        <i className="bi bi-journal-text text-primary" aria-hidden="true"></i>
-                        Catálogo de artículos
+                    <h2 className="fw-bold mb-1 d-flex align-items-center gap-2">
+                        <i className="bi bi-file-earmark-text-fill text-primary"></i>
+                        {t("articleScreen.title")}
                     </h2>
                     <p className="text-secondary mb-0">
-                        {SCOPE_SUBTITLE[allowedScopes[0]] ?? SCOPE_SUBTITLE.mine}
+                        {t("articleScreen.description")}
                     </p>
                 </div>
-                {canCreateArticle(user) && (
+                <div className="d-flex gap-2">
                     <button
-                        type="button"
                         className="btn btn-primary shadow-sm d-flex align-items-center gap-2"
-                        onClick={() => navigate("/article/postulate")}
+                        onClick={() => navigate("/article/create")}
                     >
-                        <i className="bi bi-plus-circle" aria-hidden="true"></i>
-                        <span>Postular artículo</span>
+                        <i className="bi bi-plus-circle"></i>
+                        <span>{t("articleScreen.newArticle")}</span>
                     </button>
-                )}
+                </div>
             </div>
 
-            {/* CA-05: dos vistas para autor (propios / publicados) y miembro (asignados / publicados) */}
-            {tabs.length > 1 && (
-                <>
-                    <ul className="nav nav-tabs nav-fill flex-nowrap mb-2" role="tablist">
-                        {tabs.map((tab) => (
-                            <li className="nav-item" role="presentation" key={tab.scope}>
+            {/* Tarjetas de Estadísticas rápidas */}
+            <div className="row g-3 mb-4">
+                <div className="col-12 col-sm-6 col-xl-3">
+                    <div className="card shadow-sm border-0 border-start border-primary border-4">
+                        <div className="card-body d-flex align-items-center justify-content-between py-3">
+                            <div>
+                                <span className="text-muted small text-uppercase fw-bold">{t("articleScreen.stats.total")}</span>
+                                <h3 className="fw-bold mb-0 text-dark">{articles.length}</h3>
+                            </div>
+                            <div className="bg-primary-subtle p-3 rounded-circle text-primary">
+                                <i className="bi bi-journal-bookmark fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="col-12 col-sm-6 col-xl-3">
+                    <div className="card shadow-sm border-0 border-start border-success border-4">
+                        <div className="card-body d-flex align-items-center justify-content-between py-3">
+                            <div>
+                                <span className="text-muted small text-uppercase fw-bold">{t("articleScreen.stats.published")}</span>
+                                <h3 className="fw-bold mb-0 text-success">
+                                    {articles.filter(a => a.status === "Publicado").length}
+                                </h3>
+                            </div>
+                            <div className="bg-success-subtle p-3 rounded-circle text-success">
+                                <i className="bi bi-check2-circle fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="col-12 col-sm-6 col-xl-3">
+                    <div className="card shadow-sm border-0 border-start border-warning border-4">
+                        <div className="card-body d-flex align-items-center justify-content-between py-3">
+                            <div>
+                                <span className="text-muted small text-uppercase fw-bold">{t("articleScreen.stats.inReview")}</span>
+                                <h3 className="fw-bold mb-0 text-warning">
+                                    {articles.filter(a => a.status === "En Revisión").length}
+                                </h3>
+                            </div>
+                            <div className="bg-warning-subtle p-3 rounded-circle text-warning">
+                                <i className="bi bi-clock-history fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="col-12 col-sm-6 col-xl-3">
+                    <div className="card shadow-sm border-0 border-start border-secondary border-4">
+                        <div className="card-body d-flex align-items-center justify-content-between py-3">
+                            <div>
+                                <span className="text-muted small text-uppercase fw-bold">{t("articleScreen.stats.drafts")}</span>
+                                <h3 className="fw-bold mb-0 text-secondary">
+                                    {articles.filter(a => a.status === "Borrador").length}
+                                </h3>
+                            </div>
+                            <div className="bg-secondary-subtle p-3 rounded-circle text-secondary">
+                                <i className="bi bi-pencil fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Contenedor Principal de la Tabla */}
+            <Card title={t("articleScreen.repository")} outline outlineColor="primary">
+                {/* Filtros y Buscador */}
+                <div className="row g-2 mb-3 align-items-center">
+                    <div className="col-12 col-md-6 col-lg-5">
+                        <div className="input-group">
+                            <span className="input-group-text bg-white border-end-0">
+                                <i className="bi bi-search text-muted"></i>
+                            </span>
+                            <input
+                                type="text"
+                                className="form-control border-start-0 ps-0"
+                                placeholder={t("articleScreen.searchPlaceholder")}
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                            {searchTerm && (
                                 <button
+                                    className="btn btn-outline-secondary border-start-0"
                                     type="button"
-                                    role="tab"
-                                    aria-selected={catalog.scope === tab.scope}
-                                    className={`nav-link d-flex align-items-center justify-content-center gap-2 text-nowrap ${catalog.scope === tab.scope ? "active fw-semibold" : ""
-                                        }`}
-                                    onClick={() => catalog.scope !== tab.scope && updateCatalog({ scope: tab.scope })}
+                                    onClick={() => setSearchTerm("")}
                                 >
-                                    <i className={`bi ${tab.icon}`} aria-hidden="true"></i>
-                                    <span className="d-none d-sm-inline">{tab.label}</span>
-                                    <span className="d-sm-none">{tab.shortLabel}</span>
+                                    <i className="bi bi-x"></i>
                                 </button>
-                            </li>
-                        ))}
-                    </ul>
-                    {activeTab && <p className="small text-muted mb-3">{activeTab.hint}</p>}
-                </>
-            )}
-
-            <Card
-                title={SCOPE_TITLE[catalog.scope] ?? activeTab?.label ?? "Artículos"}
-                outline
-                outlineColor="primary"
-            >
-                <ArticleFilters
-                    values={catalog}
-                    statusOptions={getStatusOptionsForScope(catalog.scope)}
-                    onChange={updateCatalog}
-                    onClear={clearFilters}
-                    canClear={filtersActive}
-                />
-
-                {/* CA-03 filtrado: contador total de coincidencias */}
-                <p className="small text-muted mb-2" aria-live="polite">
-                    {loading ? (
-                        "Buscando artículos…"
-                    ) : error ? (
-                        " "
-                    ) : (
-                        <>
-                            <strong className="text-dark">{total}</strong>{" "}
-                            {total === 1 ? "artículo coincide" : "artículos coinciden"}
-                            {filtersActive ? " con los filtros aplicados" : ""}
-                        </>
-                    )}
-                </p>
-
-                {error ? (
-                    <CatalogError message={error} onRetry={reload} />
-                ) : (
-                    <>
-                        {/* Escritorio / tablet: tabla */}
-                        <div className="d-none d-md-block border rounded">
-                            <DataTable
-                                columns={columns}
-                                data={items}
-                                keyField="id"
-                                progressPending={loading}
-                                progressComponent={<TableSkeleton rows={Math.min(catalog.size, 8)} />}
-                                noDataComponent={emptyState}
-                                persistTableHead
-                                highlightOnHover
-                                responsive
-                            />
+                            )}
                         </div>
+                    </div>
+                    <div className="col-12 col-md-4 col-lg-3">
+                        <select
+                            className="form-select"
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                        >
+                            <option value="TODOS">{t("articleScreen.filters.all")}</option>
+                            <option value="Publicado">{t("articleScreen.stats.published")}</option>
+                            <option value="En Revisión">{t("articleScreen.stats.inReview")}</option>
+                            <option value="Borrador">{t("articleScreen.stats.drafts")}</option>
+                        </select>
+                    </div>
+                    <div className="col-12 col-md-2 col-lg-4 text-md-end text-muted small">
+                        <Trans
+                            i18nKey="articleScreen.showing"
+                            values={{ shown: filteredArticles.length, total: articles.length }}
+                            components={{ b: <strong /> }}
+                        />
+                    </div>
+                </div>
 
-                        {/* Móvil: tarjetas */}
-                        <div className="d-md-none">
-                            <ArticleCardList
-                                items={items}
-                                loading={loading}
-                                showAuthor={showAuthor}
-                                renderActions={(article) => renderActions(article, true)}
-                                emptyState={<div className="card border-0 shadow-sm">{emptyState}</div>}
-                            />
-                        </div>
-
-                        {total > 0 && (
-                            <CatalogPagination
-                                page={catalog.page}
-                                size={catalog.size}
-                                total={total}
-                                loading={loading}
-                                onPageChange={(page) => updateCatalog({ page })}
-                                onSizeChange={(size) => updateCatalog({ size })}
-                            />
-                        )}
-                    </>
-                )}
+                {/* Tabla */}
+                <div className="border rounded">
+                    <DataTable
+                        columns={columns}
+                        data={filteredArticles}
+                        pagination
+                        paginationPerPage={10}
+                        paginationRowsPerPageOptions={[10, 50, 100]}
+                        responsive
+                        highlightOnHover
+                        paginationComponentOptions={{
+                            rowsPerPageText: t("articleScreen.pagination.rowsPerPage"),
+                            rangeSeparatorText: t("articleScreen.pagination.of")
+                        }}
+                        noDataComponent={
+                            <div className="py-5 text-center text-muted">
+                                <i className="bi bi-file-earmark-x fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                                <p className="mb-0">{t("articleScreen.empty")}</p>
+                            </div>
+                        }
+                    />
+                </div>
             </Card>
+
+            {/* MODAL DE CONFIRMACIÓN DE ELIMINACIÓN */}
+            <Modal
+                show={deleteModalOpen}
+                onClose={() => setDeleteModalOpen(false)}
+                title={t("articleScreen.deleteModal.title")}
+                size="md"
+                footer={
+                    <>
+                        <ButtonSecondary label={t("articleScreen.deleteModal.cancel")} onClick={() => setDeleteModalOpen(false)} />
+                        <button
+                            type="button"
+                            className="btn btn-danger d-flex align-items-center gap-1 shadow-sm"
+                            onClick={handleConfirmDelete}
+                        >
+                            <i className="bi bi-trash-fill"></i>
+                            <span>{t("articleScreen.deleteModal.confirm")}</span>
+                        </button>
+                    </>
+                }
+            >
+                {selectedArticle && (
+                    <div className="text-center py-3">
+                        <div className="text-danger mb-3">
+                            <i className="bi bi-exclamation-octagon-fill" style={{ fontSize: "3rem" }}></i>
+                        </div>
+                        <h5 className="fw-bold text-dark">{t("articleScreen.deleteModal.question")}</h5>
+                        <p className="text-muted px-2 mb-2">
+                            <Trans
+                                i18nKey="articleScreen.deleteModal.warning"
+                                values={{ title: selectedArticle.article_subject || selectedArticle.title }}
+                                components={{ b: <strong /> }}
+                            />
+                        </p>
+                        <div className="alert alert-warning py-2 small mb-0">
+                            <i className="bi bi-info-circle me-1"></i>{" "}
+                            {t("articleScreen.deleteModal.meta", {
+                                author: selectedArticle.article_created_by_name || selectedArticle.author || "—",
+                                category: selectedArticle.topic_subject || selectedArticle.topic_name || selectedArticle.category || "—"
+                            })}
+                        </div>
+                    </div>
+                )}
+            </Modal>
         </div>
     );
 };

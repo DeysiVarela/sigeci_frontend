@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useContext, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router";
 import ReCAPTCHA from "react-google-recaptcha";
@@ -6,22 +6,32 @@ import InputEmail from "../../components/inputs/InputEmail";
 import InputPassword from "../../components/inputs/InputPassword";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import HandlerApp from "../../utils/HandlerApp";
-import { login } from "../../api/auth";
+// import { login } from "../../api/auth";
+import { useFetch } from "../../hooks/useFetch";
+import { AppContext } from "../../context/AppContext";
+import Swal from "sweetalert2";
 
 const LoginScreen = () => {
-    const nav = useNavigate();
-    const handlerApp = HandlerApp();
-    const captchaRef = useRef(null);
+    const nav               = useNavigate();
+    const handlerApp        = HandlerApp();
+    const api               = useFetch();
+    const captchaRef        = useRef(null);
+
+    const {setApp} = useContext(AppContext);
+
     const [captchaToken, setCaptchaToken] = useState("");
     const [submitError, setSubmitError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const captchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+
     const { control, handleSubmit, formState: { errors }, setError } = useForm({
         mode: "onBlur",
     });
+    
     const submitData = async (data) => {
         if (!captchaSiteKey) {
-            setSubmitError("El CAPTCHA no está configurado. Comunícate con soporte.");
+            // setSubmitError("El CAPTCHA no está configurado. Comunícate con soporte.");
+            console.error("El CAPTCHA no está configurado. Comunícate con soporte.");
             return;
         }
 
@@ -34,12 +44,50 @@ const LoginScreen = () => {
         setIsSubmitting(true);
         handlerApp.setLoader(true);
         try {
-            await login({
-                identifier: data.email,
-                password: data.pass,
-                captchaToken,
-            });
-            nav("/home");
+            let body = {...data};
+            let res = await api.post('auth/login', body, null, captchaToken);
+            if(res.success){
+                let data = res.data;
+                localStorage.setItem("token", data.token);
+                localStorage.setItem("refreshToken", data.refresh_token);
+                localStorage.setItem("name", data.user.name);
+                localStorage.setItem("lastname", data.user.lastname);
+                localStorage.setItem("email", data.user.email);
+                localStorage.setItem("id", data.user.id);
+                localStorage.setItem("permissions", JSON.stringify(data.permissions));
+                
+                let profiles = data.user.profiles;
+                
+                let profile = null;
+                // mostrar modal para seleccionar perfil.
+                if(profiles.length > 1){
+                    handlerApp.setLoader(false);
+                    res = await Swal.fire({
+                        title: "Selecciona un perfil",
+                        input: "select",
+                        inputOptions: profiles.reduce((acc, profile) => {
+                            acc[profile.id] = profile.name;
+                            return acc;
+                        }, {}),
+                        inputValidator: (value) => {
+                            if (!value) {
+                                return "Debes seleccionar un perfil.";
+                            }
+                        },
+                    });
+                    profile = parseInt(res.value);
+                }else{
+                    profile = parseInt(profiles[0].id);
+                }
+                
+                localStorage.setItem("profiles", JSON.stringify(profiles));
+                localStorage.setItem("profile", profile);
+
+                setApp((app) => ({ ...app, profile, profiles, user: data.user, token: data.token, isAuthenticated: true }));
+                nav("/home");
+            }else{
+                setSubmitError(res.message);
+            }
         } catch (error) {
             if (error.status === 401 || error.status === 403) {
                 setError("email", { type: "server", message: "Las credenciales no son válidas." });
@@ -57,6 +105,7 @@ const LoginScreen = () => {
             handlerApp.setLoader(false);
         }
     };
+
     const submitForm = (event) => {
         void handleSubmit(submitData)(event);
     };
@@ -85,13 +134,13 @@ const LoginScreen = () => {
                             <InputPassword
                                 control={control}
                                 label="Contraseña"
-                                name="pass"
+                                name="password"
                                 placeholder="Contraseña"
-                                errors={errors.pass}
+                                errors={errors.password}
                                 required={true}
                             />
-                            {errors.pass?.type === "server" && (
-                                <p className="small text-danger mt-1" role="alert">{errors.pass.message}</p>
+                            {errors.password?.type === "server" && (
+                                <p className="small text-danger mt-1" role="alert">{errors.password.message}</p>
                             )}
 
                             <div className="mb-3" aria-describedby="captcha-error">
@@ -100,6 +149,7 @@ const LoginScreen = () => {
                                         ref={captchaRef}
                                         sitekey={captchaSiteKey}
                                         onChange={(token) => {
+                                            console.log({token});
                                             setCaptchaToken(token || "");
                                             setSubmitError("");
                                         }}

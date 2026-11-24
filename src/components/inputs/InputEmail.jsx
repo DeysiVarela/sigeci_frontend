@@ -1,4 +1,5 @@
 import { Controller } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 const InputEmail = ({
     control,
@@ -10,6 +11,7 @@ const InputEmail = ({
     placeholder = null,
     required = false
 }) => {
+    const { t } = useTranslation();
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
     return (
@@ -21,7 +23,7 @@ const InputEmail = ({
                 required: required,
                 pattern: rules.pattern || {
                     value: emailRegex,
-                    message: "Este campo debe ser un correo electrónico válido"
+                    message: t("validation.email")
                 }
             }}
             defaultValue=""
@@ -44,12 +46,12 @@ const InputEmail = ({
                     />
                     {errors?.type === "required" && (
                         <p className="small text-danger">
-                            <span className="mr-1">⚠️</span>Este campo es obligatorio
+                            <span className="mr-1">⚠️</span>{t("validation.required")}
                         </p>
                     )}
                     {errors?.type === "pattern" && (
                         <p className="small text-danger">
-                            <span className="mr-1">⚠️</span>Este campo debe ser un correo electrónico válido
+                            <span className="mr-1">⚠️</span>{t("validation.email")}
                         </p>
                     )}
                     {errors?.type === "validate" && (

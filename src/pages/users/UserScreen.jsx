@@ -10,6 +10,7 @@ import ButtonLink from "../../components/buttons/ButtonLink";
 import { listUsers, listProfiles, deleteUser, getMe } from "../../api/users";
 import { getErrorMessage } from "../../utils/apiError";
 import { isManager, canEditUser, canDeleteUser } from "../../utils/userAccess";
+import { useTranslation, Trans } from "react-i18next";
 
 const ROWS_PER_PAGE_OPTIONS = [10, 20, 50];
 
@@ -20,7 +21,8 @@ const formatUser = (u) => ({
     name: `${u.name} ${u.lastname}`.trim(),
     email: u.email,
     role: (u.profiles ?? []).map((p) => p.name).join(", "),
-    status: u.active ? "Activo" : "Inactivo",
+    active: Boolean(u.active),
+    profiles: u.profiles ?? [],
 });
 
 const AvatarInitial = ({ name, size = 40, className = "" }) => (
@@ -32,19 +34,20 @@ const AvatarInitial = ({ name, size = 40, className = "" }) => (
     </div>
 );
 
-const getStatusBadge = (status) =>
-    status === "Activo"
-        ? <Badge type="Success" text="Activo" pill />
-        : <Badge type="Danger" text="Inactivo" pill />;
+const getStatusBadge = (active, t) =>
+    active
+        ? <Badge type="Success" text={t("userScreen.status.active")} pill />
+        : <Badge type="Danger" text={t("userScreen.status.inactive")} pill />;
 
 const STAT_CARDS = [
-    { key: "total", label: "Total Usuarios", color: "primary", icon: "bi-people", valueClass: "text-dark" },
-    { key: "active", label: "Activos", color: "success", icon: "bi-check-circle", valueClass: "text-success" },
-    { key: "inactive", label: "Inactivos", color: "danger", icon: "bi-dash-circle", valueClass: "text-danger" },
+    { key: "total", labelKey: "userScreen.stats.total", color: "primary", icon: "bi-people", valueClass: "text-dark" },
+    { key: "active", labelKey: "userScreen.stats.active", color: "success", icon: "bi-check-circle", valueClass: "text-success" },
+    { key: "inactive", labelKey: "userScreen.stats.inactive", color: "danger", icon: "bi-dash-circle", valueClass: "text-danger" },
 ];
 
 const UserScreen = () => {
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     // Datos de la tabla (paginados en el servidor)
     const [users, setUsers] = useState([]);
@@ -105,7 +108,7 @@ const UserScreen = () => {
                 setTotalRows(Array.isArray(res) ? data.length : res.count ?? data.length);
             })
             .catch((err) => {
-                if (!cancelled) setError(getErrorMessage(err, "No fue posible cargar los usuarios."));
+                if (!cancelled) setError(getErrorMessage(err, t("userScreen.alerts.loadError")));
             })
             .finally(() => {
                 if (!cancelled) setLoading(false);
@@ -114,7 +117,7 @@ const UserScreen = () => {
         return () => {
             cancelled = true;
         };
-    }, [page, perPage, profileFilter, activeFilter, reloadKey]);
+    }, [page, perPage, profileFilter, activeFilter, reloadKey, t]);
 
     // Opciones del filtro de rol
     useEffect(() => {
@@ -143,7 +146,7 @@ const UserScreen = () => {
             .catch(() => { });
     }, [reloadKey]);
 
-    const triggerAlert = (type, message, title = "Operación exitosa") => {
+    const triggerAlert = (type, message, title = t("userScreen.alerts.successTitle")) => {
         setAlertNotification({ type, title, message });
         setTimeout(() => setAlertNotification(null), 4000);
     };
@@ -186,11 +189,11 @@ const UserScreen = () => {
         const target = selectedUser;
         try {
             await deleteUser(target.id);
-            triggerAlert("success", `El usuario "${target.name}" (${target.email}) fue eliminado.`, "Usuario eliminado");
+            triggerAlert("success", t("userScreen.alerts.deleted", { name: target.name, email: target.email }), t("userScreen.alerts.deletedTitle"));
             if (users.length === 1 && page > 1) setPage((p) => p - 1);
             setReloadKey((k) => k + 1);
         } catch (err) {
-            triggerAlert("danger", getErrorMessage(err, "No se pudo eliminar el usuario."), "No se pudo eliminar");
+            triggerAlert("danger", getErrorMessage(err, t("userScreen.alerts.deleteError")), t("userScreen.alerts.deleteErrorTitle"));
         } finally {
             setDeleteModalOpen(false);
             setSelectedUser(null);
@@ -199,7 +202,7 @@ const UserScreen = () => {
 
     const columns = [
         {
-            name: "Usuario",
+            name: t("userScreen.columns.user"),
             selector: (row) => row.name,
             minWidth: "250px",
             cell: (row) => (
@@ -213,7 +216,7 @@ const UserScreen = () => {
             ),
         },
         {
-            name: "Rol",
+            name: t("userScreen.columns.role"),
             selector: (row) => row.role,
             minWidth: "140px",
             cell: (row) => (
@@ -224,14 +227,14 @@ const UserScreen = () => {
             ),
         },
         {
-            name: "Estado",
-            selector: (row) => row.status,
+            name: t("userScreen.columns.status"),
+            selector: (row) => row.active,
             center: true,
             maxWidth: "180px",
-            cell: (row) => getStatusBadge(row.status),
+            cell: (row) => getStatusBadge(row.active, t),
         },
         {
-            name: "Acciones",
+            name: t("userScreen.columns.actions"),
             minWidth: "230px",
             allowOverflow: true,
             ignoreRowClick: true,
@@ -240,21 +243,21 @@ const UserScreen = () => {
                 <div className="d-flex align-items-center gap-2 justify-content-end py-1 flex-nowrap">
 
                     <ButtonSecondary
-                        label="Ver"
+                        label={t("userScreen.actions.view")}
                         className="btn-sm py-1 px-2 text-nowrap"
                         onClick={() => handleOpenView(row)}
                     />
 
-                    {canEditUser(me, row.id) && (
+                    {canEditUser(me, row.id, row) && (
                         <ButtonPrimary
-                            label="Editar"
+                            label={t("userScreen.actions.edit")}
                             className="btn-sm py-1 px-2 text-nowrap"
                             onClick={() => navigate(`/users/edit/${row.id}`)}
                         />
                     )}
-                    {canDeleteUser(me, row.id) && (
+                    {canDeleteUser(me, row.id, row) && (
                         <ButtonLink
-                            label="Eliminar"
+                            label={t("userScreen.actions.delete")}
                             className="text-danger fw-semibold small text-nowrap px-1"
                             onClick={() => handleOpenDelete(row)}
                         />
@@ -269,7 +272,7 @@ const UserScreen = () => {
             return (
                 <div className="py-5 text-center border rounded">
                     <div className="spinner-border text-primary" role="status"></div>
-                    <p className="mt-2 mb-0 text-muted">Cargando usuarios...</p>
+                    <p className="mt-2 mb-0 text-muted">{t("userScreen.loading")}</p>
                 </div>
             );
         }
@@ -294,15 +297,19 @@ const UserScreen = () => {
                     }}
                     responsive
                     highlightOnHover
+                    paginationComponentOptions={{
+                        rowsPerPageText: t("userScreen.pagination.rowsPerPage"),
+                        rangeSeparatorText: t("userScreen.pagination.of")
+                    }}
                     noDataComponent={
                         <div className="py-5 text-center text-muted">
                             <i className={`bi ${hasFilters ? "bi-search" : "bi-people"} fs-1 d-block mb-2 text-secondary opacity-50`}></i>
                             <p className="mb-0">
                                 {term
-                                    ? "Ningún usuario coincide con la búsqueda."
+                                    ? t("userScreen.empty.search")
                                     : hasFilters
-                                        ? "Ningún usuario coincide con los filtros seleccionados."
-                                        : "Aún no hay usuarios registrados."}
+                                        ? t("userScreen.empty.filters")
+                                        : t("userScreen.empty.none")}
                             </p>
                         </div>
                     }
@@ -334,7 +341,7 @@ const UserScreen = () => {
                     <button
                         type="button"
                         className="btn-close"
-                        aria-label="Cerrar"
+                        aria-label={t("userScreen.alerts.close")}
                         onClick={() => setAlertNotification(null)}
                     ></button>
                 </div>
@@ -345,10 +352,10 @@ const UserScreen = () => {
                 <div>
                     <h2 className="fw-bold mb-1 d-flex align-items-center gap-2">
                         <i className="bi bi-people-fill text-primary"></i>
-                        Gestión de Usuarios
+                        {t("userScreen.title")}
                     </h2>
                     <p className="text-secondary mb-0">
-                        Administra roles, accesos y estado del personal universitario registrado en SIGECI.
+                        {t("userScreen.description")}
                     </p>
                 </div>
                 {isManager(me) && (
@@ -358,7 +365,7 @@ const UserScreen = () => {
                             onClick={() => navigate("/users/create")}
                         >
                             <i className="bi bi-person-plus-fill"></i>
-                            <span>Nuevo Usuario</span>
+                            <span>{t("userScreen.newUser")}</span>
                         </button>
                     </div>
                 )}
@@ -371,7 +378,7 @@ const UserScreen = () => {
                         <div className={`card shadow-sm border-0 border-start border-${s.color} border-4`}>
                             <div className="card-body d-flex align-items-center justify-content-between py-3">
                                 <div>
-                                    <span className="text-muted small text-uppercase fw-bold">{s.label}</span>
+                                    <span className="text-muted small text-uppercase fw-bold">{t(s.labelKey)}</span>
                                     <h3 className={`fw-bold mb-0 ${s.valueClass}`}>{stats[s.key]}</h3>
                                 </div>
                                 <div className={`bg-${s.color}-subtle p-3 rounded-circle text-${s.color}`}>
@@ -391,49 +398,49 @@ const UserScreen = () => {
                         {error}
                     </span>
                     <button className="btn btn-sm btn-outline-danger" onClick={() => setReloadKey((k) => k + 1)}>
-                        Reintentar
+                        {t("userScreen.alerts.retry")}
                     </button>
                 </div>
             )}
 
             {meError && (
                 <div className="alert alert-warning py-2" role="alert">
-                    No se pudo verificar tu rol; las acciones de edición están ocultas.
+                    {t("userScreen.alerts.roleError")}
                 </div>
             )}
 
-            <Card title="Listado Oficial de Usuarios" outline outlineColor="primary">
+            <Card title={t("userScreen.list.title")} outline outlineColor="primary">
                 {/* Filtros: rol y estado */}
                 <div className="row g-2 mb-3 align-items-center">
                     <div className="col-12 col-md-4 col-lg-3">
-                        <label htmlFor="filter-profile" className="visually-hidden">Filtrar por rol</label>
+                        <label htmlFor="filter-profile" className="visually-hidden">{t("userScreen.list.filterRole")}</label>
                         <select
                             id="filter-profile"
                             className="form-select"
                             value={profileFilter}
                             onChange={handleProfileChange}
                         >
-                            <option value="">Todos los roles</option>
+                            <option value="">{t("userScreen.list.allRoles")}</option>
                             {profiles.map((p) => (
                                 <option key={p.id} value={p.id}>{p.name || p.profile_name}</option>
                             ))}
                         </select>
                     </div>
                     <div className="col-12 col-md-4 col-lg-3">
-                        <label htmlFor="filter-active" className="visually-hidden">Filtrar por estado</label>
+                        <label htmlFor="filter-active" className="visually-hidden">{t("userScreen.list.filterStatus")}</label>
                         <select
                             id="filter-active"
                             className="form-select"
                             value={activeFilter}
                             onChange={handleActiveChange}
                         >
-                            <option value="">Todos los estados</option>
-                            <option value="true">Solo Activos</option>
-                            <option value="false">Solo Inactivos</option>
+                            <option value="">{t("userScreen.list.allStatuses")}</option>
+                            <option value="true">{t("userScreen.list.onlyActive")}</option>
+                            <option value="false">{t("userScreen.list.onlyInactive")}</option>
                         </select>
                     </div>
                     <div className="col-12 col-md-4 col-lg-3">
-                        <label htmlFor="filter-search" className="visually-hidden">Buscar por nombre o correo</label>
+                        <label htmlFor="filter-search" className="visually-hidden">{t("userScreen.list.search")}</label>
                         <div className="input-group">
                             <span className="input-group-text bg-white border-end-0">
                                 <i className="bi bi-search text-muted"></i>
@@ -442,7 +449,7 @@ const UserScreen = () => {
                                 id="filter-search"
                                 type="text"
                                 className="form-control border-start-0 ps-0"
-                                placeholder="Buscar por nombre o correo"
+                                placeholder={t("userScreen.list.search")}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 disabled={!canSearch}
@@ -453,20 +460,20 @@ const UserScreen = () => {
                         {hasFilters && (
                             <button type="button" className="btn btn-outline-secondary btn-sm" onClick={clearFilters}>
                                 <i className="bi bi-x-circle me-1"></i>
-                                Limpiar filtros
+                                {t("userScreen.list.clearFilters")}
                             </button>
                         )}
                         {!loading && !error && (
                             <span className="text-muted small">
-                                <strong>{term ? `${visibleUsers.length} de ${totalRows}` : totalRows}</strong>{" "}
-                                {totalRows === 1 ? "usuario" : "usuarios"}
+                                <strong>{term ? t("userScreen.list.ofTotal", { shown: visibleUsers.length, total: totalRows }) : totalRows}</strong>{" "}
+                                {t("userScreen.list.userCount", { count: totalRows })}
                             </span>
                         )}
                     </div>
                 </div>
                 {!canSearch && !loading && !error && (
                     <p className="form-text mt-0 mb-3">
-                        La búsqueda por texto se habilita cuando los filtros dejan {perPage} usuarios o menos.
+                        {t("userScreen.list.searchHint", { max: perPage })}
                     </p>
                 )}
 
@@ -477,9 +484,9 @@ const UserScreen = () => {
             <Modal
                 show={viewModalOpen}
                 onClose={() => setViewModalOpen(false)}
-                title="Detalles del Usuario"
+                title={t("userScreen.viewModal.title")}
                 size="md"
-                footer={<ButtonSecondary label="Cerrar" onClick={() => setViewModalOpen(false)} />}
+                footer={<ButtonSecondary label={t("userScreen.viewModal.close")} onClick={() => setViewModalOpen(false)} />}
             >
                 {selectedUser && (
                     <div className="text-center py-2">
@@ -493,16 +500,16 @@ const UserScreen = () => {
 
                         <div className="list-group list-group-flush text-start border-top border-bottom mb-2">
                             <div className="list-group-item d-flex justify-content-between align-items-center py-2">
-                                <span className="text-muted fw-semibold">ID de Registro:</span>
+                                <span className="text-muted fw-semibold">{t("userScreen.viewModal.id")}</span>
                                 <span className="badge bg-secondary">#{selectedUser.id}</span>
                             </div>
                             <div className="list-group-item d-flex justify-content-between align-items-center py-2">
-                                <span className="text-muted fw-semibold">Rol Asignado:</span>
+                                <span className="text-muted fw-semibold">{t("userScreen.viewModal.role")}</span>
                                 <span className="fw-bold text-dark">{selectedUser.role}</span>
                             </div>
                             <div className="list-group-item d-flex justify-content-between align-items-center py-2">
-                                <span className="text-muted fw-semibold">Estado de Cuenta:</span>
-                                <span>{getStatusBadge(selectedUser.status)}</span>
+                                <span className="text-muted fw-semibold">{t("userScreen.viewModal.status")}</span>
+                                <span>{getStatusBadge(selectedUser.active, t)}</span>
                             </div>
                         </div>
                     </div>
@@ -513,18 +520,18 @@ const UserScreen = () => {
             <Modal
                 show={deleteModalOpen}
                 onClose={() => setDeleteModalOpen(false)}
-                title="Confirmar Eliminación"
+                title={t("userScreen.deleteModal.title")}
                 size="md"
                 footer={
                     <>
-                        <ButtonSecondary label="Cancelar" onClick={() => setDeleteModalOpen(false)} />
+                        <ButtonSecondary label={t("userScreen.deleteModal.cancel")} onClick={() => setDeleteModalOpen(false)} />
                         <button
                             type="button"
                             className="btn btn-danger d-flex align-items-center gap-1 shadow-sm"
                             onClick={handleConfirmDelete}
                         >
                             <i className="bi bi-trash-fill"></i>
-                            <span>Sí, Eliminar</span>
+                            <span>{t("userScreen.deleteModal.confirm")}</span>
                         </button>
                     </>
                 }
@@ -534,9 +541,13 @@ const UserScreen = () => {
                         <div className="text-danger mb-3">
                             <i className="bi bi-exclamation-triangle-fill" style={{ fontSize: "3rem" }}></i>
                         </div>
-                        <h5 className="fw-bold text-dark">¿Estás seguro de eliminar este usuario?</h5>
+                        <h5 className="fw-bold text-dark">{t("userScreen.deleteModal.question")}</h5>
                         <p className="text-muted px-3">
-                            Se eliminará a <strong>{selectedUser.name}</strong> (<code>{selectedUser.email}</code>) de forma permanente. Esta acción no se puede deshacer.
+                            <Trans
+                                i18nKey="userScreen.deleteModal.warning"
+                                values={{ name: selectedUser.name, email: selectedUser.email }}
+                                components={{ b: <strong />, code: <code /> }}
+                            />
                         </p>
                     </div>
                 )}
