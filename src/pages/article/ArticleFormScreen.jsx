@@ -14,6 +14,7 @@ import { useFetch } from "../../hooks/useFetch";
 import { uploadFile } from "../../utils/uploadFiles";
 import { getErrorMessage } from "../../utils/apiError";
 import { useTranslation } from "react-i18next";
+import { translateTopic } from "../../utils/topicLabel";
 
 const ArticleFormScreen = () => {
     const { id } = useParams();
@@ -160,7 +161,7 @@ const ArticleFormScreen = () => {
                                         control={control}
                                         label={t("articleForm.fields.topic")}
                                         name="topic_id"
-                                        options={topics}
+                                        options={topics.map((topic) => ({ ...topic, label: translateTopic(t, topic.label) }))}
                                         errors={errors.topic_id}
                                         required={true}
                                         placeholder={t("articleForm.fields.topicPlaceholder")}

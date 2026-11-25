@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { createEvent, getEvent, getTopics, updateEvent } from "../../api/events";
 import { canManageEvents } from "../../utils/userAccess";
 import { getEventRequestError } from "./agendaUtils";
+import { translateTopic } from "../../utils/topicLabel";
 import "./agenda.css";
 
 const EMPTY_EVENT = {
@@ -269,7 +270,7 @@ const EventFormScreen = () => {
                                         >
                                             <option value="">{t("eventForm.schedule.topicPlaceholder")}</option>
                                             {topics.map((topic) => (
-                                                <option key={topic.topic_id} value={topic.topic_id}>{topic.topic_subject}</option>
+                                                <option key={topic.topic_id} value={topic.topic_id}>{translateTopic(t, topic.topic_subject)}</option>
                                             ))}
                                         </select>
                                     </div>

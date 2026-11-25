@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { getEvents } from "../../api/events";
 import { formatEventDate, getEventRequestError, normalizeEvents } from "./agendaUtils";
 import { canManageEvents } from "../../utils/userAccess";
+import { translateTopic } from "../../utils/topicLabel";
 import "./agenda.css";
 
 const AgendaScreen = () => {
@@ -151,7 +152,7 @@ const AgendaScreen = () => {
                                     </td>
                                     <td>{formatEventDate(event.event_date)}</td>
                                     <td>{event.location || "—"}</td>
-                                    <td>{event.topics.length > 0 ? event.topics.join(", ") : t("agendaScreen.table.viewDetailFallback")}</td>
+                                    <td>{event.topics.length > 0 ? event.topics.map((topic) => translateTopic(t, topic)).join(", ") : t("agendaScreen.table.viewDetailFallback")}</td>
                                     <td className="text-end">
                                         <button
                                             type="button"
