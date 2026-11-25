@@ -37,7 +37,7 @@ const Dashboard = () => {
 	return (
 		<>
 			<div className="app-wrapper">
-				<Header onToggleSidebar={handleToggleSidebar} />
+				<Header onToggleSidebar={handleToggleSidebar} me={outletContext?.me}/>
 				<Nav me={outletContext?.me} />
 				<main className="app-main">
 					<Outlet context={outletContext} />

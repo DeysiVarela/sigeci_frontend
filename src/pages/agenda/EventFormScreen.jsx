@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useOutletContext, useParams } from "react-router";
+import { useTranslation } from "react-i18next";
 import { createEvent, getEvent, getTopics, updateEvent } from "../../api/events";
 import { canManageEvents } from "../../utils/userAccess";
 import { getEventRequestError } from "./agendaUtils";
+import { translateTopic } from "../../utils/topicLabel";
 import "./agenda.css";
 
 const EMPTY_EVENT = {
@@ -21,7 +23,7 @@ const toDateTimeInput = (value) => {
         .slice(0, 16);
 };
 
-const getApiError = (error) => {
+const getApiError = (error, fallbackMessage) => {
     const fieldErrors = error?.data?.errors;
     if (fieldErrors && typeof fieldErrors === "object") {
         const messages = Object.values(fieldErrors)
@@ -29,13 +31,14 @@ const getApiError = (error) => {
             .filter((value) => typeof value === "string");
         if (messages.length) return messages.join(" ");
     }
-    return getEventRequestError(error, "No fue posible guardar el evento. Intenta de nuevo.");
+    return getEventRequestError(error, fallbackMessage);
 };
 
 const EventFormScreen = () => {
     const { id } = useParams();
     const isEdit = Boolean(id);
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const { me } = useOutletContext() || {};
     const canManage = canManageEvents(me);
     const [form, setForm] = useState(EMPTY_EVENT);
@@ -83,7 +86,7 @@ const EventFormScreen = () => {
                 if (active) {
                     setLoadError(getEventRequestError(
                         requestError,
-                        "No fue posible cargar los datos del evento."
+                        t("eventForm.alerts.loadError")
                     ));
                 }
             } finally {
@@ -93,7 +96,7 @@ const EventFormScreen = () => {
 
         loadFormData();
         return () => { active = false; };
-    }, [canManage, id, isEdit]);
+    }, [canManage, id, isEdit, t]);
 
     const updateFormField = (event) => {
         const { name, value } = event.target;
@@ -118,7 +121,7 @@ const EventFormScreen = () => {
         setError("");
 
         if (schedule.some((item) => !item.topic_id || !item.schedule_hour)) {
-            setError("Completa el tópico y la hora de cada actividad, o elimínala del cronograma.");
+            setError(t("eventForm.alerts.incompleteSchedule"));
             return;
         }
 
@@ -143,7 +146,7 @@ const EventFormScreen = () => {
             const eventId = savedEvent?.event_id ?? savedEvent?.id ?? id;
             navigate(`/event/${encodeURIComponent(eventId)}`, { replace: true });
         } catch (requestError) {
-            setError(getApiError(requestError));
+            setError(getApiError(requestError, t("eventForm.alerts.saveError")));
         } finally {
             setSaving(false);
         }
@@ -153,10 +156,10 @@ const EventFormScreen = () => {
         return (
             <main className="container-fluid p-3 p-md-4 agenda-page">
                 <div className="alert alert-danger" role="alert">
-                    Solo Admin y Comité pueden crear o actualizar eventos.
+                    {t("eventForm.alerts.noPermission")}
                 </div>
                 <button className="btn btn-outline-secondary" type="button" onClick={() => navigate("/agenda")}>
-                    Volver a eventos
+                    {t("eventForm.backToEvents")}
                 </button>
             </main>
         );
@@ -167,7 +170,7 @@ const EventFormScreen = () => {
             <main className="container-fluid p-3 p-md-4 agenda-page">
                 <div className="text-center py-5" aria-busy="true">
                     <span className="spinner-border text-primary" role="status"></span>
-                    <p className="text-secondary mt-3">Cargando formulario del evento...</p>
+                    <p className="text-secondary mt-3">{t("eventForm.loading")}</p>
                 </div>
             </main>
         );
@@ -176,14 +179,16 @@ const EventFormScreen = () => {
     return (
         <main className="container-fluid p-3 p-md-4 agenda-page">
             <button className="btn btn-outline-secondary mb-3" type="button" onClick={() => navigate("/agenda")}>
-                <i className="bi bi-arrow-left me-2" aria-hidden="true"></i>Volver a eventos
+                <i className="bi bi-arrow-left me-2" aria-hidden="true"></i>{t("eventForm.backToEvents")}
             </button>
 
             <header className="agenda-heading">
                 <div>
-                    <span className="agenda-eyebrow">GESTIÓN DE EVENTOS</span>
-                    <h1 className="h2 fw-bold mb-1">{isEdit ? "Actualizar evento" : "Crear evento"}</h1>
-                    <p className="text-secondary mb-0">Completa los datos y configura el cronograma por tópico.</p>
+                    <span className="agenda-eyebrow">{t("eventForm.eyebrow")}</span>
+                    <h1 className="h2 fw-bold mb-1">
+                        {isEdit ? t("eventForm.editTitle") : t("eventForm.createTitle")}
+                    </h1>
+                    <p className="text-secondary mb-0">{t("eventForm.subtitle")}</p>
                 </div>
             </header>
 
@@ -192,7 +197,7 @@ const EventFormScreen = () => {
                 <form className="card border-0 shadow-sm p-3 p-md-4" onSubmit={submit}>
                     <div className="row g-3">
                         <div className="col-md-8">
-                            <label className="form-label" htmlFor="event_name">Nombre del evento</label>
+                            <label className="form-label" htmlFor="event_name">{t("eventForm.fields.name")}</label>
                             <input
                                 className="form-control"
                                 id="event_name"
@@ -204,7 +209,7 @@ const EventFormScreen = () => {
                             />
                         </div>
                         <div className="col-md-4">
-                            <label className="form-label" htmlFor="event_date">Fecha y hora</label>
+                            <label className="form-label" htmlFor="event_date">{t("eventForm.fields.dateTime")}</label>
                             <input
                                 className="form-control"
                                 id="event_date"
@@ -216,7 +221,7 @@ const EventFormScreen = () => {
                             />
                         </div>
                         <div className="col-12">
-                            <label className="form-label" htmlFor="event_address">Lugar</label>
+                            <label className="form-label" htmlFor="event_address">{t("eventForm.fields.address")}</label>
                             <input
                                 className="form-control"
                                 id="event_address"
@@ -227,7 +232,7 @@ const EventFormScreen = () => {
                             />
                         </div>
                         <div className="col-12">
-                            <label className="form-label" htmlFor="event_description">Descripción</label>
+                            <label className="form-label" htmlFor="event_description">{t("eventForm.fields.description")}</label>
                             <textarea
                                 className="form-control"
                                 id="event_description"
@@ -241,20 +246,20 @@ const EventFormScreen = () => {
 
                     <section className="mt-4" aria-labelledby="event-form-schedule">
                         <div className="d-flex justify-content-between align-items-center gap-2 mb-3">
-                            <h2 className="h5 fw-bold mb-0" id="event-form-schedule">Cronograma y tópicos</h2>
+                            <h2 className="h5 fw-bold mb-0" id="event-form-schedule">{t("eventForm.schedule.title")}</h2>
                             <button className="btn btn-sm btn-outline-primary" type="button" onClick={addScheduleItem}>
-                                <i className="bi bi-plus-lg me-1" aria-hidden="true"></i>Añadir horario
+                                <i className="bi bi-plus-lg me-1" aria-hidden="true"></i>{t("eventForm.schedule.add")}
                             </button>
                         </div>
                         {schedule.length === 0 && (
-                            <p className="text-secondary">No hay horarios. Puedes añadir actividades al cronograma.</p>
+                            <p className="text-secondary">{t("eventForm.schedule.empty")}</p>
                         )}
                         <div className="d-grid gap-2">
                             {schedule.map((item, index) => (
                                 <div className="row g-2 align-items-end border rounded p-2" key={item.rowId}>
                                     <div className="col-md-7">
                                         <label className="form-label" htmlFor={`schedule-topic-${item.rowId}`}>
-                                            Tópico {index + 1}
+                                            {t("eventForm.schedule.topicLabel", { number: index + 1 })}
                                         </label>
                                         <select
                                             className="form-select"
@@ -263,14 +268,16 @@ const EventFormScreen = () => {
                                             onChange={(event) => updateScheduleField(item.rowId, "topic_id", event.target.value)}
                                             required
                                         >
-                                            <option value="">Selecciona un tópico</option>
+                                            <option value="">{t("eventForm.schedule.topicPlaceholder")}</option>
                                             {topics.map((topic) => (
-                                                <option key={topic.topic_id} value={topic.topic_id}>{topic.topic_subject}</option>
+                                                <option key={topic.topic_id} value={topic.topic_id}>{translateTopic(t, topic.topic_subject)}</option>
                                             ))}
                                         </select>
                                     </div>
                                     <div className="col-md-3">
-                                        <label className="form-label" htmlFor={`schedule-hour-${item.rowId}`}>Hora</label>
+                                        <label className="form-label" htmlFor={`schedule-hour-${item.rowId}`}>
+                                            {t("eventForm.schedule.hourLabel")}
+                                        </label>
                                         <input
                                             className="form-control"
                                             id={`schedule-hour-${item.rowId}`}
@@ -285,9 +292,9 @@ const EventFormScreen = () => {
                                             className="btn btn-outline-danger"
                                             type="button"
                                             onClick={() => setSchedule((current) => current.filter((entry) => entry.rowId !== item.rowId))}
-                                            aria-label={`Eliminar horario ${index + 1}`}
+                                            aria-label={t("eventForm.schedule.removeAria", { number: index + 1 })}
                                         >
-                                            <i className="bi bi-trash me-1" aria-hidden="true"></i>Eliminar
+                                            <i className="bi bi-trash me-1" aria-hidden="true"></i>{t("eventForm.schedule.remove")}
                                         </button>
                                     </div>
                                 </div>
@@ -299,10 +306,14 @@ const EventFormScreen = () => {
 
                     <div className="d-flex justify-content-end gap-2 mt-4">
                         <button className="btn btn-outline-secondary" type="button" onClick={() => navigate("/agenda")} disabled={saving}>
-                            Cancelar
+                            {t("eventForm.buttons.cancel")}
                         </button>
                         <button className="btn btn-primary" type="submit" disabled={saving}>
-                            {saving ? "Guardando..." : isEdit ? "Guardar cambios" : "Crear evento"}
+                            {saving
+                                ? t("eventForm.buttons.saving")
+                                : isEdit
+                                    ? t("eventForm.buttons.saveChanges")
+                                    : t("eventForm.buttons.create")}
                         </button>
                     </div>
                 </form>

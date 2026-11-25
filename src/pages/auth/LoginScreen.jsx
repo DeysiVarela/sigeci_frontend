@@ -9,6 +9,8 @@ import HandlerApp from "../../utils/HandlerApp";
 import { login } from "../../api/auth";
 import { AppContext } from "../../context/AppContext";
 import Swal from "sweetalert2";
+import { useTranslation } from "react-i18next";
+import LanguageSelector from "../../components/multilanguage/LanguageSelector";
 
 const LoginScreen = () => {
     const nav               = useNavigate();
@@ -16,6 +18,7 @@ const LoginScreen = () => {
     const captchaRef        = useRef(null);
 
     const {setApp} = useContext(AppContext);
+    const { t } = useTranslation();
 
     const [captchaToken, setCaptchaToken] = useState("");
     const [submitError, setSubmitError] = useState("");
@@ -34,7 +37,7 @@ const LoginScreen = () => {
         }
 
         if (!captchaToken) {
-            setSubmitError("Completa el CAPTCHA para continuar.");
+            setSubmitError(t("login.captchaRequired"));
             return;
         }
 
@@ -64,7 +67,7 @@ const LoginScreen = () => {
                 if(profiles.length > 1){
                     handlerApp.setLoader(false);
                     res = await Swal.fire({
-                        title: "Selecciona un perfil",
+                        title: t("login.selectProfile"),
                         input: "select",
                         inputOptions: profiles.reduce((acc, profile) => {
                             acc[profile.id] = profile.name;
@@ -72,7 +75,7 @@ const LoginScreen = () => {
                         }, {}),
                         inputValidator: (value) => {
                             if (!value) {
-                                return "Debes seleccionar un perfil.";
+                                return t("login.selectProfileRequired");
                             }
                         },
                     });
@@ -99,13 +102,13 @@ const LoginScreen = () => {
             }
         } catch (error) {
             if (error.status === 401 || error.status === 403) {
-                setError("email", { type: "server", message: "Las credenciales no son válidas." });
-                setError("pass", { type: "server", message: "Las credenciales no son válidas." });
-                setSubmitError("No pudimos iniciar sesión. Revisa tus credenciales.");
+                setError("email", { type: "server", message: t("login.invalidCredentials") });
+                setError("pass", { type: "server", message: t("login.invalidCredentials") });
+                setSubmitError(t("login.loginFailed"));
             } else if (error.status === 400 || error.status === 503) {
                 setSubmitError(error.message);
             } else {
-                setSubmitError("No pudimos conectar con el servicio. Inténtalo nuevamente.");
+                setSubmitError(t("login.connectionError"));
             }
             captchaRef.current?.reset();
             setCaptchaToken("");
@@ -120,19 +123,27 @@ const LoginScreen = () => {
     };
 
     return (
-        <div className="login-page bg-body-secondary">
+        <div className="login-page bg-body-secondary position-relative">
+            <div className="position-absolute top-0 end-0 p-3">
+                <LanguageSelector toggleClassName="btn btn-light border shadow-sm" />
+            </div>
             <main className="login-box">
-                <h1 className="login-logo">
-                    {import.meta.env.VITE_PROJECT_NAME || "SIGECI"}
-                </h1>
+                <div className="login-logo mb-3 text-center">
+                    <img
+                        src="/logo-sigeci-login.png"
+                        alt={import.meta.env.VITE_PROJECT_NAME || "SIGECI"}
+                        className="img-fluid"
+                        style={{ maxHeight: "82px", width: "auto", objectFit: "contain" }}
+                    />
+                </div>
                 <div className="card">
                     <div className="card-body login-card-body">
-                        <p className="login-box-msg">Inicia sesión para comenzar</p>
+                        <p className="login-box-msg">{t("login.title")}</p>
 
                         <form onSubmit={submitForm} noValidate>
                             <InputEmail
                                 control={control}
-                                label="Correo electrónico"
+                                label={t("login.email")}
                                 name="email"
                                 errors={errors.email}
                                 required={true}
@@ -142,9 +153,9 @@ const LoginScreen = () => {
                             )}
                             <InputPassword
                                 control={control}
-                                label="Contraseña"
+                                label={t("login.password")}
                                 name="password"
-                                placeholder="Contraseña"
+                                placeholder={t("login.password")}
                                 errors={errors.password}
                                 required={true}
                             />
@@ -165,21 +176,21 @@ const LoginScreen = () => {
                                         onExpired={() => setCaptchaToken("")}
                                         onErrored={() => {
                                             setCaptchaToken("");
-                                            setSubmitError("No pudimos cargar el CAPTCHA. Inténtalo nuevamente.");
+                                            setSubmitError(t("login.captchaLoadError"));
                                         }}
                                     />
                                 ) : (
                                     <p className="small text-danger mb-0" role="alert">
-                                        El CAPTCHA no está configurado. Comunícate con soporte.
+                                        {t("login.captchaNotConfigured")}
                                     </p>
                                 )}
-                                {!captchaToken && submitError === "Completa el CAPTCHA para continuar." && (
+                                {!captchaToken && submitError === t("login.captchaRequired") && (
                                     <p id="captcha-error" className="small text-danger mt-1 mb-0" role="alert">
-                                        Completa el CAPTCHA antes de enviar.
+                                        {t("login.captchaBeforeSubmit")}
                                     </p>
                                 )}
                             </div>
-                            {submitError && submitError !== "Completa el CAPTCHA para continuar." && (
+                            {submitError && submitError !== t("login.captchaRequired") && (
                                 <div className="alert alert-danger" role="alert">{submitError}</div>
                             )}
 
@@ -188,13 +199,13 @@ const LoginScreen = () => {
                                     <div className="form-check">
                                         <input className="form-check-input" type="checkbox" value="" id="flexCheckDefault" />
                                         <label className="form-check-label" htmlFor="flexCheckDefault">
-                                            Recuérdame
+                                            {t("login.rememberMe")}
                                         </label>
                                     </div>
                                 </div>
                             </div>
                             <ButtonPrimary
-                                label={isSubmitting ? "Iniciando sesión..." : "Iniciar sesión"}
+                                label={isSubmitting ? t("login.submitting") : t("login.submit")}
                                 className="w-100"
                                 type="submit"
                                 disabled={isSubmitting}
@@ -203,15 +214,15 @@ const LoginScreen = () => {
 
                         <div className="social-auth-links text-center d-grid gap-2">
                             <button type="button" className="btn btn-danger" disabled>
-                                <i className="bi bi-google me-2"></i>Iniciar sesión con Google
+                                <i className="bi bi-google me-2"></i>{t("login.google")}
                             </button>
                         </div>
 
                         <p className="mb-1">
-                            <a href="/forgot-password">¿Olvidaste tu contraseña?</a>
+                            <a href="/forgot-password">{t("login.forgotPassword")}</a>
                         </p>
                         <p className="mb-0">
-                            ¿No tienes cuenta? <Link to="/register">Regístrate</Link>
+                            {t("login.noAccount")} <Link to="/register">{t("login.register")}</Link>
                         </p>
                     </div>
                 </div>

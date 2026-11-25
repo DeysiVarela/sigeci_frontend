@@ -11,6 +11,7 @@ import { AppContext } from "../../context/AppContext";
 import ArticleVersionManager from "./components/ArticleVersionManager";
 import { getCorrectedVersion } from "../../api/articles";
 import { hasPermission } from "../../utils/userAccess";
+import { translateTopic } from "../../utils/topicLabel";
 
 const ArticleViewScreen = () => {
     const { id } = useParams();
@@ -236,7 +237,7 @@ const ArticleViewScreen = () => {
                             </li>
                             <li className="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
                                 <span className="text-muted fw-semibold">{t("articleView.fields.topic")}</span>
-                                <span className="badge bg-light text-dark border">{article.topic_name || "\u2014"}</span>
+                                <span className="badge bg-light text-dark border">{translateTopic(t, article.topic_name) || "\u2014"}</span>
                             </li>
                             <li className="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
                                 <span className="text-muted fw-semibold">{t("articleView.fields.createdBy")}</span>

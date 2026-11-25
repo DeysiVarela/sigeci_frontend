@@ -11,7 +11,8 @@ import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import ButtonSecondary from "../../components/buttons/ButtonSecondary";
 import { useTranslation, Trans } from "react-i18next";
 import { AppContext } from "../../context/AppContext";
-import { hasPermission } from "../../utils/userAccess";
+import { canCreateArticle } from "./utils/permissions";
+import { translateTopic } from "../../utils/topicLabel";
 
 const ArticleScreen = () => {
     const navigate = useNavigate();
@@ -20,7 +21,10 @@ const ArticleScreen = () => {
     const handlerApp = HandlerApp();
     const { t } = useTranslation();
     const { app } = useContext(AppContext);
-    const canCreate = hasPermission({ permissions: app?.permissions }, "article", "create");
+    // Solo el AUTHOR postula: se decide por el perfil elegido al iniciar sesión
+    const sessionProfiles = app?.profiles ?? JSON.parse(localStorage.getItem("profiles") || "[]");
+    const activeProfileName = sessionProfiles.find((p) => String(p.id) === String(app?.profile))?.name;
+    const canCreate = canCreateArticle({ roles: [activeProfileName] });
 
     const activeProfile = String(app?.profile || localStorage.getItem("profile") || "").toUpperCase();
     const isAuthorOnly = activeProfile === "3" || activeProfile === "AUTHOR";
@@ -149,11 +153,11 @@ const ArticleScreen = () => {
         },
         {
             name: t("articleScreen.table.topic"),
-            selector: row => row.topic_subject || row.topic_name || "",
+            selector: row => translateTopic(t, row.topic_subject || row.topic_name) || "",
             sortable: true,
             width: "210px",
             cell: row => {
-                const topicLabel = row.topic_subject || row.topic_name;
+                const topicLabel = translateTopic(t, row.topic_subject || row.topic_name);
                 return row.topic_id && !isAuthorOnly ? (
                     <span
                         className="badge bg-primary-subtle text-primary border border-primary-subtle text-truncate"
@@ -291,13 +295,7 @@ const ArticleScreen = () => {
                 <div className="d-flex gap-2">
                     {canCreate && (
                         <>
-                            <button
-                                className="btn btn-outline-primary shadow-sm d-flex align-items-center gap-2"
-                                onClick={() => navigate("/article/postulate")}
-                            >
-                                <i className="bi bi-send"></i>
-                                <span>Postular artículo</span>
-                            </button>
+
                             <button
                                 className="btn btn-primary shadow-sm d-flex align-items-center gap-2"
                                 onClick={() => navigate("/article/create")}
@@ -481,7 +479,7 @@ const ArticleScreen = () => {
                             <i className="bi bi-info-circle me-1"></i>{" "}
                             {t("articleScreen.deleteModal.meta", {
                                 author: selectedArticle.article_created_by_name || selectedArticle.author || "—",
-                                category: selectedArticle.topic_subject || selectedArticle.topic_name || selectedArticle.category || "—"
+                                category: translateTopic(t, selectedArticle.topic_subject || selectedArticle.topic_name) || selectedArticle.category || "—"
                             })}
                         </div>
                     </div>

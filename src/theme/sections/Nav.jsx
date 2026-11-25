@@ -13,9 +13,13 @@ const Nav = ({ me }) => {
   return (
     <aside className="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
       {/* Sidebar Brand */}
-      <div className="sidebar-brand">
-        <Link to="/home" className="brand-link">
-          <span className="brand-text fw-light">{import.meta.env.VITE_PROJECT_NAME}</span>
+      <div className="sidebar-brand py-2">
+        <Link to="/home" className="brand-link d-flex align-items-center justify-content-center w-100 px-3">
+          <img
+            src="/logo-sigeci-sidebar.png"
+            alt={import.meta.env.VITE_PROJECT_NAME || "SIGECI"}
+            style={{ maxHeight: "62px", width: "auto", objectFit: "contain" }}
+          />
         </Link>
       </div>
       {/* Sidebar Wrapper */}
@@ -33,6 +37,14 @@ const Nav = ({ me }) => {
                 <p>{t("dashboard")}</p>
               </Link>
             </li>
+            {canViewUsers(menuUser) && (
+              <li className="nav-item">
+                <Link to="/users" className="nav-link">
+                  <i className="nav-icon bi bi-people"></i>
+                  <p>{t("users")}</p>
+                </Link>
+              </li>
+            )}
             {hasPermission(menuUser, "article", "view") && (
               <li className="nav-item">
                 <Link to="/article" className="nav-link">
@@ -62,14 +74,6 @@ const Nav = ({ me }) => {
                 <Link to="/evaluations" className="nav-link">
                   <i className="nav-icon bi bi-clipboard2-check"></i>
                   <p>{t("evaluations")}</p>
-                </Link>
-              </li>
-            )}
-            {canViewUsers(menuUser) && (
-              <li className="nav-item">
-                <Link to="/users" className="nav-link">
-                  <i className="nav-icon bi bi-people"></i>
-                  <p>{t("users")}</p>
                 </Link>
               </li>
             )}

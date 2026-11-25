@@ -36,9 +36,14 @@ const ForgotPasswordScreen = () => {
     return (
         <div className="login-page bg-body-secondary">
             <main className="login-box">
-                <h1 className="login-logo">
-                    {import.meta.env.VITE_PROJECT_NAME || "SIGECI"}
-                </h1>
+                <div className="login-logo mb-3 text-center">
+                    <img
+                        src="/logo-sigeci-login.png"
+                        alt={import.meta.env.VITE_PROJECT_NAME || "SIGECI"}
+                        className="img-fluid"
+                        style={{ maxHeight: "82px", width: "auto", objectFit: "contain" }}
+                    />
+                </div>
                 <div className="card">
                     <div className="card-body login-card-body">
                         <p className="login-box-msg">Recuperar contraseña</p>
