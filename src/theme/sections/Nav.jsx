@@ -13,9 +13,13 @@ const Nav = ({ me }) => {
   return (
     <aside className="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
       {/* Sidebar Brand */}
-      <div className="sidebar-brand">
-        <Link to="/home" className="brand-link">
-          <span className="brand-text fw-light">{import.meta.env.VITE_PROJECT_NAME}</span>
+      <div className="sidebar-brand py-2">
+        <Link to="/home" className="brand-link d-flex align-items-center justify-content-center w-100 px-3">
+          <img
+            src="/logo-sigeci-sidebar.png"
+            alt={import.meta.env.VITE_PROJECT_NAME || "SIGECI"}
+            style={{ maxHeight: "62px", width: "auto", objectFit: "contain" }}
+          />
         </Link>
       </div>
       {/* Sidebar Wrapper */}
