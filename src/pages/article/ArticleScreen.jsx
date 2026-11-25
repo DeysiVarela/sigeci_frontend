@@ -1,125 +1,39 @@
-import { useFetch } from "../../hooks/useFetch";
-import { useState, useMemo, useEffect, useContext } from "react";
-import { useNavigate, useLocation } from "react-router";
-import Card from "../../components/cards/Card";
 import HandlerApp from "../../utils/HandlerApp";
-import Badge from "../../components/badges/Badge";
-import Modal from "../../components/modals/Modal";
-import DataTable from "react-data-table-component";
-import ButtonLink from "../../components/buttons/ButtonLink";
-import ButtonPrimary from "../../components/buttons/ButtonPrimary";
-import ButtonSecondary from "../../components/buttons/ButtonSecondary";
-import { useTranslation, Trans } from "react-i18next";
+import { useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
+import { useFetch } from "../../hooks/useFetch";
 import { AppContext } from "../../context/AppContext";
-import { canCreateArticle } from "./utils/permissions";
-import { translateTopic } from "../../utils/topicLabel";
+import { useContext, useEffect, useState } from "react";
 
 const ArticleScreen = () => {
-    const navigate = useNavigate();
-    const location = useLocation();
-    const api = useFetch();
-    const handlerApp = HandlerApp();
-    const { t } = useTranslation();
+    const navigate      = useNavigate();
+    const { t }         = useTranslation();
+    const api           = useFetch();
+    const handlerApp    = HandlerApp();
+
     const { app } = useContext(AppContext);
-    // Solo el AUTHOR postula: se decide por el perfil elegido al iniciar sesión
-    const sessionProfiles = app?.profiles ?? JSON.parse(localStorage.getItem("profiles") || "[]");
-    const activeProfileName = sessionProfiles.find((p) => String(p.id) === String(app?.profile))?.name;
-    const canCreate = canCreateArticle({ roles: [activeProfileName] });
-
-    const activeProfile = String(app?.profile || localStorage.getItem("profile") || "").toUpperCase();
-    const isAuthorOnly = activeProfile === "3" || activeProfile === "AUTHOR";
-
+    
     const [articles, setArticles] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    const [searchTerm, setSearchTerm] = useState("");
-    const [statusFilter, setStatusFilter] = useState("TODOS");
-
-
-    console.log(app.permission, app.permissionObject, "permissions")
-
-    const loadArticles = async () => {
-        setLoading(true);
-        handlerApp.setLoader(true);
-        try {
-            const res = await api.get("article");
-            if (res.data) setArticles(res.data);
-        } catch {
-            setArticles([]);
-            triggerAlert("danger", t("articleScreen.alerts.loadError"), t("articleScreen.alerts.errorTitle"));
-        } finally {
-            setLoading(false);
-            handlerApp.setLoader(false);
-        }
-    };
 
     useEffect(() => {
-        loadArticles();
+        getArticles();
     }, []);
 
-    // Modal de confirmación para eliminar
-    const [selectedArticle, setSelectedArticle] = useState(null);
-    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-
-    // Mensaje de alerta / feedback AdminLTE
-    const [alertNotification, setAlertNotification] = useState(() => {
-        if (location.state?.message) {
-            return {
-                type: location.state.type || "success",
-                title: location.state.title || t("articleScreen.alerts.successTitle"),
-                message: location.state.message
-            };
-        }
-        return null;
-    });
-
-    const triggerAlert = (type, message, title = t("articleScreen.alerts.successTitle")) => {
-        setAlertNotification({ type, title, message });
-        setTimeout(() => {
-            setAlertNotification(null);
-        }, 4500);
-    };
-
-    const handleOpenDelete = (article) => {
-        setSelectedArticle(article);
-        setDeleteModalOpen(true);
-    };
-
-    const handleConfirmDelete = async () => {
-        if (!selectedArticle) return;
+    const getArticles = async () => {
         handlerApp.setLoader(true);
-        try {
-            await api.deleteMethod(`article/${selectedArticle.article_id}/delete`);
-            setArticles(prev => prev.filter(a => a.article_id !== selectedArticle.article_id));
-            setDeleteModalOpen(false);
-            triggerAlert(
-                "danger",
-                t("articleScreen.alerts.deleted", { title: selectedArticle.article_subject, id: selectedArticle.article_id }),
-                t("articleScreen.alerts.deletedTitle")
-            );
-        } catch (error) {
-            console.error("Error al eliminar artículo:", error);
-            triggerAlert("danger", t("articleScreen.alerts.deleteError"), t("articleScreen.alerts.errorTitle"));
-        } finally {
+        api.get("article")
+        .then( res =>{
+            if (res.success){
+                setArticles(res.data);
+            } else {
+                setArticles([]);
+            }
+        }).catch(error =>{
+            setArticles([]);
+        }).finally(() =>{
             handlerApp.setLoader(false);
-            setSelectedArticle(null);
-        }
-    };
-
-    const filteredArticles = useMemo(() => {
-        return articles.filter(article => {
-            const subject = article.article_subject || "";
-            const desc = article.article_description || "";
-            const matchesSearch =
-                subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                desc.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesStatus =
-                statusFilter === "TODOS" ||
-                (statusFilter === "ACTIVO" && article.article_active) ||
-                (statusFilter === "INACTIVO" && !article.article_active);
-            return matchesSearch && matchesStatus;
         });
-    }, [articles, searchTerm, statusFilter]);
+    };
 
     const columns = [
         {
@@ -292,18 +206,13 @@ const ArticleScreen = () => {
                     </p>
                 </div>
                 <div className="d-flex gap-2">
-                    {canCreate && (
-                        <>
-
-                            <button
-                                className="btn btn-primary shadow-sm d-flex align-items-center gap-2"
-                                onClick={() => navigate("/article/create")}
-                            >
-                                <i className="bi bi-plus-circle"></i>
-                                <span>{t("articleScreen.newArticle")}</span>
-                            </button>
-                        </>
-                    )}
+                    <button
+                        className="btn btn-primary shadow-sm d-flex align-items-center gap-2"
+                        onClick={() => navigate("/article/create")}
+                    >
+                        <i className="bi bi-plus-circle"></i>
+                        <span>{t("articleScreen.newArticle")}</span>
+                    </button>
                 </div>
             </div>
 
