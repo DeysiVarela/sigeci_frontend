@@ -35,7 +35,6 @@ const ArticleScreen = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("TODOS");
 
-    const { app } = useContext(AppContext);
 
     console.log(app.permission, app.permissionObject, "permissions")
 

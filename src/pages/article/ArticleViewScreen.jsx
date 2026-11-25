@@ -64,18 +64,9 @@ const ArticleViewScreen = () => {
                 setLoading(false);
                 handlerApp.setLoader(false);
             }
-            else{
-                setArticle(null);
-                handlerApp.showError(response.message);
-            }
-        })
-        .catch((error) => {
-            handlerApp.showError(error.message);
-        })
-        .finally(() => {
-            handlerApp.setLoader(false);
-        });
-    }
+
+        }
+    }, [])
     // useEffect(() => {
     //     const fetchArticle = async () => {
     //         setLoading(true);
@@ -112,7 +103,7 @@ const ArticleViewScreen = () => {
                     <ButtonSecondary label={t("articleView.backToList")} onClick={() => navigate("/article")} />
                 </div>
             </div>
-        );
+        )
     }
 
     const currentUserId =
