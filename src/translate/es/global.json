@@ -327,7 +327,13 @@
         "demoRole": "Desarrollador",
         "memberSince": "Miembro desde {{date}}",
         "profile": "Perfil",
-        "logout": "Cerrar sesión"
+        "logout": "Cerrar sesión",
+        "roles": {
+            "admin": "Administrador",
+            "member": "Miembro",
+            "author": "Autor",
+            "evaluator": "Evaluador"
+        }
     },
     "topicArticlesScreen": {
         "title": "Organizar Artículos del Tópico",
