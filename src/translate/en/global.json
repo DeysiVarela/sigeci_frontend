@@ -2,6 +2,29 @@
     "0000": "Error 1",
     "0001": "Error 2",
     "0002": "Success 1",
+
+    "login": {
+        "title": "Sign in to start",
+        "email": "Email",
+        "password": "Password",
+        "rememberMe": "Remember me",
+        "submit": "Sign in",
+        "submitting": "Signing in...",
+        "google": "Sign in with Google",
+        "forgotPassword": "Forgot your password?",
+        "noAccount": "Don't have an account?",
+        "register": "Sign up",
+        "selectProfile": "Select a profile",
+        "selectProfileRequired": "You must select a profile.",
+        "captchaRequired": "Complete the CAPTCHA to continue.",
+        "captchaBeforeSubmit": "Complete the CAPTCHA before submitting.",
+        "captchaLoadError": "We couldn't load the CAPTCHA. Please try again.",
+        "captchaNotConfigured": "CAPTCHA is not configured. Please contact support.",
+        "invalidCredentials": "The credentials are not valid.",
+        "loginFailed": "We couldn't sign you in. Check your credentials.",
+        "connectionError": "We couldn't reach the service. Please try again."
+    },
+
     "catalog": {
         "title": "UI Component Catalog",
         "description": "Interactive gallery for developers. Visualize, test, and reuse the system's component library."

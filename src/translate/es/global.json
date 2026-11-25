@@ -2,6 +2,29 @@
     "0000": "Error 1",
     "0001": "Error 2",
     "0002": "Success 1",
+
+    "login": {
+        "title": "Inicia sesión para comenzar",
+        "email": "Correo electrónico",
+        "password": "Contraseña",
+        "rememberMe": "Recuérdame",
+        "submit": "Iniciar sesión",
+        "submitting": "Iniciando sesión...",
+        "google": "Iniciar sesión con Google",
+        "forgotPassword": "¿Olvidaste tu contraseña?",
+        "noAccount": "¿No tienes cuenta?",
+        "register": "Regístrate",
+        "selectProfile": "Selecciona un perfil",
+        "selectProfileRequired": "Debes seleccionar un perfil.",
+        "captchaRequired": "Completa el CAPTCHA para continuar.",
+        "captchaBeforeSubmit": "Completa el CAPTCHA antes de enviar.",
+        "captchaLoadError": "No pudimos cargar el CAPTCHA. Inténtalo nuevamente.",
+        "captchaNotConfigured": "El CAPTCHA no está configurado. Comunícate con soporte.",
+        "invalidCredentials": "Las credenciales no son válidas.",
+        "loginFailed": "No pudimos iniciar sesión. Revisa tus credenciales.",
+        "connectionError": "No pudimos conectar con el servicio. Inténtalo nuevamente."
+    },
+
     "catalog": {
         "title": "Catálogo de Componentes UI",
         "description": "Galería interactiva para desarrolladores. Visualiza, prueba y reutiliza la librería de componentes del sistema."
