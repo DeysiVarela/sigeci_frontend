@@ -37,6 +37,14 @@ const Nav = ({ me }) => {
                 <p>{t("dashboard")}</p>
               </Link>
             </li>
+            {canViewUsers(menuUser) && (
+              <li className="nav-item">
+                <Link to="/users" className="nav-link">
+                  <i className="nav-icon bi bi-people"></i>
+                  <p>{t("users")}</p>
+                </Link>
+              </li>
+            )}
             {hasPermission(menuUser, "article", "view") && (
               <li className="nav-item">
                 <Link to="/article" className="nav-link">
@@ -66,14 +74,6 @@ const Nav = ({ me }) => {
                 <Link to="/evaluations" className="nav-link">
                   <i className="nav-icon bi bi-clipboard2-check"></i>
                   <p>{t("evaluations")}</p>
-                </Link>
-              </li>
-            )}
-            {canViewUsers(menuUser) && (
-              <li className="nav-item">
-                <Link to="/users" className="nav-link">
-                  <i className="nav-icon bi bi-people"></i>
-                  <p>{t("users")}</p>
                 </Link>
               </li>
             )}
