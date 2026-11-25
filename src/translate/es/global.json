@@ -11,6 +11,7 @@
     "agenda": "Agenda",
     "article": "Artículos",
     "application": "Postulaciones",
+    "evaluations" : "Evaluaciones",
     "dashboard": "Dashboard",
     "setting": "Configuración",
     "add": "Agregar",
@@ -338,5 +339,178 @@
         "authorId": "Autor ID",
         "loadError": "No se pudieron cargar los artículos.",
         "reorderError": "No se pudo guardar el nuevo orden. Revisa tu conexión."
+    },
+    "evaluationScreen": {
+        "title": "Mis evaluaciones",
+        "description": "Artículos asignados al Comité Científico para emisión de veredictos.",
+        "assignedCount": "{{count}} asignadas",
+        "loadError": "No fue posible actualizar la bandeja. Se muestran los datos disponibles localmente.",
+        "loadingTitle": "Cargando evaluaciones",
+        "loadingText": "Consultando artículos asignados...",
+        "inboxTitle": "Bandeja de revisiones",
+        "searchPlaceholder": "Buscar por título, autor o categoría...",
+        "empty": "No hay revisiones asignadas con estos filtros.",
+        "table": {
+            "article": "Artículo",
+            "category": "Categoría",
+            "deadline": "Fecha límite",
+            "noDeadline": "Sin límite",
+            "state": "Estado",
+            "action": "Acción"
+        },
+        "status": {
+            "pending": "Pendiente",
+            "inReview": "En revisión",
+            "approved": "Aprobado",
+            "rejected": "Rechazado",
+            "noStatus": "Sin estado"
+        },
+        "filters": {
+            "all": "Todos los estados",
+            "pending": "Pendientes",
+            "inReview": "En revisión",
+            "approved": "Aprobados",
+            "rejected": "Rechazados"
+        },
+        "actions": {
+            "view": "Consultar",
+            "evaluate": "Evaluar"
+        }
+    },
+    "evaluationDetail": {
+        "header": "Evaluación #{{id}}",
+        "back": "Volver",
+        "backToList": "Volver a mis evaluaciones",
+        "loadingTitle": "Cargando evaluación",
+        "loadingText": "Preparando el artículo asignado...",
+        "notFound": "No tienes asignada una evaluación con este identificador.",
+        "noDeadline": "Sin fecha límite",
+        "documentCardTitle": "Documento del artículo",
+        "defaultPdfName": "Artículo asignado.pdf",
+        "openPdf": "Abrir PDF",
+        "downloadPdf": "Descargar",
+        "pdfUnavailable": "PDF no disponible",
+        "iframeTitle": "Visor del artículo",
+        "pdfPendingBackend": "El enlace seguro del PDF estará disponible cuando sea generado por el backend.",
+        "reviewInfoTitle": "Información de la revisión",
+        "fields": {
+            "author": "Autor",
+            "category": "Categoría",
+            "deadline": "Fecha límite"
+        },
+        "gradingTitle": "Calificación y comentarios",
+        "verdictLocked": "El veredicto ya fue registrado y la edición está cerrada.",
+        "commentsLabel": "Comentarios cualitativos",
+        "commentsPlaceholder": "Describe los aspectos académicos, fortalezas y observaciones...",
+        "commentsHint": "Este comentario es obligatorio antes de emitir el veredicto.",
+        "buttons": {
+            "approve": "Aprobar",
+            "reject": "Rechazar"
+        },
+        "alerts": {
+            "commentsRequired": "Los comentarios cualitativos son obligatorios.",
+            "verdictSuccess": "Veredicto registrado correctamente. La evaluación quedó cerrada.",
+            "verdictError": "No fue posible registrar el veredicto."
+        },
+        "modal": {
+            "title": "Confirmar veredicto definitivo",
+            "cancel": "Cancelar",
+            "submitting": "Registrando...",
+            "confirmApprove": "Confirmar aprobación",
+            "confirmReject": "Confirmar rechazo",
+            "question": "¿Confirmas emitir este veredicto?",
+            "warningApprove": "La decisión APROBAR quedará registrada y no podrás modificarla posteriormente.",
+            "warningReject": "La decisión RECHAZAR quedará registrada y no podrás modificarla posteriormente."
+        }
+    },
+    "eventForm": {
+        "backToEvents": "Volver a eventos",
+        "eyebrow": "GESTIÓN DE EVENTOS",
+        "createTitle": "Crear evento",
+        "editTitle": "Actualizar evento",
+        "subtitle": "Completa los datos y configura el cronograma por tópico.",
+        "loading": "Cargando formulario del evento...",
+        "fields": {
+            "name": "Nombre del evento",
+            "dateTime": "Fecha y hora",
+            "address": "Lugar",
+            "description": "Descripción"
+        },
+        "schedule": {
+            "title": "Cronograma y tópicos",
+            "add": "Añadir horario",
+            "empty": "No hay horarios. Puedes añadir actividades al cronograma.",
+            "topicLabel": "Tópico {{number}}",
+            "topicPlaceholder": "Selecciona un tópico",
+            "hourLabel": "Hora",
+            "remove": "Eliminar",
+            "removeAria": "Eliminar horario {{number}}"
+        },
+        "buttons": {
+            "cancel": "Cancelar",
+            "saving": "Guardando...",
+            "saveChanges": "Guardar cambios",
+            "create": "Crear evento"
+        },
+        "alerts": {
+            "noPermission": "Solo Admin y Comité pueden crear o actualizar eventos.",
+            "loadError": "No fue posible cargar los datos del evento.",
+            "incompleteSchedule": "Completa el tópico y la hora de cada actividad, o elimínala del cronograma.",
+            "saveError": "No fue posible guardar el evento. Intenta de nuevo."
+        }
+    },
+    "eventDetail": {
+        "backToEvents": "Volver a eventos",
+        "editEvent": "Editar evento",
+        "eyebrow": "DETALLE DEL EVENTO",
+        "loading": "Cargando detalle del evento...",
+        "alerts": {
+            "loadError": "No fue posible cargar el detalle del evento.",
+            "notFound": "No se encontró el evento solicitado."
+        },
+        "topics": {
+            "title": "Tópicos",
+            "empty": "No hay tópicos registrados para este evento."
+        },
+        "schedule": {
+            "title": "Cronograma",
+            "activityCount_one": "{{count}} actividad",
+            "activityCount_other": "{{count}} actividades",
+            "dayTbd": "Día por confirmar",
+            "timeTbd": "Horario por confirmar",
+            "emptyTitle": "Cronograma por confirmar",
+            "emptyDescription": "Aún no se han publicado actividades para este evento."
+        }
+    },
+    "agendaScreen": {
+        "eyebrow": "PANTALLA P-14 · EVENTOS",
+        "title": "Eventos de la conferencia",
+        "subtitle": "Consulta la programación y los tópicos de cada evento.",
+        "timezone": "América/Bogotá",
+        "createEvent": "Crear evento",
+        "searchLabel": "Buscar eventos",
+        "searchPlaceholder": "Buscar por evento, tópico o lugar...",
+        "scheduleTitle": "Programación",
+        "eventCount_one": "{{count}} evento",
+        "eventCount_other": "{{count}} eventos",
+        "loadingAria": "Cargando eventos",
+        "retry": "Reintentar",
+        "emptySearchTitle": "No hay eventos para esta búsqueda",
+        "emptySearchDescription": "Prueba con otro término.",
+        "emptyPublishedTitle": "Aún no hay eventos publicados",
+        "emptyPublishedDescription": "La programación estará disponible cuando se creen eventos.",
+        "alerts": {
+            "loadError": "No fue posible cargar los eventos. Intenta de nuevo."
+        },
+        "table": {
+            "event": "Evento",
+            "date": "Fecha",
+            "location": "Lugar",
+            "topics": "Tópicos",
+            "actions": "Acciones",
+            "viewDetailFallback": "Consultar detalle",
+            "viewDetail": "Ver detalle",
+            "viewDetailAria": "Ver detalle de {{title}}"
+        }
     }
 }

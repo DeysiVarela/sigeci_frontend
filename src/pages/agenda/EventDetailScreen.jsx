@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useOutletContext, useParams } from "react-router";
+import { useTranslation } from "react-i18next";
 import { getEvent } from "../../api/events";
 import {
     getEventRequestError,
@@ -14,18 +15,19 @@ import {
 import { canManageEvents } from "../../utils/userAccess";
 import "./agenda.css";
 
-const formatDate = (value) => {
+const formatDate = (value, locale) => {
     if (!value) return "";
     const datePart = String(value).slice(0, 10);
     const date = new Date(`${datePart}T12:00:00`);
     return Number.isNaN(date.getTime())
         ? String(value)
-        : new Intl.DateTimeFormat("es-CO", { dateStyle: "long", timeZone: "America/Bogota" }).format(date);
+        : new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "America/Bogota" }).format(date);
 };
 
 const EventDetailScreen = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { t, i18n } = useTranslation();
     const { me } = useOutletContext() || {};
     const canManage = canManageEvents(me);
     const [result, setResult] = useState({ id: null, event: null, error: "" });
@@ -41,12 +43,13 @@ const EventDetailScreen = () => {
                 if (active) setResult({
                     id,
                     event: null,
-                    error: getEventRequestError(requestError, "No fue posible cargar el detalle del evento.")
+                    error: getEventRequestError(requestError, t("eventDetail.alerts.loadError"))
                 });
             });
         return () => { active = false; };
-    }, [id]);
+    }, [id, t]);
 
+    const dateLocale = i18n.language?.startsWith("en") ? "en-US" : "es-CO";
     const loading = result.id !== id;
     const event = loading ? null : result.event;
     const error = loading ? "" : result.error;
@@ -56,7 +59,7 @@ const EventDetailScreen = () => {
             <main className="container-fluid p-3 p-md-4 agenda-page">
                 <div className="text-center py-5" aria-busy="true">
                     <span className="spinner-border text-primary" role="status"></span>
-                    <p className="text-secondary mt-3">Cargando detalle del evento...</p>
+                    <p className="text-secondary mt-3">{t("eventDetail.loading")}</p>
                 </div>
             </main>
         );
@@ -67,7 +70,7 @@ const EventDetailScreen = () => {
             <main className="container-fluid p-3 p-md-4 agenda-page">
                 <div className="d-flex justify-content-between align-items-center gap-2 mb-3">
                     <button type="button" className="btn btn-outline-secondary" onClick={() => navigate("/agenda")}>
-                        <i className="bi bi-arrow-left me-2" aria-hidden="true"></i>Volver a eventos
+                        <i className="bi bi-arrow-left me-2" aria-hidden="true"></i>{t("eventDetail.backToEvents")}
                     </button>
                     {canManage && (
                         <button
@@ -75,12 +78,12 @@ const EventDetailScreen = () => {
                             className="btn btn-outline-primary"
                             onClick={() => navigate(`/event/${encodeURIComponent(id)}/edit`)}
                         >
-                            <i className="bi bi-pencil me-2" aria-hidden="true"></i>Editar evento
+                            <i className="bi bi-pencil me-2" aria-hidden="true"></i>{t("eventDetail.editEvent")}
                         </button>
                     )}
                 </div>
                 <div className={`alert ${error ? "alert-danger" : "alert-warning"}`} role="alert">
-                    {error || "No se encontró el evento solicitado."}
+                    {error || t("eventDetail.alerts.notFound")}
                 </div>
             </main>
         );
@@ -99,12 +102,12 @@ const EventDetailScreen = () => {
     return (
         <main className="container-fluid p-3 p-md-4 agenda-page">
             <button type="button" className="btn btn-outline-secondary mb-3" onClick={() => navigate("/agenda")}>
-                <i className="bi bi-arrow-left me-2" aria-hidden="true"></i>Volver a eventos
+                <i className="bi bi-arrow-left me-2" aria-hidden="true"></i>{t("eventDetail.backToEvents")}
             </button>
 
             <header className="agenda-heading">
                 <div>
-                    <span className="agenda-eyebrow">DETALLE DEL EVENTO</span>
+                    <span className="agenda-eyebrow">{t("eventDetail.eyebrow")}</span>
                     <h1 className="h2 fw-bold mb-2">{event.title}</h1>
                     {event.description && <p className="text-secondary mb-0">{event.description}</p>}
                 </div>
@@ -113,27 +116,33 @@ const EventDetailScreen = () => {
 
             <section className="card border-0 shadow-sm agenda-detail-card mb-4" aria-labelledby="event-topics-heading">
                 <div className="card-body">
-                    <h2 id="event-topics-heading" className="h5 fw-bold"><i className="bi bi-tags text-primary me-2" aria-hidden="true"></i>Tópicos</h2>
+                    <h2 id="event-topics-heading" className="h5 fw-bold">
+                        <i className="bi bi-tags text-primary me-2" aria-hidden="true"></i>{t("eventDetail.topics.title")}
+                    </h2>
                     {event.topics.length > 0 ? (
                         <div className="agenda-event-topics">
                             {event.topics.map((topic, index) => <span className="agenda-topic" key={`${topic}-${index}`}>{topic}</span>)}
                         </div>
                     ) : (
-                        <p className="text-secondary mb-0">No hay tópicos registrados para este evento.</p>
+                        <p className="text-secondary mb-0">{t("eventDetail.topics.empty")}</p>
                     )}
                 </div>
             </section>
 
             <section aria-labelledby="event-schedule-heading">
                 <div className="d-flex align-items-center justify-content-between gap-2 mb-3">
-                    <h2 id="event-schedule-heading" className="h5 fw-bold mb-0"><i className="bi bi-calendar3 text-primary me-2" aria-hidden="true"></i>Cronograma</h2>
-                    <span className="small text-secondary">{schedule.length} {schedule.length === 1 ? "actividad" : "actividades"}</span>
+                    <h2 id="event-schedule-heading" className="h5 fw-bold mb-0">
+                        <i className="bi bi-calendar3 text-primary me-2" aria-hidden="true"></i>{t("eventDetail.schedule.title")}
+                    </h2>
+                    <span className="small text-secondary">
+                        {t("eventDetail.schedule.activityCount", { count: schedule.length })}
+                    </span>
                 </div>
                 {schedule.length > 0 ? (
                     scheduleDays.map(([day, daySchedule]) => (
                         <section className="mb-4" key={day || "unscheduled"}>
                             <h3 className="h6 text-secondary mb-2">
-                                {day ? formatDate(day) : "Día por confirmar"}
+                                {day ? formatDate(day, dateLocale) : t("eventDetail.schedule.dayTbd")}
                             </h3>
                             <div className="agenda-list">
                                 {daySchedule.map((item, index) => {
@@ -145,7 +154,7 @@ const EventDetailScreen = () => {
                                         <article className="agenda-schedule-item card border-0 shadow-sm" key={item.schedule_id ?? item.id ?? `${getScheduleTitle(item)}-${index}`}>
                                             <div className="agenda-schedule-time">
                                                 {time && <strong>{time}</strong>}
-                                                {!time && <span className="text-secondary">Horario por confirmar</span>}
+                                                {!time && <span className="text-secondary">{t("eventDetail.schedule.timeTbd")}</span>}
                                             </div>
                                             <div className="agenda-schedule-content">
                                                 <h4 className="h6 fw-bold mb-2">{getScheduleTitle(item)}</h4>
@@ -170,8 +179,8 @@ const EventDetailScreen = () => {
                 ) : (
                     <div className="agenda-empty card border-0 shadow-sm">
                         <i className="bi bi-calendar2-x" aria-hidden="true"></i>
-                        <h3 className="h6 mt-3">Cronograma por confirmar</h3>
-                        <p className="text-secondary mb-0">Aún no se han publicado actividades para este evento.</p>
+                        <h3 className="h6 mt-3">{t("eventDetail.schedule.emptyTitle")}</h3>
+                        <p className="text-secondary mb-0">{t("eventDetail.schedule.emptyDescription")}</p>
                     </div>
                 )}
             </section>
