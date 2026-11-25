@@ -3,6 +3,14 @@
     "0001": "Error 2",
     "0002": "Success 1",
 
+    "topicNames": {
+        "Inteligencia Artificial": "Artificial Intelligence",
+        "Ciberseguridad": "Cybersecurity",
+        "Ingeniería de Software": "Software Engineering",
+        "Sistemas Inteligentes": "Intelligent Systems",
+        "Pruebas": "Testing"
+    },
+
     "login": {
         "title": "Sign in to start",
         "email": "Email",

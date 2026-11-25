@@ -13,6 +13,7 @@ import {
     normalizeEventDetail
 } from "./agendaUtils";
 import { canManageEvents } from "../../utils/userAccess";
+import { translateTopic } from "../../utils/topicLabel";
 import "./agenda.css";
 
 const formatDate = (value, locale) => {
@@ -121,7 +122,7 @@ const EventDetailScreen = () => {
                     </h2>
                     {event.topics.length > 0 ? (
                         <div className="agenda-event-topics">
-                            {event.topics.map((topic, index) => <span className="agenda-topic" key={`${topic}-${index}`}>{topic}</span>)}
+                            {event.topics.map((topic, index) => <span className="agenda-topic" key={`${topic}-${index}`}>{translateTopic(t, topic)}</span>)}
                         </div>
                     ) : (
                         <p className="text-secondary mb-0">{t("eventDetail.topics.empty")}</p>
@@ -160,7 +161,7 @@ const EventDetailScreen = () => {
                                                 <h4 className="h6 fw-bold mb-2">{getScheduleTitle(item)}</h4>
                                                 {topics.length > 0 && (
                                                     <div className="agenda-event-topics mb-2">
-                                                        {topics.map((topic, topicIndex) => <span className="agenda-topic" key={`${topic}-${topicIndex}`}>{topic}</span>)}
+                                                        {topics.map((topic, topicIndex) => <span className="agenda-topic" key={`${topic}-${topicIndex}`}>{translateTopic(t, topic)}</span>)}
                                                     </div>
                                                 )}
                                                 {location && (
