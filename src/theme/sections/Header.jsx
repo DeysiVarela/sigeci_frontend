@@ -1,8 +1,9 @@
-import { useContext, useState } from "react";
+import { useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { logout } from "../../api/auth";
 import { AppContext } from "../../context/AppContext";
+import LanguageSelector from "../../components/multilanguage/LanguageSelector";
 
 const DEFAULT_AVATAR = "https://img.magnific.com/vector-gratis/establecimiento-circulos-usuarios_78370-4704.jpg";
 
@@ -17,14 +18,6 @@ const Header = ({ onToggleSidebar, me }) => {
 
 	const { t, i18n } = useTranslation();
 	const { app } = useContext(AppContext);
-
-	const [languageSelected, setLanguageSelected] = useState(localStorage.getItem("language") || i18n.language);
-
-	const handleLanguageChange = (language) => {
-		localStorage.setItem("language", language);
-		setLanguageSelected(language);
-		i18n.changeLanguage(language);
-	};
 
 	const fullName = [me?.name, me?.lastname].filter(Boolean).join(" ").trim()
 		|| me?.full_name
@@ -102,29 +95,8 @@ const Header = ({ onToggleSidebar, me }) => {
 					</li>
 
 					{/* Language Menu */}
-					<li className="nav-item dropdown">
-						<a
-							href="#"
-							className="nav-link"
-							id="language-menu"
-							data-bs-toggle="dropdown"
-							aria-expanded="false"
-							aria-label="Change language"
-						>
-							<i className="bi bi-translate" aria-hidden="true"></i>
-						</a>
-						<ul className="dropdown-menu dropdown-menu-end" aria-labelledby="language-menu">
-							<li>
-								<a className={`dropdown-item ${languageSelected === "en" ? "active" : ""}`} onClick={() => handleLanguageChange("en")}>
-									English {languageSelected === "en" && <i className="bi bi-check-lg ms-2" aria-hidden="true"></i>}
-								</a>
-							</li>
-							<li>
-								<a className={`dropdown-item ${languageSelected === "es" ? "active" : ""}`} onClick={() => handleLanguageChange("es")}>
-									Español {languageSelected === "es" && <i className="bi bi-check-lg ms-2" aria-hidden="true"></i>}
-								</a>
-							</li>
-						</ul>
+					<li className="nav-item">
+						<LanguageSelector />
 					</li>
 
 					{/* User Menu Dropdown */}
