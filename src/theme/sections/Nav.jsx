@@ -40,11 +40,11 @@ const Nav = ({ onCloseSidebar }) => {
             >
               { app?.menu?.filter(p => p.profile_action_visibility).sort((a, b) => a.profile_action_order - b.profile_action_order).map((menu, i) => (
                 <li className="nav-item" key={i}>
-                    <Link to={menu.profile_action_action} className="nav-link" onClick={onCloseSidebar}>
-                      <i className={`nav-icon bi ${menu.profile_action_icon}`}></i>
-                      <p>{t(menu.profile_action_title)}</p>
-                    </Link>
-                  </li>
+                  <Link to={menu.profile_action_action} className="nav-link" onClick={onCloseSidebar}>
+                    <i className={`nav-icon bi ${menu.profile_action_icon}`}></i>
+                    <p>{t(menu.profile_action_title)}</p>
+                  </Link>
+                </li>
               ))}
             </ul>
             :
@@ -58,6 +58,12 @@ const Nav = ({ onCloseSidebar }) => {
               data-accordion="false"
               id="navigation"
             >
+              <li className="nav-item">
+                <Link to="/components" className="nav-link" onClick={onCloseSidebar}>
+                  <i className="nav-icon bi bi-gear"></i>
+                  <p>{t("Components")}</p>
+                </Link>
+              </li>
               <li className="nav-item">
                 <Link to="/settings" className="nav-link" onClick={onCloseSidebar}>
                   <i className="nav-icon bi bi-gear"></i>

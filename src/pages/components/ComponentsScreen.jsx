@@ -1,18 +1,18 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import DataTable from "react-data-table-component";
-import ButtonPrimary from "../../components/buttons/ButtonPrimary";
-import ButtonSecondary from "../../components/buttons/ButtonSecondary";
-import ButtonLink from "../../components/buttons/ButtonLink";
-import Badge from "../../components/badges/Badge";
+import { useTranslation } from "react-i18next";
 import Card from "../../components/cards/Card";
+import HandlerApp from "../../utils/HandlerApp";
+import Badge from "../../components/badges/Badge";
 import Modal from "../../components/modals/Modal";
+import DataTable from "react-data-table-component";
 import InputText from "../../components/inputs/InputText";
 import InputEmail from "../../components/inputs/InputEmail";
+import ButtonLink from "../../components/buttons/ButtonLink";
 import InputNumber from "../../components/inputs/InputNumber";
 import InputPassword from "../../components/inputs/InputPassword";
-import HandlerApp from "../../utils/HandlerApp";
-import { useTranslation } from "react-i18next";
+import ButtonPrimary from "../../components/buttons/ButtonPrimary";
+import ButtonSecondary from "../../components/buttons/ButtonSecondary";
 
 const ComponentsScreen = () => {
     const { t } = useTranslation();
