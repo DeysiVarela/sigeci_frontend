@@ -6,9 +6,7 @@ import InputPassword from "../../components/inputs/InputPassword";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import Card from "../../components/cards/Card";
 import HandlerApp from "../../utils/HandlerApp";
-import Swal from "sweetalert2";
-import { getMyProfile, updateMyProfile, changeMyPassword } from "../../api/users";
-import { getErrorMessage } from "../../utils/apiError";
+import { useFetch } from "../../hooks/useFetch";
 
 // El login guarda el usuario en localStorage["user"] (lo leen otras pantallas).
 // El PATCH devuelve la misma forma, así que se mezcla para no dejar la sesión desactualizada.
@@ -23,6 +21,7 @@ const syncSessionUser = (updatedUser) => {
 
 const UserProfileScreen = () => {
     const handlerApp = HandlerApp();
+    const api = useFetch();
 
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [showPasswordSection, setShowPasswordSection] = useState(false);
@@ -52,17 +51,12 @@ const UserProfileScreen = () => {
 
         const loadProfile = async () => {
             try {
-                const me = await getMyProfile();
+                const me = await api.get("users/me");
                 if (cancelled) return;
                 resetProfile({ name: me.name, lastname: me.lastname, email: me.email });
             } catch (err) {
                 if (cancelled) return;
-                Swal.fire({
-                    title: "No se pudo cargar tu perfil",
-                    text: getErrorMessage(err, "Intenta de nuevo en unos minutos."),
-                    icon: "error",
-                    confirmButtonText: "Aceptar"
-                });
+                handlerApp.showError(err?.message || err?.detail || "No se pudo cargar tu perfil.");
             } finally {
                 if (!cancelled) setIsLoadingData(false);
             }
@@ -93,7 +87,7 @@ const UserProfileScreen = () => {
     const submitData = async (formData) => {
         handlerApp.setLoader(true);
         try {
-            const updated = await updateMyProfile({
+            const updated = await api.patch("users/me", {
                 name: formData.name.trim(),
                 lastname: formData.lastname.trim(),
                 email: formData.email.trim()
@@ -101,19 +95,9 @@ const UserProfileScreen = () => {
             syncSessionUser(updated);
             // El backend normaliza el correo (minúsculas): se refleja en el formulario
             resetProfile({ name: updated.name, lastname: updated.lastname, email: updated.email });
-            Swal.fire({
-                title: 'Perfil actualizado',
-                text: 'Tus datos se guardaron correctamente.',
-                icon: 'success',
-                confirmButtonText: 'Aceptar'
-            });
+            handlerApp.showOk("Tus datos se guardaron correctamente.");
         } catch (err) {
-            Swal.fire({
-                title: 'No se pudo actualizar el perfil',
-                text: getErrorMessage(err, "Revisa los datos e intenta de nuevo."),
-                icon: 'error',
-                confirmButtonText: 'Aceptar'
-            });
+            handlerApp.showError(err?.message || err?.detail || "No se pudo actualizar el perfil.");
         } finally {
             handlerApp.setLoader(false);
         }
@@ -124,39 +108,19 @@ const UserProfileScreen = () => {
     const submitPassword = async ({ currentPassword, newPassword }) => {
         handlerApp.setLoader(true);
         try {
-            await changeMyPassword({ currentPassword, newPassword });
-            Swal.fire({
-                title: 'Contraseña actualizada',
-                text: 'Tu contraseña ha sido cambiada exitosamente.',
-                icon: 'success',
-                confirmButtonText: 'Aceptar'
-            }).then(() => {
-                setShowPasswordSection(false);
-                resetPassword();
-            });
+            await api.put("users/me/password/", { currentPassword, newPassword });
+            await handlerApp.showOk("Tu contraseña ha sido cambiada exitosamente.");
+            setShowPasswordSection(false);
+            resetPassword();
         } catch (err) {
-            const fieldErrors = err?.data;
-            const currentMsg = fieldErrors?.currentPassword?.[0];
-            const newMsg = fieldErrors?.newPassword?.[0];
+            const currentMsg = err?.currentPassword?.[0];
+            const newMsg = err?.newPassword?.[0];
 
-            if (err?.status === 429) {
-                Swal.fire({
-                    title: 'Demasiados intentos',
-                    text: 'Espera un minuto antes de volver a intentarlo.',
-                    icon: 'warning',
-                    confirmButtonText: 'Aceptar'
-                });
-            } else if (currentMsg || newMsg) {
-                // 400 con error por campo: se muestra debajo del input correspondiente
+            if (currentMsg || newMsg) {
                 if (currentMsg) setPasswordError("currentPassword", { type: "validate", message: currentMsg });
                 if (newMsg) setPasswordError("newPassword", { type: "validate", message: newMsg });
             } else {
-                Swal.fire({
-                    title: 'No se pudo cambiar la contraseña',
-                    text: getErrorMessage(err, "Intenta de nuevo."),
-                    icon: 'error',
-                    confirmButtonText: 'Aceptar'
-                });
+                handlerApp.showError(err?.message || err?.detail || "No se pudo cambiar la contraseña.");
             }
         } finally {
             handlerApp.setLoader(false);

@@ -1,10 +1,10 @@
-import { useForm } from "react-hook-form";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
+import { useFetch } from "../../hooks/useFetch";
+import HandlerApp from "../../utils/HandlerApp";
 import InputEmail from "../../components/inputs/InputEmail";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
-import HandlerApp from "../../utils/HandlerApp";
-import { forgotPassword } from "../../api/auth";
 
 const markRecoverySent = (email) => {
     sessionStorage.setItem("recovery_email", email);
@@ -14,6 +14,7 @@ const markRecoverySent = (email) => {
 const ForgotPasswordScreen = () => {
     const nav = useNavigate();
     const handlerApp = HandlerApp();
+    const api = useFetch();
 
     const { control, handleSubmit, formState: { errors } } = useForm();
 
@@ -23,12 +24,12 @@ const ForgotPasswordScreen = () => {
         handlerApp.setLoader(true);
         setError("");
         try {
-            await forgotPassword(data.email);
+            await api.post("auth/password/forgot", { email: data.email });
             handlerApp.setLoader(false);
             markRecoverySent(data.email);
             nav("/reset-pin");
         } catch (requestError) {
-            setError(requestError.message);
+            setError(requestError.message || "No fue posible enviar el código.");
             handlerApp.setLoader(false);
         }
     };

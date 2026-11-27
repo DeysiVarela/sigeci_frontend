@@ -1,21 +1,21 @@
-import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
+import { useContext, useEffect, useState } from "react";
+import { useFetch } from "../../hooks/useFetch";
+import { AppContext } from "../../context/AppContext";
+import Card from "../../components/cards/Card";
+import HandlerApp from "../../utils/HandlerApp";
 import InputText from "../../components/inputs/InputText";
 import InputEmail from "../../components/inputs/InputEmail";
 import InputPassword from "../../components/inputs/InputPassword";
-import InputMultiSelect from "../../components/inputs/InputMultiSelect";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
-import Card from "../../components/cards/Card";
-import HandlerApp from "../../utils/HandlerApp";
-import { createUser, listProfiles, getMe } from "../../api/users";
-import { isManager } from "../../utils/userAccess";
-import { getErrorMessage } from "../../utils/apiError";
-import Swal from "sweetalert2";
+import InputMultiSelect from "../../components/inputs/InputMultiSelect";
 
 const CreateUserScreen = () => {
   const nav = useNavigate();
   const handlerApp = HandlerApp();
+  const api = useFetch();
+  const { app } = useContext(AppContext);
   const [rolesOptions, setRolesOptions] = useState([]);
   const [profilesError, setProfilesError] = useState(false);
 
@@ -39,7 +39,7 @@ const CreateUserScreen = () => {
 
   // Los roles salen del backend para que los ids coincidan
   useEffect(() => {
-    listProfiles()
+    api.get("profiles/")
       .then((res) => {
         const profiles = Array.isArray(res) ? res : res?.results || [];
         setRolesOptions(
@@ -51,18 +51,16 @@ const CreateUserScreen = () => {
 
   // Solo quien tenga el permiso user.create puede crear usuarios
   useEffect(() => {
-    getMe()
-      .then((me) => {
-        if (!isManager(me)) nav("/users");
-      })
-      .catch(() => nav("/users"));
-  }, [nav]);
+    if (app?.permissions && !app.permissions?.["user"]?.includes("create")) {
+      nav("/users");
+    }
+  }, [app?.permissions, nav]);
 
 
   const submitData = async (data) => {
     handlerApp.setLoader(true);
     try {
-      await createUser({
+      await api.post("users/", {
         name: data.nombre.trim(),
         lastname: data.apellido.trim(),
         email: data.email.trim(),
@@ -73,23 +71,13 @@ const CreateUserScreen = () => {
       // Apagamos el loader ANTES de mostrar el modal
       handlerApp.setLoader(false);
 
-      await Swal.fire({
-        title: "¡Usuario creado!",
-        text: "El usuario se registró correctamente.",
-        icon: "success",
-        confirmButtonText: "Aceptar",
-      });
+      await handlerApp.showOk("El usuario se registró correctamente.");
 
       reset();
       nav("/users");
     } catch (err) {
-      handlerApp.setLoader(false); // También apagamos si hay error
-      Swal.fire({
-        title: "No se pudo crear el usuario",
-        text: getErrorMessage(err, "No se pudo crear el usuario."),
-        icon: "error",
-        confirmButtonText: "Aceptar",
-      });
+      handlerApp.setLoader(false);
+      handlerApp.showError(err?.message || err?.detail || "No se pudo crear el usuario.");
     }
   };
 

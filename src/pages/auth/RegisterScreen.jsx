@@ -1,14 +1,14 @@
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useFetch } from "../../hooks/useFetch";
 import { Link, useNavigate } from "react-router";
-import ReCAPTCHA from "react-google-recaptcha";
 import Swal from "sweetalert2";
+import ReCAPTCHA from "react-google-recaptcha";
+import HandlerApp from "../../utils/HandlerApp";
 import InputText from "../../components/inputs/InputText";
 import InputEmail from "../../components/inputs/InputEmail";
 import InputPassword from "../../components/inputs/InputPassword";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
-import HandlerApp from "../../utils/HandlerApp";
-import { register } from "../../api/auth";
 
 const NAME_MAX = 60;
 const EMAIL_MAX = 120;
@@ -42,6 +42,7 @@ const firstMessage = (value) => (Array.isArray(value) ? value[0] : value);
 const RegisterScreen = () => {
     const nav = useNavigate();
     const handlerApp = HandlerApp();
+    const api = useFetch();
     const captchaRef = useRef(null);
     const [captchaToken, setCaptchaToken] = useState("");
     const [submitError, setSubmitError] = useState("");
@@ -85,13 +86,15 @@ const RegisterScreen = () => {
         handlerApp.setLoader(true);
         try {
             // Solo se envían estos campos: la confirmación de contraseña no viaja y el rol nunca se incluye
-            await register({
-                name: cleanName(data.name),
-                lastname: cleanName(data.lastname),
-                email: data.email.trim().toLowerCase(),
-                password: data.password,
-                captchaToken,
-            });
+            await api.post("auth/register/",{
+                    name: cleanName(data.name),
+                    lastname: cleanName(data.lastname),
+                    email: data.email.trim().toLowerCase(),
+                    password: data.password,
+                },
+                null,
+                captchaToken
+            );
             handlerApp.setLoader(false);
             await Swal.fire({
                 icon: "success",

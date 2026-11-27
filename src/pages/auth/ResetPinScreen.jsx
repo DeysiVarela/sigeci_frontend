@@ -2,12 +2,12 @@ import { useEffect } from "react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
+import { useFetch } from "../../hooks/useFetch";
+import HandlerApp from "../../utils/HandlerApp";
 import InputPin from "../../components/inputs/InputPin";
 import InputPassword from "../../components/inputs/InputPassword";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import ButtonLink from "../../components/buttons/ButtonLink";
-import HandlerApp from "../../utils/HandlerApp";
-import { forgotPassword, resetPassword } from "../../api/auth";
 
 // Espera entre envíos del PIN (debe coincidir con PASSWORD_RESET_RESEND_SECONDS del backend)
 const RESEND_SECONDS = 60;
@@ -26,6 +26,7 @@ const markSent = (secondsLeft = RESEND_SECONDS) => {
 const ResetPinScreen = () => {
     const nav = useNavigate();
     const handlerApp = HandlerApp();
+    const api = useFetch();
 
     const { control, handleSubmit, formState: { errors } } = useForm();
 
@@ -54,12 +55,12 @@ const ResetPinScreen = () => {
         setError("");
         setInfo("");
         try {
-            await forgotPassword(sessionStorage.getItem("recovery_email"));
+            await api.post("auth/password/forgot", { email: sessionStorage.getItem("recovery_email") });
             markSent();
             setSecondsLeft(RESEND_SECONDS);
             setInfo("Te enviamos un nuevo PIN. Revisa tu correo.");
         } catch (requestError) {
-            setError(requestError.message);
+            setError(requestError.message || "No fue posible reenviar el PIN.");
             if (requestError.status === 429) {
                 // El backend indica cuántos segundos faltan: "Espera N segundos..."
                 const match = /(\d+)/.exec(requestError.message);
@@ -77,16 +78,16 @@ const ResetPinScreen = () => {
         handlerApp.setLoader(true);
         setError("");
         try {
-            await resetPassword({
+            await api.post("auth/password/reset", {
                 email: sessionStorage.getItem("recovery_email"),
-                code: data.pin,
+                pin: data.pin,
                 password: data.password,
             });
             handlerApp.setLoader(false);
             sessionStorage.removeItem("recovery_email");
             nav("/login");
         } catch (requestError) {
-            setError(requestError.message);
+            setError(requestError.message || "No fue posible restablecer la contraseña.");
             handlerApp.setLoader(false);
         }
     };

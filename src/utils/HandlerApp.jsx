@@ -1,4 +1,5 @@
 import { useContext } from "react";
+import Swal from "sweetalert2";
 import { LoaderContext } from "../context/LoaderContext";
 
 
@@ -10,8 +11,26 @@ const HandlerApp = ()=>{
         setLoaderContext(state)
     };
 
+    const showError = (message = "Ocurrió un error inesperado.") => {
+        return Swal.fire({
+            text: message,
+            icon: "error",
+            confirmButtonText: "Aceptar"
+        });
+    };
+
+    const showOk = (message = "Operación realizada exitosamente.") => {
+        return Swal.fire({
+            text: message,
+            icon: "success",
+            confirmButtonText: "Aceptar"
+        });
+    };
+
     return {
-        setLoader
+        setLoader,
+        showError,
+        showOk
     }
 }
 

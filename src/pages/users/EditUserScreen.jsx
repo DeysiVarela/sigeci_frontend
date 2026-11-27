@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useContext, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
 import InputText from "../../components/inputs/InputText";
@@ -8,10 +8,8 @@ import InputMultiSelect from "../../components/inputs/InputMultiSelect";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import Card from "../../components/cards/Card";
 import HandlerApp from "../../utils/HandlerApp";
-import { getUser, updateUser, listProfiles, getMe } from "../../api/users";
-import { isManager, canEditUser } from "../../utils/userAccess";
-import { getErrorMessage } from "../../utils/apiError";
-import Swal from "sweetalert2";
+import { useFetch } from "../../hooks/useFetch";
+import { AppContext } from "../../context/AppContext";
 
 const STATUS_OPTIONS = [
   { value: "true", label: "Activo" },
@@ -22,9 +20,12 @@ const EditUserScreen = () => {
   const nav = useNavigate();
   const { id } = useParams(); // Obtenemos el ID de la URL
   const handlerApp = HandlerApp();
+  const api = useFetch();
+
+  const { app } = useContext(AppContext);
+  
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [rolesOptions, setRolesOptions] = useState([]);
-  const [manager, setManager] = useState(false);
   const [original, setOriginal] = useState(null);
 
   const {
@@ -38,23 +39,10 @@ const EditUserScreen = () => {
 
   useEffect(() => {
     let cancelled = false;
-    let denied = false;
 
-    Promise.all([getUser(id), listProfiles(), getMe()])
-      .then(([user, profileRes, me]) => {
+    Promise.all([api.get(`users/${id}/`), api.get("profiles/")])
+      .then(([user, profileRes]) => {
         if (cancelled) return;
-
-        if (!canEditUser(me, id, user)) {
-          denied = true;
-          Swal.fire({
-            title: "Sin permisos",
-            text: "No tienes permisos para editar a este usuario.",
-            icon: "warning",
-          }).then(() => nav("/users"));
-          return;
-        }
-
-        setManager(isManager(me));
 
         const userProfiles = user.profiles ? user.profiles.map(p => p.id).sort() : [];
         setOriginal({ profiles: userProfiles, active: user.active });
@@ -75,14 +63,11 @@ const EditUserScreen = () => {
       })
       .catch((err) => {
         if (cancelled) return;
-        Swal.fire({
-          title: "Error",
-          text: getErrorMessage(err, "No se pudo cargar el usuario."),
-          icon: "error",
-        }).then(() => nav("/users"));
+        handlerApp.showError(err?.message || err?.detail || "No se pudo cargar el usuario.");
+        nav("/users");
       })
       .finally(() => {
-        if (!cancelled && !denied) setIsLoadingData(false);
+        if (!cancelled) setIsLoadingData(false);
       });
 
     return () => {
@@ -100,7 +85,7 @@ const EditUserScreen = () => {
       };
 
       // Rol y estado solo los envía un gestor, y solo si cambiaron
-      if (manager) {
+      if (app?.permissions?.["user"]?.includes("update")) {
         const newProfiles = data.roles.map(Number).sort();
         if (JSON.stringify(newProfiles) !== JSON.stringify(original?.profiles)) {
           payload.profiles = newProfiles;
@@ -110,26 +95,16 @@ const EditUserScreen = () => {
         if (newActive !== original?.active) payload.active = newActive;
       }
 
-      await updateUser(id, payload);
+      await api.patch(`users/${id}/`, payload);
 
       // Apagamos el loader ANTES de mostrar el modal
       handlerApp.setLoader(false);
 
-      await Swal.fire({
-        title: "¡Actualizado!",
-        text: "Los datos del usuario se guardaron correctamente.",
-        icon: "success",
-        confirmButtonText: "Aceptar",
-      });
+      await handlerApp.showOk("Los datos del usuario se guardaron correctamente.");
       nav("/users");
     } catch (err) {
-      handlerApp.setLoader(false); // También apagamos si hay error
-      Swal.fire({
-        title: "No se pudo actualizar",
-        text: getErrorMessage(err, "No se pudo actualizar el usuario."),
-        icon: "error",
-        confirmButtonText: "Aceptar",
-      });
+      handlerApp.setLoader(false);
+      handlerApp.showError(err?.message || err?.detail || "No se pudo actualizar el usuario.");
     }
   };
 
@@ -176,7 +151,7 @@ const EditUserScreen = () => {
                   required={true}
                 />
 
-                {manager && (
+                {app?.permissions?.["user"]?.includes("update") && (
                   <>
 
                     <InputMultiSelect

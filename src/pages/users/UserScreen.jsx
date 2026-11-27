@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import DataTable from "react-data-table-component";
 import Card from "../../components/cards/Card";
@@ -7,9 +7,9 @@ import Modal from "../../components/modals/Modal";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import ButtonSecondary from "../../components/buttons/ButtonSecondary";
 import ButtonLink from "../../components/buttons/ButtonLink";
-import { listUsers, listProfiles, deleteUser, getMe } from "../../api/users";
-import { getErrorMessage } from "../../utils/apiError";
-import { isManager, canEditUser, canDeleteUser } from "../../utils/userAccess";
+import HandlerApp from "../../utils/HandlerApp";
+import { useFetch } from "../../hooks/useFetch";
+import { AppContext } from "../../context/AppContext";
 
 const ROWS_PER_PAGE_OPTIONS = [10, 20, 50];
 
@@ -46,6 +46,9 @@ const STAT_CARDS = [
 
 const UserScreen = () => {
     const navigate = useNavigate();
+    const api = useFetch();
+    const handlerApp = HandlerApp();
+    const { app } = useContext(AppContext);
 
     // Datos de la tabla (paginados en el servidor)
     const [users, setUsers] = useState([]);
@@ -65,8 +68,7 @@ const UserScreen = () => {
     const [profiles, setProfiles] = useState([]);
     const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 });
     const [reloadKey, setReloadKey] = useState(0);
-    const [me, setMe] = useState(null); // usuario autenticado (null = aún cargando)
-    const [meError, setMeError] = useState(false);
+    const currentUserId = Number(localStorage.getItem("id") || 0);
 
     // Alertas y modales
     const [alertNotification, setAlertNotification] = useState(null);
@@ -93,12 +95,11 @@ const UserScreen = () => {
         setLoading(true);
         setError("");
 
-        listUsers({
-            page,
-            pageSize: perPage,
-            profile: profileFilter || undefined,
-            active: activeFilter || undefined,
-        })
+        const params = { page, page_size: perPage };
+        if (profileFilter) params.profile = profileFilter;
+        if (activeFilter) params.active = activeFilter;
+
+        api.get("users/", params)
             .then((res) => {
                 if (cancelled) return;
                 const data = toArray(res);
@@ -106,7 +107,7 @@ const UserScreen = () => {
                 setTotalRows(Array.isArray(res) ? data.length : res.count ?? data.length);
             })
             .catch((err) => {
-                if (!cancelled) setError(getErrorMessage(err, "No fue posible cargar los usuarios."));
+                if (!cancelled) setError(err?.message || err?.detail || "No fue posible cargar los usuarios.");
             })
             .finally(() => {
                 if (!cancelled) setLoading(false);
@@ -119,24 +120,17 @@ const UserScreen = () => {
 
     // Opciones del filtro de rol
     useEffect(() => {
-        listProfiles()
+        api.get("profiles/")
             .then((res) => setProfiles(toArray(res)))
             .catch(() => setProfiles([]));
-    }, []);
-
-    // Usuario autenticado: de su rol e id dependen los botones (el backend sigue validando cada acción)
-    useEffect(() => {
-        getMe()
-            .then((data) => setMe(data))
-            .catch(() => setMeError(true));
     }, []);
 
     // Contadores de las tarjetas (totales globales, sin filtros)
     useEffect(() => {
         Promise.all([
-            listUsers({ pageSize: 1 }),
-            listUsers({ pageSize: 1, active: true }),
-            listUsers({ pageSize: 1, active: false }),
+            api.get("users/", { page_size: 1 }),
+            api.get("users/", { page_size: 1, active: true }),
+            api.get("users/", { page_size: 1, active: false }),
         ])
             .then(([all, act, inact]) =>
                 setStats({ total: all.count ?? 0, active: act.count ?? 0, inactive: inact.count ?? 0 })
@@ -186,12 +180,12 @@ const UserScreen = () => {
         if (!selectedUser) return;
         const target = selectedUser;
         try {
-            await deleteUser(target.id);
-            triggerAlert("success", `El usuario "${target.name}" (${target.email}) fue eliminado.`, "Usuario eliminado");
+            await api.deleteMethod(`users/${target.id}/`);
+            handlerApp.showOk(`El usuario "${target.name}" (${target.email}) fue eliminado.`);
             if (users.length === 1 && page > 1) setPage((p) => p - 1);
             setReloadKey((k) => k + 1);
         } catch (err) {
-            triggerAlert("danger", getErrorMessage(err, "No se pudo eliminar el usuario."), "No se pudo eliminar");
+            handlerApp.showError(err?.message || err?.detail || "No se pudo eliminar el usuario.");
         } finally {
             setDeleteModalOpen(false);
             setSelectedUser(null);
@@ -246,14 +240,14 @@ const UserScreen = () => {
                         onClick={() => handleOpenView(row)}
                     />
 
-                    {canEditUser(me, row.id, row) && (
+                    {(app?.permissions?.["user"]?.includes("update") || Number(row.id) === currentUserId) && (
                         <ButtonPrimary
                             label="Editar"
                             className="btn-sm py-1 px-2 text-nowrap"
                             onClick={() => navigate(`/users/edit/${row.id}`)}
                         />
                     )}
-                    {canDeleteUser(me, row.id, row) && (
+                    {app?.permissions?.["user"]?.includes("delete") && Number(row.id) !== currentUserId && (
                         <ButtonLink
                             label="Eliminar"
                             className="text-danger fw-semibold small text-nowrap px-1"
@@ -352,7 +346,7 @@ const UserScreen = () => {
                         Administra roles, accesos y estado del personal universitario registrado en SIGECI.
                     </p>
                 </div>
-                {isManager(me) && (
+                {app?.permissions?.["user"]?.includes("create") && (
                     <div className="d-flex gap-2">
                         <button
                             className="btn btn-primary shadow-sm d-flex align-items-center gap-2"
@@ -394,12 +388,6 @@ const UserScreen = () => {
                     <button className="btn btn-sm btn-outline-danger" onClick={() => setReloadKey((k) => k + 1)}>
                         Reintentar
                     </button>
-                </div>
-            )}
-
-            {meError && (
-                <div className="alert alert-warning py-2" role="alert">
-                    No se pudo verificar tu rol; las acciones de edición están ocultas.
                 </div>
             )}
 

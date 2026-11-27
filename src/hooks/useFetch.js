@@ -26,10 +26,11 @@ export const useFetch = () => {
     const handlerApp    = HandlerApp();
     const { app, setApp } = useContext(AppContext);
     
+    const token = (app.token) ? app.token : (localStorage.getItem("token") || "");
     const instance = axios.create({
         baseURL: `${import.meta.env.VITE_BACKEND_URL}`,
         headers: {
-            Authorization: (app.token) ? app.token : (localStorage.getItem("token") || ""),
+            Authorization: token ? `Bearer ${token}` : "",
             profile: (app.profile) ? app.profile : (parseInt(localStorage.getItem("profile")) || 0)
         }
     });
@@ -95,7 +96,7 @@ export const useFetch = () => {
                         failedQueue.push({ resolve, reject });
                     })
                     .then((newToken) => {
-                        originalRequest.headers.Authorization = newToken;
+                        originalRequest.headers.Authorization = `Bearer ${newToken}`;
                         return instance(originalRequest);
                     })
                     .catch((err) => Promise.reject(err));
@@ -141,8 +142,8 @@ export const useFetch = () => {
                         }));
 
                         // 3. Actualizar headers de la instancia y de la petición fallida
-                        instance.defaults.headers.Authorization = newAccessToken;
-                        originalRequest.headers.Authorization = newAccessToken;
+                        instance.defaults.headers.Authorization = `Bearer ${newAccessToken}`;
+                        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
                         // 4. Despachar las peticiones encoladas
                         processQueue(null, newAccessToken);
