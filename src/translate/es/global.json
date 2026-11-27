@@ -15,9 +15,14 @@
     "add": "Agregar",
     "edit": "Editar",
     "delete": "Eliminar",
+    "yesDelete": "Sí, eliminar",
+    "noDelete": "Cancelar",
+    "deleteSuccess": "Eliminado exitosamente",
+    "deleteError": "Error al eliminar",
     "articleScreen": {
         "title": "Gestión de Artículos Científicos",
         "description": "Publicaciones académicas, revisiones por pares y documentos de investigación SIGECI.",
+        "titleModaldelete": "¿Estás seguro de eliminar el artículo?",
         "table": {
             "title": "Título del artículo",
             "topic": "Tópico",

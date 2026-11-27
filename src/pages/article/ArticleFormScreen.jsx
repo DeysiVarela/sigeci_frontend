@@ -1,128 +1,82 @@
-import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { useFetch } from "../../hooks/useFetch";
+import { uploadFile } from "../../utils/uploadFiles";
 import { useNavigate, useParams } from "react-router";
-import Swal from "sweetalert2";
 import Card from "../../components/cards/Card";
+import HandlerApp from "../../utils/HandlerApp";
+import InputPdf from "../../components/inputs/InputPdf";
 import InputText from "../../components/inputs/InputText";
 import InputSelect from "../../components/inputs/InputSelect";
 import InputTextArea from "../../components/inputs/InputTextArea";
-import InputPdf from "../../components/inputs/InputPdf";
 import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import ButtonSecondary from "../../components/buttons/ButtonSecondary";
-import HandlerApp from "../../utils/HandlerApp";
-import { useFetch } from "../../hooks/useFetch";
-import { uploadFile } from "../../utils/uploadFiles";
-import { getErrorMessage } from "../../utils/apiError";
 
 const ArticleFormScreen = () => {
     const { id } = useParams();
-    const isEdit = Boolean(id);
     const nav = useNavigate();
     const handlerApp = HandlerApp();
     const api = useFetch();
     const [topics, setTopics] = useState([]);
     const [currentArticle, setCurrentArticle] = useState(null);
 
-    const {
-        register,
-        control,
-        handleSubmit,
-        setValue,
-        formState: { errors },
-        reset,
-    } = useForm({
-        mode: "onChange",
-    });
+    const { register,control,handleSubmit,formState: { errors },reset,} = useForm({ mode: "onChange"});
 
     useEffect(() => {
-        const loadData = async () => {
-            handlerApp.setLoader(true);
-            try {
-                const topicsPromise = api.get("topic");
-                const articlePromise = isEdit ? api.get(`article/${id}`) : Promise.resolve(null);
-                const [topicsRes, articleRes] = await Promise.all([topicsPromise, articlePromise]);
+        if(id){
+            getArticleById(id);
+        }
+    }, []);
 
-                const list = Array.isArray(topicsRes?.data)
-                    ? topicsRes.data
-                    : Array.isArray(topicsRes)
-                        ? topicsRes
-                        : [];
-                setTopics(
-                    list.map((topic) => ({
-                        value: String(topic.topic_id),
-                        label: topic.topic_subject,
-                    }))
-                );
-
-                if (isEdit && articleRes?.data) {
-                    const art = articleRes.data;
-                    setCurrentArticle(art);
-                    setValue("article_subject", art.article_subject || "");
-                    setValue("topic_id", art.topic_id ? String(art.topic_id) : "");
-                    setValue("article_description", art.article_description || "");
-                    setValue("article", art.article || "");
-                }
-            } catch (err) {
-                if (isEdit) {
-                    Swal.fire({
-                        title: "Error",
-                        text: getErrorMessage(err, "No se pudo cargar el artículo."),
-                        icon: "error",
-                        confirmButtonText: "Aceptar",
-                    });
-                }
-            } finally {
-                handlerApp.setLoader(false);
+    const getArticleById = async (id) => {
+        try {
+            const result = await api.get(`article/${id}`);
+            if(result.success){
+                setCurrentArticle(result.data);
+                reset(result.data);
             }
-        };
-
-        loadData();
-    }, [id, isEdit, setValue]);
+        } catch (err) {
+            handlerApp.showError(err.message);
+        }
+    };
 
     const submitData = async (data) => {
         handlerApp.setLoader(true);
         try {
+            // Cargue de fichero
             const pdfFile = data.pdfFile?.[0];
             let articleAttachedUrl = null;
             if (pdfFile) {
                 articleAttachedUrl = await uploadFile(api, pdfFile, "articles");
             }
 
+            // datos de formulario + url de fichero cargado
             const payload = {
-                article_subject: data.article_subject.trim(),
-                topic_id: Number(data.topic_id),
-                article_description: data.article_description?.trim() || "",
-                article: data.article.trim(),
+                ...data,
                 ...(articleAttachedUrl ? { article_attached_url: articleAttachedUrl } : {}),
             };
 
-            if (isEdit) {
-                await api.put(`article/${id}/update`, payload);
-            } else {
-                await api.post("article/create", payload);
+            // peticion put o post.
+            let result;
+            if(Boolean(id)){
+                result = await api.put(`article/${id}`, payload);
+            }else{
+                result = await api.post(`article`, payload);
+            }
+
+            if(result.sucess){
+                handlerApp.showOk(result.message);
+            }else{
+                handlerApp.showError(result.message);
             }
 
             handlerApp.setLoader(false);
 
-            await Swal.fire({
-                title: isEdit ? "¡Artículo actualizado!" : "¡Artículo creado!",
-                text: isEdit
-                    ? "El artículo se actualizó correctamente."
-                    : "El artículo se registró correctamente.",
-                icon: "success",
-                confirmButtonText: "Aceptar",
-            });
-
             reset();
-            nav("/article");
+            await nav("/article");
         } catch (err) {
             handlerApp.setLoader(false);
-            Swal.fire({
-                title: isEdit ? "No se pudo actualizar el artículo" : "No se pudo crear el artículo",
-                text: getErrorMessage(err, "Ocurrió un error al guardar el artículo."),
-                icon: "error",
-                confirmButtonText: "Aceptar",
-            });
+            handlerApp.showError(err.message);
         }
     };
 
@@ -135,11 +89,10 @@ const ArticleFormScreen = () => {
                             onClick={() => nav("/article")}
                             className="btn-sm"
                         >
-                            <i className="bi bi-arrow-left me-1"></i>
-                            Volver
+                            <i className="bi bi-arrow-left me-1"/>Volver
                         </ButtonSecondary>
                     </div>
-                    <Card title={isEdit ? `Editar Artículo #${id}` : "Crear Artículo"} outline outlineColor="primary">
+                    <Card title={ id ? `Editar Artículo #${id}` : "Crear Artículo"} outline outlineColor="primary">
                         <form onSubmit={handleSubmit(submitData)}>
                             <div className="row">
                                 <div className="col-md-6">
@@ -186,7 +139,7 @@ const ArticleFormScreen = () => {
                                 placeholder="Escribe el contenido principal del artículo"
                             />
 
-                            {isEdit && currentArticle?.article_attached_url && (
+                            {id && currentArticle?.article_attached_url && (
                                 <div className="mb-3">
                                     <span className="small text-muted d-block mb-1">
                                         PDF actual (v{currentArticle.article_attached_version || "1.0"}):
@@ -205,11 +158,11 @@ const ArticleFormScreen = () => {
 
                             <InputPdf
                                 name="pdfFile"
-                                label={isEdit ? "Reemplazar Documento PDF (opcional)" : "Documento PDF"}
+                                label={id ? "Reemplazar Documento PDF (opcional)" : "Documento PDF"}
                                 register={register}
                                 errors={errors}
                                 maxSizeMB={20}
-                                required={!isEdit}
+                                required={!id}
                             />
 
                             <div className="d-flex justify-content-end gap-2 mt-4">
@@ -219,7 +172,7 @@ const ArticleFormScreen = () => {
                                 />
                                 <ButtonPrimary
                                     type="submit"
-                                    label={isEdit ? "Guardar Cambios" : "Guardar Artículo"}
+                                    label={id ? "Guardar Cambios" : "Guardar Artículo"}
                                 />
                             </div>
                         </form>

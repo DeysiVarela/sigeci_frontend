@@ -1,5 +1,4 @@
 import { createBrowserRouter } from "react-router";
-// import LoginScreen from "../pages/login/LoginScreen";
 import LoginScreen from "../pages/auth/LoginScreen";
 import ForgotPasswordScreen from "../pages/auth/ForgotPasswordScreen";
 import ResetPinScreen from "../pages/auth/ResetPinScreen";
@@ -9,16 +8,13 @@ import ComponentsScreen from "../pages/components/ComponentsScreen";
 import Dashboard from "../theme/containers/Dashboard";
 import ArticleScreen from "../pages/article/ArticleScreen";
 import ArticleViewScreen from "../pages/article/ArticleViewScreen";
-import ArticleEditScreen from "../pages/article/ArticleEditScreen";
-import ArticleEditGuard from "../pages/article/components/ArticleEditGuard";
-import UserScreen from "../pages/users/UserScreen";
+// import UserScreen from "../pages/users/UserScreen";
 import Container from "../theme/containers/Container";
 import ProtectedRoute from "./ProtectedRoute";
-import CreateArticlePDFScreen from "../pages/article/CreateArticlePDFScreen";
 import ArticleFormScreen from "../pages/article/ArticleFormScreen";
-import CreateUserScreen from "../pages/users/CreateUserScreen";
-import EditUserScreen from "../pages/users/EditUserScreen";
-import UserProfileScreen from "../pages/users/UserProfileScreen";
+// import CreateUserScreen from "../pages/users/CreateUserScreen";
+// import EditUserScreen from "../pages/users/EditUserScreen";
+// import UserProfileScreen from "../pages/users/UserProfileScreen";
 
 const router = createBrowserRouter([
     {
@@ -65,11 +61,10 @@ const router = createBrowserRouter([
                     { path: "/article/:id", element: <ArticleViewScreen /> },
                     { path: "/article/edit/:id", element: <ArticleFormScreen /> },
                     { path: "/article/create", element: <ArticleFormScreen /> },
-                    { path: "/article/postulate", element: <CreateArticlePDFScreen /> },
-                    { path: "/users", element: <UserScreen /> },
-                    { path: "/users/create", element: <CreateUserScreen /> },
-                    { path: "/users/edit/:id", element: <EditUserScreen /> },
-                    { path: "/profile", element: <UserProfileScreen /> }
+                    // { path: "/users", element: <UserScreen /> },
+                    // { path: "/users/create", element: <CreateUserScreen /> },
+                    // { path: "/users/edit/:id", element: <EditUserScreen /> },
+                    // { path: "/profile", element: <UserProfileScreen /> }
                 ]
             }
         ]

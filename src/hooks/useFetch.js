@@ -41,13 +41,27 @@ export const useFetch = () => {
             text: "Session Expired",
             icon: "info"
         });
-        localStorage.clear();
+        clearStorage();
         // await logoutGoogle();
         setApp({
             token: null,
             timezone: null
         });
         nav("/login");
+    };
+
+    const clearStorage = () => {
+        const cleanVars = [
+            "profile",
+            "profiles",
+            "token",
+            "refreshToken",
+            "name",
+            "lastname",
+            "email",
+            "id"
+        ];
+        cleanVars.forEach(item => localStorage.removeItem(item));
     };
 
     const notPermissions = async () => {
@@ -69,8 +83,8 @@ export const useFetch = () => {
             const originalRequest = error.config;
 
             const isTokenExpired = error.response?.status === 401;
-            const isAuthEndpoint = originalRequest.url?.includes("/auth/login") || 
-                                   originalRequest.url?.includes("/auth/refresh");
+            const isAuthEndpoint = originalRequest.url?.includes("auth/login") || 
+                                   originalRequest.url?.includes("auth/refresh");
 
             // Evitar reintento si la petición que falló fue login o el propio refresh
             if (isTokenExpired && !originalRequest._retry && !isAuthEndpoint) {

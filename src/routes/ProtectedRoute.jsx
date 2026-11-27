@@ -10,20 +10,14 @@ const ProtectedRoute = () => {
     const { app, setApp } = useContext(AppContext);
 
     useEffect(() => {
-        let active = true;
-
-        // try{
-        //     const menu = await api.get("auth/me")
-        //     if men
-
-        // }catch(err){
-
-        // }
-
         api.get("auth/me")
         .then(res =>{
+            let permissions = {};
+            res.data?.forEach(permission => {
+                permissions[permission.profile_action_action] = permission.profile_action_permissions.split("|");
+            });
             if(res.success){
-                setApp({...app, permissions: res.data});
+                setApp((prev) => ({ ...prev, menu: res.data, permissions }));
             }
         })
         .catch(err=>{
@@ -31,8 +25,7 @@ const ProtectedRoute = () => {
             setState("anonymous")
         })
         setState("authenticated");
-        return () => { active = false; };
-    }, []);
+    }, [app.profile]);
 
     if (state === "checking") {
         return <div className="p-4 text-center">Verificando sesión...</div>;

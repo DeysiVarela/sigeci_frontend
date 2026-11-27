@@ -1,135 +1,94 @@
-import { useFetch } from "../../hooks/useFetch";
-import { useState, useMemo, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router";
-import Card from "../../components/cards/Card";
 import HandlerApp from "../../utils/HandlerApp";
-import Badge from "../../components/badges/Badge";
-import Modal from "../../components/modals/Modal";
-import DataTable from "react-data-table-component";
-import ButtonLink from "../../components/buttons/ButtonLink";
-import ButtonPrimary from "../../components/buttons/ButtonPrimary";
-import ButtonSecondary from "../../components/buttons/ButtonSecondary";
+import { Link, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
+import { useFetch } from "../../hooks/useFetch";
+import { AppContext } from "../../context/AppContext";
+import { useContext, useEffect, useState } from "react";
+import DataTable from "react-data-table-component";
 
 const ArticleScreen = () => {
-    const navigate = useNavigate();
-    const location = useLocation();
-    const api = useFetch();
-    const handlerApp = HandlerApp();
-    const {t} = useTranslation();
+    const navigate      = useNavigate();
+    const { t }         = useTranslation();
+    const api           = useFetch();
+    const handlerApp    = HandlerApp();
 
+    const { app } = useContext(AppContext);
+    
     const [articles, setArticles] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    const [searchTerm, setSearchTerm] = useState("");
-    const [statusFilter, setStatusFilter] = useState("TODOS");
-
-    const loadArticles = async () => {
-        setLoading(true);
-        handlerApp.setLoader(true);
-        try {
-            const res = await api.get("article");
-            if (res.data) setArticles(res.data);
-        } catch {
-            setArticles([]);
-            triggerAlert("danger", "No pudimos cargar los artículos desde el servidor.", "Error");
-        } finally {
-            setLoading(false);
-            handlerApp.setLoader(false);
-        }
-    };
 
     useEffect(() => {
-        loadArticles();
+        getArticles();
     }, []);
 
-    // Modal de confirmación para eliminar
-    const [selectedArticle, setSelectedArticle] = useState(null);
-    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-
-    // Mensaje de alerta / feedback AdminLTE
-    const [alertNotification, setAlertNotification] = useState(() => {
-        if (location.state?.message) {
-            return {
-                type: location.state.type || "success",
-                title: location.state.title || "Operación exitosa",
-                message: location.state.message
-            };
-        }
-        return null;
-    });
-
-    const triggerAlert = (type, message, title = "Operación exitosa") => {
-        setAlertNotification({ type, title, message });
-        setTimeout(() => {
-            setAlertNotification(null);
-        }, 4500);
-    };
-
-    const handleOpenDelete = (article) => {
-        setSelectedArticle(article);
-        setDeleteModalOpen(true);
-    };
-
-    const handleConfirmDelete = async () => {
-        if (!selectedArticle) return;
+    const getArticles = async () => {
         handlerApp.setLoader(true);
-        try {
-            await api.deleteMethod(`article/${selectedArticle.article_id}/delete`);
-            setArticles(prev => prev.filter(a => a.article_id !== selectedArticle.article_id));
-            setDeleteModalOpen(false);
-            triggerAlert(
-                "danger",
-                `El artículo "${selectedArticle.article_subject}" (ID: #${selectedArticle.article_id}) ha sido eliminado con éxito.`,
-                "¡Artículo Eliminado!"
-            );
-        } catch (error) {
-            console.error("Error al eliminar artículo:", error);
-            triggerAlert("danger", "No fue posible eliminar el artículo.", "Error");
-        } finally {
+        api.get("article")
+        .then( res =>{
+            if (res.success){
+                setArticles(res.data);
+            } else {
+                setArticles([]);
+            }
+        }).catch(error =>{
+            handlerApp.showError("003");
+            setArticles([]);
+        }).finally(() =>{
             handlerApp.setLoader(false);
-            setSelectedArticle(null);
-        }
+        });
     };
 
-    const filteredArticles = useMemo(() => {
-        return articles.filter(article => {
-            const subject = article.article_subject || "";
-            const desc = article.article_description || "";
-            const matchesSearch =
-                subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                desc.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesStatus =
-                statusFilter === "TODOS" ||
-                (statusFilter === "ACTIVO" && article.article_active) ||
-                (statusFilter === "INACTIVO" && !article.article_active);
-            return matchesSearch && matchesStatus;
+    const handleDelete = async (articleId) => {
+        const confirm = await SweetAlert.fire({
+            title: t("articleScreen.titleModaldelete"),
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6",
+            confirmButtonText: t("yesDelete"),
+            cancelButtonText: t("no")
         });
-    }, [articles, searchTerm, statusFilter]);
+
+        if (!confirm.isConfirmed) return;
+
+        handlerApp.setLoader(true);
+        api.delete(`article/${articleId}`)
+        .then( res =>{
+            if (res.success){
+                handlerApp.showSuccess(t("deleteSuccess"));
+                getArticles();
+            } else {
+                handlerApp.showError(t("deleteError"));
+            }
+        }).catch(error =>{
+            handlerApp.showError(error.message);
+        }).finally(() =>{
+            handlerApp.setLoader(false);
+        });
+    };
 
     const columns = [
         {
             name: "ID",
             selector: row => row.article_id,
             sortable: true,
-            width: "80px",
             center: true,
-            cell: row => <span className="badge bg-light text-secondary border">#{row.article_id}</span>
+            grow: 0.5,
+            cell: row => `#${row.article_id}`
         },
         {
             name: t("articleScreen.table.title"),
             selector: row => row.article_subject,
             sortable: true,
+            grow: 3,
             cell: row => (
-                <div className="py-2 text-truncate" style={{ maxWidth: "100%" }}>
-                    <span
-                        className="fw-semibold text-primary d-block mb-1 text-truncate"
-                        style={{ cursor: "pointer" }}
-                        onClick={() => navigate(`/article/${row.article_id}`)}
+                <div className="w-100 overflow-hidden py-1">
+                    <Link
+                        to={`/article/${row.article_id}`}
+                        className="d-block text-primary text-truncate text-decoration-none"
                         title={row.article_subject}
                     >
-                        {row.article_subject}
-                    </span>
+                        {row.article_subject} - <span className="small text-muted">v{row.article_attached_version || "1.0"}</span>
+                    </Link>
                     <small className="text-muted d-block text-truncate" title={row.article_description}>
                         {row.article_description}
                     </small>
@@ -138,89 +97,83 @@ const ArticleScreen = () => {
         },
         {
             name: t("articleScreen.table.topic"),
-            selector: row => row.topic_name || "",
+            selector: row => row.topic_id,
             sortable: true,
-            width: "180px",
+            grow: 1.3,
             cell: row => (
-                <span className="badge bg-light text-dark border text-truncate" title={row.topic_name || ""}>
-                    {row.topic_name || "—"}
+                <span
+                    className="badge bg-light text-dark border text-truncate d-inline-block mw-100"
+                    title={t(row.topic_subject)}
+                >
+                    {t(row.topic_subject)}
                 </span>
             )
         },
         {
             name: t("articleScreen.table.author"),
-            selector: row => row.article_created_by_name || "",
+            selector: row => row.article_created_by,
             sortable: true,
-            width: "160px",
+            grow: 1.2,
             cell: row => (
-                <span className="small text-dark text-truncate" title={row.article_created_by_name || ""}>
+                <span className="text-truncate d-block w-100" title={row.article_created_by_name || "—"}>
                     {row.article_created_by_name || "—"}
                 </span>
-            )
-        },
-        {
-            name: t("articleScreen.table.version"),
-            selector: row => row.article_attached_version || "",
-            sortable: true,
-            width: "130px",
-            center: true,
-            cell: row => row.article_attached_url ? (
-                <span className="badge bg-danger-subtle text-danger border border-danger-subtle" title={`${row.article_subject}.pdf`}>
-                    <i className="bi bi-file-earmark-pdf me-1"></i>
-                    v{row.article_attached_version || "1.0"}
-                </span>
-            ) : (
-                <span className="small text-muted">—</span>
             )
         },
         {
             name: t("articleScreen.table.date"),
             selector: row => row.article_date || row.article_created_at || "",
             sortable: true,
-            width: "120px",
+            grow: 1,
             cell: row => (
-                <span className="small text-muted">
+                <span className="small text-muted text-nowrap">
                     {row.article_date || (row.article_created_at ? row.article_created_at.split("T")[0] : "—")}
                 </span>
             )
         },
         {
-            name: t("articleScreen.table.state"),
-            selector: row => row.article_active,
-            sortable: true,
-            width: "120px",
-            center: true,
-            cell: row => (
-                <Badge
-                    type={row.article_active ? "Success" : "Secondary"}
-                    text={row.article_active ? "Activo" : "Inactivo"}
-                    pill
-                />
-            )
-        },
-        {
             name: t("articleScreen.table.actions"),
-            width: "230px",
-            allowOverflow: true,
             ignoreRowClick: true,
-            button: true,
+            center: true,
+            grow: 1.6,
             cell: row => (
-                <div className="d-flex align-items-center gap-2 justify-content-end py-1 flex-nowrap">
-                    <ButtonSecondary
-                        label="Ver"
-                        className="btn-sm py-1 px-2 text-nowrap"
-                        onClick={() => navigate(`/article/${row.article_id}`)}
-                    />
-                    <ButtonPrimary
-                        label="Editar"
-                        className="btn-sm py-1 px-2 text-nowrap"
-                        onClick={() => navigate(`/article/edit/${row.article_id}`)}
-                    />
-                    <ButtonLink
-                        label="Eliminar"
-                        className="text-danger fw-semibold small text-nowrap px-1"
-                        onClick={() => handleOpenDelete(row)}
-                    />
+                <div className="table-actions">
+                    {
+                        app?.permissions["article"]?.includes('view') &&
+                        <button
+                            type="button"
+                            className="btn-table-action btn-table-view"
+                            title={t("view")}
+                            aria-label={t("view")}
+                            onClick={() => navigate(`/article/${row.article_id}`)}
+                        >
+                            <i className="bi bi-eye"></i>
+                        </button>
+                    }
+                    {
+                        app?.permissions["article"]?.includes('update') &&
+                        <button
+                            type="button"
+                            className="btn-table-action btn-table-edit"
+                            title={t("edit")}
+                            aria-label={t("edit")}
+                            onClick={() => navigate(`/article/edit/${row.article_id}`)}
+                        >
+                            <i className="bi bi-pencil"></i>
+                        </button>
+                    }
+                    {
+                        app?.permissions["article"]?.includes('delete') &&
+                        <button
+                            type="button"
+                            className="btn-table-action btn-table-delete"
+                            title={t("delete")}
+                            aria-label={t("delete")}
+                            onClick={() => handleDelete(row.article_id)}
+                        >
+                            <i className="bi bi-trash"></i>
+                        </button>
+                    }
                 </div>
             )
         }
@@ -228,32 +181,6 @@ const ArticleScreen = () => {
 
     return (
         <div className="container-fluid p-4">
-            {/* Alert Banner AdminLTE */}
-            {alertNotification && (
-                <div
-                    className={`alert alert-${alertNotification.type} alert-dismissible fade show shadow-sm border-0 mb-4`}
-                    role="alert"
-                >
-                    <div className="d-flex align-items-center">
-                        <i className={`bi fs-4 me-2 ${
-                            alertNotification.type === "danger"
-                                ? "bi-check-circle-fill"
-                                : "bi-info-circle-fill"
-                        }`}></i>
-                        <div>
-                            <strong className="d-block">{alertNotification.title}</strong>
-                            <span>{alertNotification.message}</span>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        className="btn-close"
-                        aria-label="Close"
-                        onClick={() => setAlertNotification(null)}
-                    ></button>
-                </div>
-            )}
-
             {/* Cabecera de la sección */}
             <div className="d-flex flex-wrap align-items-center justify-content-between mb-4 pb-2 border-bottom gap-3">
                 <div>
@@ -268,176 +195,35 @@ const ArticleScreen = () => {
                 <div className="d-flex gap-2">
                     <button
                         className="btn btn-primary shadow-sm d-flex align-items-center gap-2"
-                        // onClick={() => navigate("/article/postulate")}
                         onClick={() => navigate("/article/create")}
                     >
                         <i className="bi bi-plus-circle"></i>
-                        <span>Nuevo Artículo</span>
+                        <span>{t("articleScreen.newArticle")}</span>
                     </button>
                 </div>
             </div>
-
-            {/* Tarjetas de Estadísticas rápidas */}
-            <div className="row g-3 mb-4">
-                <div className="col-12 col-sm-6 col-xl-3">
-                    <div className="card shadow-sm border-0 border-start border-primary border-4">
-                        <div className="card-body d-flex align-items-center justify-content-between py-3">
-                            <div>
-                                <span className="text-muted small text-uppercase fw-bold">Total Publicaciones</span>
-                                <h3 className="fw-bold mb-0 text-dark">{articles.length}</h3>
-                            </div>
-                            <div className="bg-primary-subtle p-3 rounded-circle text-primary">
-                                <i className="bi bi-journal-bookmark fs-4"></i>
-                            </div>
+            {/* Tabla */}
+            <div className="border rounded">
+                <DataTable
+                    columns={columns}
+                    data={articles}
+                    pagination
+                    paginationPerPage={10}
+                    paginationRowsPerPageOptions={[10, 50, 100]}
+                    responsive
+                    highlightOnHover
+                    paginationComponentOptions={{
+                        rowsPerPageText: t("articleScreen.pagination.rowsPerPage"),
+                        rangeSeparatorText: t("articleScreen.pagination.of")
+                    }}
+                    noDataComponent={
+                        <div className="py-5 text-center text-muted">
+                            <i className="bi bi-file-earmark-x fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                            <p className="mb-0">{t("articleScreen.empty")}</p>
                         </div>
-                    </div>
-                </div>
-                <div className="col-12 col-sm-6 col-xl-3">
-                    <div className="card shadow-sm border-0 border-start border-success border-4">
-                        <div className="card-body d-flex align-items-center justify-content-between py-3">
-                            <div>
-                                <span className="text-muted small text-uppercase fw-bold">Publicados</span>
-                                <h3 className="fw-bold mb-0 text-success">
-                                    {articles.filter(a => a.status === "Publicado").length}
-                                </h3>
-                            </div>
-                            <div className="bg-success-subtle p-3 rounded-circle text-success">
-                                <i className="bi bi-check2-circle fs-4"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="col-12 col-sm-6 col-xl-3">
-                    <div className="card shadow-sm border-0 border-start border-warning border-4">
-                        <div className="card-body d-flex align-items-center justify-content-between py-3">
-                            <div>
-                                <span className="text-muted small text-uppercase fw-bold">En Revisión</span>
-                                <h3 className="fw-bold mb-0 text-warning">
-                                    {articles.filter(a => a.status === "En Revisión").length}
-                                </h3>
-                            </div>
-                            <div className="bg-warning-subtle p-3 rounded-circle text-warning">
-                                <i className="bi bi-clock-history fs-4"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="col-12 col-sm-6 col-xl-3">
-                    <div className="card shadow-sm border-0 border-start border-secondary border-4">
-                        <div className="card-body d-flex align-items-center justify-content-between py-3">
-                            <div>
-                                <span className="text-muted small text-uppercase fw-bold">Borradores</span>
-                                <h3 className="fw-bold mb-0 text-secondary">
-                                    {articles.filter(a => a.status === "Borrador").length}
-                                </h3>
-                            </div>
-                            <div className="bg-secondary-subtle p-3 rounded-circle text-secondary">
-                                <i className="bi bi-pencil fs-4"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    }
+                />
             </div>
-
-            {/* Contenedor Principal de la Tabla */}
-            <Card title="Repositorio de Artículos" outline outlineColor="primary">
-                {/* Filtros y Buscador */}
-                <div className="row g-2 mb-3 align-items-center">
-                    <div className="col-12 col-md-6 col-lg-5">
-                        <div className="input-group">
-                            <span className="input-group-text bg-white border-end-0">
-                                <i className="bi bi-search text-muted"></i>
-                            </span>
-                            <input
-                                type="text"
-                                className="form-control border-start-0 ps-0"
-                                placeholder="Buscar por título, autor o categoría..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                            {searchTerm && (
-                                <button
-                                    className="btn btn-outline-secondary border-start-0"
-                                    type="button"
-                                    onClick={() => setSearchTerm("")}
-                                >
-                                    <i className="bi bi-x"></i>
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                    <div className="col-12 col-md-4 col-lg-3">
-                        <select
-                            className="form-select"
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                        >
-                            <option value="TODOS">Todos los estados</option>
-                            <option value="Publicado">Publicados</option>
-                            <option value="En Revisión">En Revisión</option>
-                            <option value="Borrador">Borradores</option>
-                        </select>
-                    </div>
-                    <div className="col-12 col-md-2 col-lg-4 text-md-end text-muted small">
-                        Mostrando <strong>{filteredArticles.length}</strong> de <strong>{articles.length}</strong> artículos
-                    </div>
-                </div>
-
-                {/* Tabla */}
-                <div className="border rounded">
-                    <DataTable
-                        columns={columns}
-                        data={filteredArticles}
-                        pagination
-                        paginationPerPage={10}
-                        paginationRowsPerPageOptions={[10, 50, 100]}
-                        responsive
-                        highlightOnHover
-                        noDataComponent={
-                            <div className="py-5 text-center text-muted">
-                                <i className="bi bi-file-earmark-x fs-1 d-block mb-2 text-secondary opacity-50"></i>
-                                <p className="mb-0">No se encontraron artículos con los criterios indicados.</p>
-                            </div>
-                        }
-                    />
-                </div>
-            </Card>
-
-            {/* MODAL DE CONFIRMACIÓN DE ELIMINACIÓN */}
-            <Modal
-                show={deleteModalOpen}
-                onClose={() => setDeleteModalOpen(false)}
-                title="Confirmar Eliminación de Artículo"
-                size="md"
-                footer={
-                    <>
-                        <ButtonSecondary label="Cancelar" onClick={() => setDeleteModalOpen(false)} />
-                        <button
-                            type="button"
-                            className="btn btn-danger d-flex align-items-center gap-1 shadow-sm"
-                            onClick={handleConfirmDelete}
-                        >
-                            <i className="bi bi-trash-fill"></i>
-                            <span>Sí, Eliminar Artículo</span>
-                        </button>
-                    </>
-                }
-            >
-                {selectedArticle && (
-                    <div className="text-center py-3">
-                        <div className="text-danger mb-3">
-                            <i className="bi bi-exclamation-octagon-fill" style={{ fontSize: "3rem" }}></i>
-                        </div>
-                        <h5 className="fw-bold text-dark">¿Deseas eliminar este artículo permanentemente?</h5>
-                        <p className="text-muted px-2 mb-2">
-                            Estás a punto de remover <strong>&quot;{selectedArticle.title}&quot;</strong> de la base de datos de publicaciones.
-                        </p>
-                        <div className="alert alert-warning py-2 small mb-0">
-                            <i className="bi bi-info-circle me-1"></i> Autor: {selectedArticle.author} · Categoría: {selectedArticle.category}
-                        </div>
-                    </div>
-                )}
-            </Modal>
         </div>
     );
 };

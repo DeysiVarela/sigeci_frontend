@@ -53,7 +53,6 @@ const LoginScreen = () => {
                 localStorage.setItem("lastname", data.user.lastname);
                 localStorage.setItem("email", data.user.email);
                 localStorage.setItem("id", data.user.id);
-                localStorage.setItem("permissions", JSON.stringify(data.permissions));
                 
                 let profiles = data.user.profiles;
                 
