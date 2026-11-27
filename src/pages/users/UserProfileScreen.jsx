@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import InputText from "../../components/inputs/InputText";
 import InputEmail from "../../components/inputs/InputEmail";
@@ -7,123 +7,122 @@ import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import Card from "../../components/cards/Card";
 import HandlerApp from "../../utils/HandlerApp";
 import { useFetch } from "../../hooks/useFetch";
-
-// El login guarda el usuario en localStorage["user"] (lo leen otras pantallas).
-// El PATCH devuelve la misma forma, así que se mezcla para no dejar la sesión desactualizada.
-const syncSessionUser = (updatedUser) => {
-    try {
-        const stored = JSON.parse(localStorage.getItem("user") || "{}");
-        localStorage.setItem("user", JSON.stringify({ ...stored, ...updatedUser }));
-    } catch {
-        // sesión corrupta: se ignora, el próximo login la reescribe
-    }
-};
+import { AppContext } from "../../context/AppContext";
 
 const UserProfileScreen = () => {
     const handlerApp = HandlerApp();
     const api = useFetch();
+    const { setApp } = useContext(AppContext);
 
-    const [isLoadingData, setIsLoadingData] = useState(true);
     const [showPasswordSection, setShowPasswordSection] = useState(false);
+    const [profilesLabel, setProfilesLabel] = useState("");
 
-    // Formulario separado para los datos del perfil
-    const { 
-        control: profileControl, 
-        handleSubmit: handleProfileSubmit, 
-        formState: { errors: profileErrors }, 
-        reset: resetProfile 
+    const {
+        control: profileControl,
+        handleSubmit: handleProfileSubmit,
+        formState: { errors: profileErrors },
+        reset: resetProfile,
     } = useForm({ mode: "onChange" });
 
-    // Formulario separado para la contraseña
-    const { 
-        control: passwordControl, 
-        handleSubmit: handlePasswordSubmit, 
-        formState: { errors: passwordErrors }, 
+    const {
+        control: passwordControl,
+        handleSubmit: handlePasswordSubmit,
+        formState: { errors: passwordErrors },
         reset: resetPassword,
-        setError: setPasswordError,
-        watch: watchPassword 
+        watch: watchPassword,
     } = useForm({ mode: "onChange" });
 
-    const newPassword = watchPassword("newPassword", "");
+    const newPassword = watchPassword("new_password", "");
 
     useEffect(() => {
         let cancelled = false;
+        handlerApp.setLoader(true);
 
-        const loadProfile = async () => {
-            try {
-                const me = await api.get("users/me");
+        api.get("users/me")
+            .then((res) => {
                 if (cancelled) return;
-                resetProfile({ name: me.name, lastname: me.lastname, email: me.email });
-            } catch (err) {
-                if (cancelled) return;
-                handlerApp.showError(err?.message || err?.detail || "No se pudo cargar tu perfil.");
-            } finally {
-                if (!cancelled) setIsLoadingData(false);
-            }
+                if (res.success) {
+                    const me = res.data;
+                    resetProfile({
+                        user_name: me.user_name,
+                        user_lastname: me.user_lastname,
+                        user_email: me.user_email,
+                    });
+                    setProfilesLabel(
+                        Array.isArray(me.profiles) && me.profiles.length > 0
+                            ? me.profiles.map((p) => p.profile_name).join(", ")
+                            : ""
+                    );
+                } else {
+                    handlerApp.showError(res.message);
+                }
+            })
+            .catch((err) => {
+                if (!cancelled) handlerApp.showError(err.message);
+            })
+            .finally(() => {
+                if (!cancelled) handlerApp.setLoader(false);
+            });
+
+        return () => {
+            cancelled = true;
         };
-
-        loadProfile();
-
-        // --- BLOQUE MOCK (Movido al final según tu indicación) ---
-        // Nota: Si quitas el comentario de estas líneas, los datos de prueba 
-        // sobrescribirán los datos reales de la API.
-        /*
-        setTimeout(() => {
-            const mockUser = {
-                nombre: "Laura Dayana",
-                apellido: "Tascon",
-                email: "laura@test.com",
-            };
-            resetProfile(mockUser); 
-            setIsLoadingData(false);
-        }, 1000);
-        */
-        // --------------------------------------------------------
-
-        return () => { cancelled = true; };
     }, [resetProfile]);
 
-    // Funcion para guardar los datos personales (PATCH /api/users/me)
     const submitData = async (formData) => {
         handlerApp.setLoader(true);
         try {
-            const updated = await api.patch("users/me", {
-                name: formData.name.trim(),
-                lastname: formData.lastname.trim(),
-                email: formData.email.trim()
+            const res = await api.patch("users/me", {
+                user_name: formData.user_name.trim(),
+                user_lastname: formData.user_lastname.trim(),
+                user_email: formData.user_email.trim().toLowerCase(),
             });
-            syncSessionUser(updated);
-            // El backend normaliza el correo (minúsculas): se refleja en el formulario
-            resetProfile({ name: updated.name, lastname: updated.lastname, email: updated.email });
-            handlerApp.showOk("Tus datos se guardaron correctamente.");
-        } catch (err) {
-            handlerApp.showError(err?.message || err?.detail || "No se pudo actualizar el perfil.");
-        } finally {
+
             handlerApp.setLoader(false);
+            if (res.success) {
+                const updated = res.data;
+                localStorage.setItem("name", updated.user_name);
+                localStorage.setItem("lastname", updated.user_lastname);
+                localStorage.setItem("email", updated.user_email);
+                setApp((prev) => ({
+                    ...prev,
+                    name: updated.user_name,
+                    email: updated.user_email,
+                }));
+                resetProfile({
+                    user_name: updated.user_name,
+                    user_lastname: updated.user_lastname,
+                    user_email: updated.user_email,
+                });
+                handlerApp.showOk(res.message);
+            } else {
+                handlerApp.showError(res.message);
+            }
+        } catch (err) {
+            handlerApp.setLoader(false);
+            handlerApp.showError(err.message);
         }
     };
 
-    // Funcion para cambiar la contraseña (PUT /api/users/me/password/)
-    // confirmPassword solo se valida en la pantalla: no se envía.
-    const submitPassword = async ({ currentPassword, newPassword }) => {
+    const submitPassword = async ({ current_password, new_password }) => {
         handlerApp.setLoader(true);
         try {
-            await api.put("users/me/password/", { currentPassword, newPassword });
-            await handlerApp.showOk("Tu contraseña ha sido cambiada exitosamente.");
-            setShowPasswordSection(false);
-            resetPassword();
-        } catch (err) {
-            const currentMsg = err?.currentPassword?.[0];
-            const newMsg = err?.newPassword?.[0];
-
-            if (currentMsg || newMsg) {
-                if (currentMsg) setPasswordError("currentPassword", { type: "validate", message: currentMsg });
-                if (newMsg) setPasswordError("newPassword", { type: "validate", message: newMsg });
-            } else {
-                handlerApp.showError(err?.message || err?.detail || "No se pudo cambiar la contraseña.");
-            }
-        } finally {
+            const res = await api.put("users/me/password/", {
+                current_password,
+                new_password,
+            });
             handlerApp.setLoader(false);
+
+            if (res.success) {
+                await handlerApp.showOk(res.message);
+                setShowPasswordSection(false);
+                resetPassword();
+            } else {
+                handlerApp.showError(res.message);
+            }
+        } catch (err) {
+            handlerApp.setLoader(false);
+            handlerApp.showError(err.message);
         }
     };
 
@@ -131,94 +130,99 @@ const UserProfileScreen = () => {
         <div className="container-fluid pt-4">
             <div className="row justify-content-center">
                 <div className="col-md-8 col-lg-7">
-                    <Card title="Mi Perfil">
-                        {isLoadingData ? (
-                            <div className="text-center py-5">
-                                <div className="spinner-border text-primary" role="status">
-                                    <span className="visually-hidden">Cargando...</span>
-                                </div>
-                                <p className="mt-2 text-muted">Cargando datos del perfil...</p>
+                    <Card title="Mi Perfil" outline outlineColor="primary">
+                        {profilesLabel && (
+                            <div className="mb-3">
+                                <span className="text-muted small me-2">Perfiles asignados:</span>
+                                <span className="badge bg-light text-dark border">
+                                    <i className="bi bi-person-badge me-1 text-primary"></i>
+                                    {profilesLabel}
+                                </span>
                             </div>
-                        ) : (
-                            <form>
-                                <div className="row">
-                                    <div className="col-md-6">
-                                        <InputText
-                                            control={profileControl}
-                                            label="Nombre"
-                                            name="name"
-                                            errors={profileErrors.name}
-                                            required={true}
-                                        />
-                                    </div>
-                                    <div className="col-md-6">
-                                        <InputText
-                                            control={profileControl}
-                                            label="Apellido"
-                                            name="lastname"
-                                            errors={profileErrors.lastname}
-                                            required={true}
-                                        />
-                                    </div>
-                                </div>
-
-                                <InputEmail
-                                    control={profileControl}
-                                    label="Correo electronico"
-                                    name="email"
-                                    errors={profileErrors.email}
-                                    required={true}
-                                />
-
-                                <div className="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                                    <ButtonPrimary
-                                        label="Guardar cambios"
-                                        onClick={handleProfileSubmit(submitData)}
+                        )}
+                        <form onSubmit={handleProfileSubmit(submitData)}>
+                            <div className="row">
+                                <div className="col-md-6">
+                                    <InputText
+                                        control={profileControl}
+                                        label="Nombre"
+                                        name="user_name"
+                                        errors={profileErrors.user_name}
+                                        required={true}
                                     />
                                 </div>
-                            </form>
-                        )}
+                                <div className="col-md-6">
+                                    <InputText
+                                        control={profileControl}
+                                        label="Apellido"
+                                        name="user_lastname"
+                                        errors={profileErrors.user_lastname}
+                                        required={true}
+                                    />
+                                </div>
+                            </div>
+
+                            <InputEmail
+                                control={profileControl}
+                                label="Correo electrónico"
+                                name="user_email"
+                                errors={profileErrors.user_email}
+                                required={true}
+                            />
+
+                            <div className="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                                <ButtonPrimary
+                                    label="Guardar cambios"
+                                    type="submit"
+                                />
+                            </div>
+                        </form>
                     </Card>
 
-                    <Card title="Cambiar Contraseña">
+                    <Card title="Cambiar Contraseña" outline outlineColor="secondary">
                         {!showPasswordSection ? (
                             <div className="text-center py-3">
-                                <p className="text-muted mb-3">Por seguridad, puedes cambiar tu contraseña desde aqui.</p>
-                                <ButtonPrimary 
-                                    label="Cambiar mi contraseña" 
-                                    onClick={() => setShowPasswordSection(true)} 
+                                <p className="text-muted mb-3">
+                                    Por seguridad, puedes actualizar tu contraseña desde aquí.
+                                </p>
+                                <ButtonPrimary
+                                    label="Cambiar mi contraseña"
+                                    onClick={() => setShowPasswordSection(true)}
                                 />
                             </div>
                         ) : (
-                            <form>
+                            <form onSubmit={handlePasswordSubmit(submitPassword)}>
                                 <InputPassword
                                     control={passwordControl}
                                     label="Contraseña actual"
-                                    name="currentPassword"
-                                    errors={passwordErrors.currentPassword}
+                                    name="current_password"
+                                    errors={passwordErrors.current_password}
                                     required={true}
                                 />
                                 <InputPassword
                                     control={passwordControl}
                                     label="Nueva contraseña"
-                                    name="newPassword"
-                                    errors={passwordErrors.newPassword}
+                                    name="new_password"
+                                    errors={passwordErrors.new_password}
                                     required={true}
                                 />
                                 <InputPassword
                                     control={passwordControl}
                                     label="Confirmar nueva contraseña"
-                                    name="confirmPassword"
-                                    errors={passwordErrors.confirmPassword}
+                                    name="confirm_password"
+                                    errors={passwordErrors.confirm_password}
                                     required={true}
                                     rules={{
-                                        validate: value => value === newPassword || "Las contraseñas no coinciden"
+                                        minLength: { value: 0, message: "" },
+                                        pattern: { value: /^[\s\S]*$/, message: "" },
+                                        validate: (value) =>
+                                            value === newPassword || "Las contraseñas no coinciden",
                                     }}
                                 />
                                 <div className="d-flex justify-content-end gap-2 mt-3">
-                                    <button 
-                                        type="button" 
-                                        className="btn btn-secondary" 
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary"
                                         onClick={() => {
                                             setShowPasswordSection(false);
                                             resetPassword();
@@ -228,7 +232,7 @@ const UserProfileScreen = () => {
                                     </button>
                                     <ButtonPrimary
                                         label="Actualizar contraseña"
-                                        onClick={handlePasswordSubmit(submitPassword)}
+                                        type="submit"
                                     />
                                 </div>
                             </form>

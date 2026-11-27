@@ -8,13 +8,13 @@ import ComponentsScreen from "../pages/components/ComponentsScreen";
 import Dashboard from "../theme/containers/Dashboard";
 import ArticleScreen from "../pages/article/ArticleScreen";
 import ArticleViewScreen from "../pages/article/ArticleViewScreen";
-// import UserScreen from "../pages/users/UserScreen";
+import ArticleFormScreen from "../pages/article/ArticleFormScreen";
+import UserScreen from "../pages/users/UserScreen";
+import UserFormScreen from "../pages/users/UserFormScreen";
+import UserViewScreen from "../pages/users/UserViewScreen";
+import UserProfileScreen from "../pages/users/UserProfileScreen";
 import Container from "../theme/containers/Container";
 import ProtectedRoute from "./ProtectedRoute";
-import ArticleFormScreen from "../pages/article/ArticleFormScreen";
-// import CreateUserScreen from "../pages/users/CreateUserScreen";
-// import EditUserScreen from "../pages/users/EditUserScreen";
-// import UserProfileScreen from "../pages/users/UserProfileScreen";
 
 const router = createBrowserRouter([
     {
@@ -61,10 +61,11 @@ const router = createBrowserRouter([
                     { path: "/article/:id", element: <ArticleViewScreen /> },
                     { path: "/article/edit/:id", element: <ArticleFormScreen /> },
                     { path: "/article/create", element: <ArticleFormScreen /> },
-                    // { path: "/users", element: <UserScreen /> },
-                    // { path: "/users/create", element: <CreateUserScreen /> },
-                    // { path: "/users/edit/:id", element: <EditUserScreen /> },
-                    // { path: "/profile", element: <UserProfileScreen /> }
+                    { path: "/users", element: <UserScreen /> },
+                    { path: "/users/:id", element: <UserViewScreen /> },
+                    { path: "/users/edit/:id", element: <UserFormScreen /> },
+                    { path: "/users/create", element: <UserFormScreen /> },
+                    { path: "/profile", element: <UserProfileScreen /> }
                 ]
             }
         ]

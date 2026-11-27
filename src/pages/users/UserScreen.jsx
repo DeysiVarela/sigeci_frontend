@@ -1,48 +1,12 @@
 import { useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import DataTable from "react-data-table-component";
-import Card from "../../components/cards/Card";
 import Badge from "../../components/badges/Badge";
 import Modal from "../../components/modals/Modal";
-import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 import ButtonSecondary from "../../components/buttons/ButtonSecondary";
-import ButtonLink from "../../components/buttons/ButtonLink";
 import HandlerApp from "../../utils/HandlerApp";
 import { useFetch } from "../../hooks/useFetch";
 import { AppContext } from "../../context/AppContext";
-
-const ROWS_PER_PAGE_OPTIONS = [10, 20, 50];
-
-const toArray = (res) => (Array.isArray(res) ? res : res?.results || []);
-
-const formatUser = (u) => ({
-    id: u.id,
-    name: `${u.name} ${u.lastname}`.trim(),
-    email: u.email,
-    role: (u.profiles ?? []).map((p) => p.name).join(", "),
-    status: u.active ? "Activo" : "Inactivo",
-    profiles: u.profiles ?? [],
-});
-
-const AvatarInitial = ({ name, size = 40, className = "" }) => (
-    <div
-        className={`rounded-circle bg-primary-subtle text-primary fw-bold d-flex align-items-center justify-content-center flex-shrink-0 ${className}`}
-        style={{ width: size, height: size, fontSize: size / 2.2 }}
-    >
-        {name.charAt(0).toUpperCase()}
-    </div>
-);
-
-const getStatusBadge = (status) =>
-    status === "Activo"
-        ? <Badge type="Success" text="Activo" pill />
-        : <Badge type="Danger" text="Inactivo" pill />;
-
-const STAT_CARDS = [
-    { key: "total", label: "Total Usuarios", color: "primary", icon: "bi-people", valueClass: "text-dark" },
-    { key: "active", label: "Activos", color: "success", icon: "bi-check-circle", valueClass: "text-success" },
-    { key: "inactive", label: "Inactivos", color: "danger", icon: "bi-dash-circle", valueClass: "text-danger" },
-];
 
 const UserScreen = () => {
     const navigate = useNavigate();
@@ -50,292 +14,171 @@ const UserScreen = () => {
     const handlerApp = HandlerApp();
     const { app } = useContext(AppContext);
 
-    // Datos de la tabla (paginados en el servidor)
     const [users, setUsers] = useState([]);
-    const [totalRows, setTotalRows] = useState(0);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-
-    // Paginación y filtros (los 2 filtros que define el backend: profile y active)
-    const [page, setPage] = useState(1);
-    const [perPage, setPerPage] = useState(ROWS_PER_PAGE_OPTIONS[0]);
-    const [profileFilter, setProfileFilter] = useState("");
-    const [activeFilter, setActiveFilter] = useState("");
-    const [resetPaginationToggle, setResetPaginationToggle] = useState(false);
-    const [searchTerm, setSearchTerm] = useState("");
-
-    // Apoyo
-    const [profiles, setProfiles] = useState([]);
-    const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 });
-    const [reloadKey, setReloadKey] = useState(0);
-    const currentUserId = Number(localStorage.getItem("id") || 0);
-
-    // Alertas y modales
-    const [alertNotification, setAlertNotification] = useState(null);
     const [selectedUser, setSelectedUser] = useState(null);
-    const [viewModalOpen, setViewModalOpen] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
-    const hasFilters = profileFilter !== "" || activeFilter !== "";
+    const currentUserId = Number(localStorage.getItem("id") || 0);
 
-    // La búsqueda por texto se hace en el cliente (el backend no la soporta), así que solo
-    // es confiable cuando TODOS los resultados de los filtros caben en la página actual.
-    const canSearch = totalRows > 0 && totalRows <= perPage;
-    const term = canSearch ? searchTerm.trim().toLowerCase() : "";
-    const visibleUsers = term
-        ? users.filter(
-            (u) => u.name.toLowerCase().includes(term) || u.email.toLowerCase().includes(term)
-        )
-        : users;
-
-    // Listado: se vuelve a pedir al backend cuando cambia la página, el tamaño o un filtro
-    useEffect(() => {
-        let cancelled = false;
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setLoading(true);
-        setError("");
-
-        const params = { page, page_size: perPage };
-        if (profileFilter) params.profile = profileFilter;
-        if (activeFilter) params.active = activeFilter;
-
-        api.get("users/", params)
+    const getUsers = () => {
+        handlerApp.setLoader(true);
+        api.get("users/")
             .then((res) => {
-                if (cancelled) return;
-                const data = toArray(res);
-                setUsers(data.map(formatUser));
-                setTotalRows(Array.isArray(res) ? data.length : res.count ?? data.length);
+                if (res.success) {
+                    setUsers(res.data);
+                } else {
+                    setUsers([]);
+                    handlerApp.showError(res.message);
+                }
             })
             .catch((err) => {
-                if (!cancelled) setError(err?.message || err?.detail || "No fue posible cargar los usuarios.");
+                setUsers([]);
+                handlerApp.showError(err.message);
             })
             .finally(() => {
-                if (!cancelled) setLoading(false);
+                handlerApp.setLoader(false);
             });
+    };
 
-        return () => {
-            cancelled = true;
-        };
-    }, [page, perPage, profileFilter, activeFilter, reloadKey]);
-
-    // Opciones del filtro de rol
     useEffect(() => {
-        api.get("profiles/")
-            .then((res) => setProfiles(toArray(res)))
-            .catch(() => setProfiles([]));
+        getUsers();
     }, []);
 
-    // Contadores de las tarjetas (totales globales, sin filtros)
-    useEffect(() => {
-        Promise.all([
-            api.get("users/", { page_size: 1 }),
-            api.get("users/", { page_size: 1, active: true }),
-            api.get("users/", { page_size: 1, active: false }),
-        ])
-            .then(([all, act, inact]) =>
-                setStats({ total: all.count ?? 0, active: act.count ?? 0, inactive: inact.count ?? 0 })
-            )
-            .catch(() => { });
-    }, [reloadKey]);
-
-    const triggerAlert = (type, message, title = "Operación exitosa") => {
-        setAlertNotification({ type, title, message });
-        setTimeout(() => setAlertNotification(null), 4000);
-    };
-
-    const resetToFirstPage = () => {
-        setPage(1);
-        setResetPaginationToggle((t) => !t);
-        setSearchTerm("");
-    };
-
-    const handleProfileChange = (e) => {
-        setProfileFilter(e.target.value);
-        resetToFirstPage();
-    };
-
-    const handleActiveChange = (e) => {
-        setActiveFilter(e.target.value);
-        resetToFirstPage();
-    };
-
-    const clearFilters = () => {
-        setProfileFilter("");
-        setActiveFilter("");
-        resetToFirstPage();
-    };
-
-    const handleOpenView = (user) => {
-        setSelectedUser(user);
-        setViewModalOpen(true);
-    };
-
-    const handleOpenDelete = (user) => {
-        setSelectedUser(user);
-        setDeleteModalOpen(true);
-    };
-
-    // El backend hace borrado lógico; la fila deja de aparecer en el listado
     const handleConfirmDelete = async () => {
         if (!selectedUser) return;
-        const target = selectedUser;
+        const targetId = selectedUser.user_id;
+        handlerApp.setLoader(true);
         try {
-            await api.deleteMethod(`users/${target.id}/`);
-            handlerApp.showOk(`El usuario "${target.name}" (${target.email}) fue eliminado.`);
-            if (users.length === 1 && page > 1) setPage((p) => p - 1);
-            setReloadKey((k) => k + 1);
-        } catch (err) {
-            handlerApp.showError(err?.message || err?.detail || "No se pudo eliminar el usuario.");
-        } finally {
+            const res = await api.deleteMethod(`users/${targetId}/`);
             setDeleteModalOpen(false);
             setSelectedUser(null);
+            if (res.success) {
+                handlerApp.showOk(res.message);
+                getUsers();
+            } else {
+                handlerApp.showError(res.message);
+            }
+        } catch (err) {
+            setDeleteModalOpen(false);
+            setSelectedUser(null);
+            handlerApp.showError(err.message);
+        } finally {
+            handlerApp.setLoader(false);
         }
     };
 
     const columns = [
         {
-            name: "Usuario",
-            selector: (row) => row.name,
-            minWidth: "250px",
-            cell: (row) => (
-                <div className="d-flex align-items-center py-2 text-truncate" style={{ maxWidth: "100%" }}>
-                    <AvatarInitial name={row.name} className="me-3" />
-                    <div className="text-truncate">
-                        <div className="fw-semibold text-dark text-truncate" title={row.name}>{row.name}</div>
-                        <small className="text-secondary text-truncate d-block" title={row.email}>{row.email}</small>
-                    </div>
-                </div>
-            ),
+            name: "ID",
+            selector: (row) => row.user_id,
+            sortable: true,
+            center: true,
+            grow: 0.5,
+            cell: (row) => `#${row.user_id}`,
         },
         {
-            name: "Rol",
-            selector: (row) => row.role,
-            minWidth: "140px",
-            cell: (row) => (
-                <span className="badge bg-light text-dark border fw-normal px-2 py-1">
-                    <i className="bi bi-person-badge me-1 text-primary"></i>
-                    {row.role}
-                </span>
-            ),
+            name: "Usuario",
+            selector: (row) => `${row.user_name} ${row.user_lastname}`,
+            sortable: true,
+            grow: 2.5,
+            cell: (row) => {
+                const fullName = `${row.user_name} ${row.user_lastname}`.trim();
+                return (
+                    <div className="w-100 overflow-hidden py-1">
+                        <Link
+                            to={`/users/${row.user_id}`}
+                            className="d-block text-primary text-truncate text-decoration-none"
+                            title={fullName}
+                        >
+                            {fullName}
+                        </Link>
+                        <small className="text-muted d-block text-truncate" title={row.user_email}>
+                            {row.user_email}
+                        </small>
+                    </div>
+                );
+            },
+        },
+        {
+            name: "Perfiles",
+            selector: (row) => row.profiles_names,
+            sortable: true,
+            grow: 1.8,
+            cell: (row) => {
+                const label = Array.isArray(row.profiles) && row.profiles.length > 0
+                    ? row.profiles.map((p) => p.profile_name).join(", ")
+                    : "—";
+                return (
+                    <span
+                        className="badge bg-light text-dark border text-truncate d-inline-block mw-100"
+                        title={label}
+                    >
+                        {label}
+                    </span>
+                );
+            },
         },
         {
             name: "Estado",
-            selector: (row) => row.status,
+            selector: (row) => row.user_active,
+            sortable: true,
             center: true,
-            maxWidth: "180px",
-            cell: (row) => getStatusBadge(row.status),
+            grow: 1,
+            cell: (row) =>
+                row.user_active
+                    ? <Badge type="Success" text="Activo" pill />
+                    : <Badge type="Danger" text="Inactivo" pill />,
         },
         {
             name: "Acciones",
-            minWidth: "230px",
-            allowOverflow: true,
             ignoreRowClick: true,
-            button: true,
+            center: true,
+            grow: 1.5,
             cell: (row) => (
-                <div className="d-flex align-items-center gap-2 justify-content-end py-1 flex-nowrap">
-
-                    <ButtonSecondary
-                        label="Ver"
-                        className="btn-sm py-1 px-2 text-nowrap"
-                        onClick={() => handleOpenView(row)}
-                    />
-
-                    {(app?.permissions?.["user"]?.includes("update") || Number(row.id) === currentUserId) && (
-                        <ButtonPrimary
-                            label="Editar"
-                            className="btn-sm py-1 px-2 text-nowrap"
-                            onClick={() => navigate(`/users/edit/${row.id}`)}
-                        />
+                <div className="table-actions">
+                    {app?.permissions?.["users"]?.includes("view") && (
+                        <button
+                            type="button"
+                            className="btn-table-action btn-table-view"
+                            title="Ver"
+                            aria-label="Ver"
+                            onClick={() => navigate(`/users/${row.user_id}`)}
+                        >
+                            <i className="bi bi-eye"></i>
+                        </button>
                     )}
-                    {app?.permissions?.["user"]?.includes("delete") && Number(row.id) !== currentUserId && (
-                        <ButtonLink
-                            label="Eliminar"
-                            className="text-danger fw-semibold small text-nowrap px-1"
-                            onClick={() => handleOpenDelete(row)}
-                        />
+                    {(app?.permissions?.["users"]?.includes("update") || Number(row.user_id) === currentUserId) && (
+                        <button
+                            type="button"
+                            className="btn-table-action btn-table-edit"
+                            title="Editar"
+                            aria-label="Editar"
+                            onClick={() => navigate(`/users/edit/${row.user_id}`)}
+                        >
+                            <i className="bi bi-pencil"></i>
+                        </button>
+                    )}
+                    {app?.permissions?.["users"]?.includes("delete") && Number(row.user_id) !== currentUserId && (
+                        <button
+                            type="button"
+                            className="btn-table-action btn-table-delete"
+                            title="Eliminar"
+                            aria-label="Eliminar"
+                            onClick={() => {
+                                setSelectedUser(row);
+                                setDeleteModalOpen(true);
+                            }}
+                        >
+                            <i className="bi bi-trash"></i>
+                        </button>
                     )}
                 </div>
             ),
         },
     ];
 
-    const renderTable = () => {
-        if (loading) {
-            return (
-                <div className="py-5 text-center border rounded">
-                    <div className="spinner-border text-primary" role="status"></div>
-                    <p className="mt-2 mb-0 text-muted">Cargando usuarios...</p>
-                </div>
-            );
-        }
-        if (error) return null;
-
-        return (
-            <div className="border rounded">
-                <DataTable
-                    columns={columns}
-                    data={visibleUsers}
-                    pagination
-                    paginationServer
-                    paginationTotalRows={totalRows}
-                    paginationPerPage={perPage}
-                    paginationRowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
-                    paginationDefaultPage={page}
-                    paginationResetDefaultPage={resetPaginationToggle}
-                    onChangePage={(newPage) => setPage(newPage)}
-                    onChangeRowsPerPage={(newPerPage, newPage) => {
-                        setPerPage(newPerPage);
-                        setPage(newPage);
-                    }}
-                    responsive
-                    highlightOnHover
-                    noDataComponent={
-                        <div className="py-5 text-center text-muted">
-                            <i className={`bi ${hasFilters ? "bi-search" : "bi-people"} fs-1 d-block mb-2 text-secondary opacity-50`}></i>
-                            <p className="mb-0">
-                                {term
-                                    ? "Ningún usuario coincide con la búsqueda."
-                                    : hasFilters
-                                        ? "Ningún usuario coincide con los filtros seleccionados."
-                                        : "Aún no hay usuarios registrados."}
-                            </p>
-                        </div>
-                    }
-                />
-            </div>
-        );
-    };
-
     return (
         <div className="container-fluid p-4">
-            {/* Banner de alerta */}
-            {alertNotification && (
-                <div
-                    className={`alert alert-${alertNotification.type} alert-dismissible fade show shadow-sm border-0 mb-4`}
-                    role="alert"
-                >
-                    <div className="d-flex align-items-center">
-                        <i className={`bi fs-4 me-2 ${alertNotification.type === "success"
-                            ? "bi-check-circle-fill"
-                            : alertNotification.type === "danger"
-                                ? "bi-exclamation-triangle-fill"
-                                : "bi-info-circle-fill"
-                            }`}></i>
-                        <div>
-                            <strong className="d-block">{alertNotification.title}</strong>
-                            <span>{alertNotification.message}</span>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        className="btn-close"
-                        aria-label="Cerrar"
-                        onClick={() => setAlertNotification(null)}
-                    ></button>
-                </div>
-            )}
-
-            {/* Encabezado */}
             <div className="d-flex flex-wrap align-items-center justify-content-between mb-4 pb-2 border-bottom gap-3">
                 <div>
                     <h2 className="fw-bold mb-1 d-flex align-items-center gap-2">
@@ -343,162 +186,41 @@ const UserScreen = () => {
                         Gestión de Usuarios
                     </h2>
                     <p className="text-secondary mb-0">
-                        Administra roles, accesos y estado del personal universitario registrado en SIGECI.
+                        Administra perfiles, accesos y estado del personal registrado en SIGECI.
                     </p>
                 </div>
-                {app?.permissions?.["user"]?.includes("create") && (
+                {app?.permissions?.["users"]?.includes("create") && (
                     <div className="d-flex gap-2">
                         <button
+                            type="button"
                             className="btn btn-primary shadow-sm d-flex align-items-center gap-2"
                             onClick={() => navigate("/users/create")}
                         >
-                            <i className="bi bi-person-plus-fill"></i>
+                            <i className="bi bi-plus-circle"></i>
                             <span>Nuevo Usuario</span>
                         </button>
                     </div>
                 )}
             </div>
 
-            {/* Tarjetas de estadísticas */}
-            <div className="row g-3 mb-4">
-                {STAT_CARDS.map((s) => (
-                    <div className="col-12 col-sm-6 col-xl-4" key={s.key}>
-                        <div className={`card shadow-sm border-0 border-start border-${s.color} border-4`}>
-                            <div className="card-body d-flex align-items-center justify-content-between py-3">
-                                <div>
-                                    <span className="text-muted small text-uppercase fw-bold">{s.label}</span>
-                                    <h3 className={`fw-bold mb-0 ${s.valueClass}`}>{stats[s.key]}</h3>
-                                </div>
-                                <div className={`bg-${s.color}-subtle p-3 rounded-circle text-${s.color}`}>
-                                    <i className={`bi ${s.icon} fs-4`}></i>
-                                </div>
-                            </div>
+            <div className="border rounded">
+                <DataTable
+                    columns={columns}
+                    data={users}
+                    pagination
+                    paginationPerPage={10}
+                    paginationRowsPerPageOptions={[10, 50, 100]}
+                    responsive
+                    highlightOnHover
+                    noDataComponent={
+                        <div className="py-5 text-center text-muted">
+                            <i className="bi bi-people fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                            <p className="mb-0">No hay usuarios registrados.</p>
                         </div>
-                    </div>
-                ))}
+                    }
+                />
             </div>
 
-            {/* Error de comunicación */}
-            {error && (
-                <div className="alert alert-danger d-flex align-items-center justify-content-between" role="alert">
-                    <span>
-                        <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                        {error}
-                    </span>
-                    <button className="btn btn-sm btn-outline-danger" onClick={() => setReloadKey((k) => k + 1)}>
-                        Reintentar
-                    </button>
-                </div>
-            )}
-
-            <Card title="Listado Oficial de Usuarios" outline outlineColor="primary">
-                {/* Filtros: rol y estado */}
-                <div className="row g-2 mb-3 align-items-center">
-                    <div className="col-12 col-md-4 col-lg-3">
-                        <label htmlFor="filter-profile" className="visually-hidden">Filtrar por rol</label>
-                        <select
-                            id="filter-profile"
-                            className="form-select"
-                            value={profileFilter}
-                            onChange={handleProfileChange}
-                        >
-                            <option value="">Todos los roles</option>
-                            {profiles.map((p) => (
-                                <option key={p.id} value={p.id}>{p.name || p.profile_name}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className="col-12 col-md-4 col-lg-3">
-                        <label htmlFor="filter-active" className="visually-hidden">Filtrar por estado</label>
-                        <select
-                            id="filter-active"
-                            className="form-select"
-                            value={activeFilter}
-                            onChange={handleActiveChange}
-                        >
-                            <option value="">Todos los estados</option>
-                            <option value="true">Solo Activos</option>
-                            <option value="false">Solo Inactivos</option>
-                        </select>
-                    </div>
-                    <div className="col-12 col-md-4 col-lg-3">
-                        <label htmlFor="filter-search" className="visually-hidden">Buscar por nombre o correo</label>
-                        <div className="input-group">
-                            <span className="input-group-text bg-white border-end-0">
-                                <i className="bi bi-search text-muted"></i>
-                            </span>
-                            <input
-                                id="filter-search"
-                                type="text"
-                                className="form-control border-start-0 ps-0"
-                                placeholder="Buscar por nombre o correo"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                disabled={!canSearch}
-                            />
-                        </div>
-                    </div>
-                    <div className="col-12 col-lg-3 d-flex align-items-center justify-content-lg-end gap-3">
-                        {hasFilters && (
-                            <button type="button" className="btn btn-outline-secondary btn-sm" onClick={clearFilters}>
-                                <i className="bi bi-x-circle me-1"></i>
-                                Limpiar filtros
-                            </button>
-                        )}
-                        {!loading && !error && (
-                            <span className="text-muted small">
-                                <strong>{term ? `${visibleUsers.length} de ${totalRows}` : totalRows}</strong>{" "}
-                                {totalRows === 1 ? "usuario" : "usuarios"}
-                            </span>
-                        )}
-                    </div>
-                </div>
-                {!canSearch && !loading && !error && (
-                    <p className="form-text mt-0 mb-3">
-                        La búsqueda por texto se habilita cuando los filtros dejan {perPage} usuarios o menos.
-                    </p>
-                )}
-
-                {renderTable()}
-            </Card>
-
-            {/* MODAL: VER DETALLES */}
-            <Modal
-                show={viewModalOpen}
-                onClose={() => setViewModalOpen(false)}
-                title="Detalles del Usuario"
-                size="md"
-                footer={<ButtonSecondary label="Cerrar" onClick={() => setViewModalOpen(false)} />}
-            >
-                {selectedUser && (
-                    <div className="text-center py-2">
-                        <AvatarInitial
-                            name={selectedUser.name}
-                            size={90}
-                            className="mx-auto mb-3 border border-3 border-primary"
-                        />
-                        <h4 className="fw-bold mb-1">{selectedUser.name}</h4>
-                        <p className="text-muted mb-3">{selectedUser.email}</p>
-
-                        <div className="list-group list-group-flush text-start border-top border-bottom mb-2">
-                            <div className="list-group-item d-flex justify-content-between align-items-center py-2">
-                                <span className="text-muted fw-semibold">ID de Registro:</span>
-                                <span className="badge bg-secondary">#{selectedUser.id}</span>
-                            </div>
-                            <div className="list-group-item d-flex justify-content-between align-items-center py-2">
-                                <span className="text-muted fw-semibold">Rol Asignado:</span>
-                                <span className="fw-bold text-dark">{selectedUser.role}</span>
-                            </div>
-                            <div className="list-group-item d-flex justify-content-between align-items-center py-2">
-                                <span className="text-muted fw-semibold">Estado de Cuenta:</span>
-                                <span>{getStatusBadge(selectedUser.status)}</span>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </Modal>
-
-            {/* MODAL: CONFIRMACIÓN DE ELIMINACIÓN */}
             <Modal
                 show={deleteModalOpen}
                 onClose={() => setDeleteModalOpen(false)}
@@ -513,7 +235,7 @@ const UserScreen = () => {
                             onClick={handleConfirmDelete}
                         >
                             <i className="bi bi-trash-fill"></i>
-                            <span>Sí, Eliminar</span>
+                            <span>Sí, eliminar</span>
                         </button>
                     </>
                 }
@@ -524,8 +246,10 @@ const UserScreen = () => {
                             <i className="bi bi-exclamation-triangle-fill" style={{ fontSize: "3rem" }}></i>
                         </div>
                         <h5 className="fw-bold text-dark">¿Estás seguro de eliminar este usuario?</h5>
-                        <p className="text-muted px-3">
-                            Se eliminará a <strong>{selectedUser.name}</strong> (<code>{selectedUser.email}</code>) de forma permanente. Esta acción no se puede deshacer.
+                        <p className="text-muted px-3 mb-0">
+                            Se desactivará el acceso de{" "}
+                            <strong>{`${selectedUser.user_name} ${selectedUser.user_lastname}`.trim()}</strong>{" "}
+                            (<code>{selectedUser.user_email}</code>).
                         </p>
                     </div>
                 )}

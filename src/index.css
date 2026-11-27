@@ -24,6 +24,12 @@
     width: 100%;
 }
 
+/* DataTable fluido sin anchos fijos */
+.rdt_TableCol,
+.rdt_TableCell {
+    min-width: 0 !important;
+}
+
 /* Botones globales de acciones para tablas */
 .table-actions {
     display: flex;

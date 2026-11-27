@@ -2,7 +2,6 @@ import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useFetch } from "../../hooks/useFetch";
 import { Link, useNavigate } from "react-router";
-import Swal from "sweetalert2";
 import ReCAPTCHA from "react-google-recaptcha";
 import HandlerApp from "../../utils/HandlerApp";
 import InputText from "../../components/inputs/InputText";
@@ -13,7 +12,6 @@ import ButtonPrimary from "../../components/buttons/ButtonPrimary";
 const NAME_MAX = 60;
 const EMAIL_MAX = 120;
 const CAPTCHA_MISSING = "Completa el CAPTCHA para continuar.";
-const SERVER_FIELDS = ["name", "lastname", "email", "password"];
 
 const NAME_PATTERN = /^\p{L}+(?:[ '-]\p{L}+)*$/u;
 const STRONG_PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._\-#^()+=])[A-Za-z\d@$!%*?&._\-#^()+=]{8,}$/;
@@ -37,8 +35,6 @@ const passwordRules = {
         "Debe contener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial",
 };
 
-const firstMessage = (value) => (Array.isArray(value) ? value[0] : value);
-
 const RegisterScreen = () => {
     const nav = useNavigate();
     const handlerApp = HandlerApp();
@@ -49,26 +45,13 @@ const RegisterScreen = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const captchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
-    const { control, handleSubmit, getValues, trigger, setError, formState: { errors } } = useForm({
+    const { control, handleSubmit, getValues, trigger, formState: { errors } } = useForm({
         mode: "onTouched",
     });
 
     const resetCaptcha = () => {
         captchaRef.current?.reset();
         setCaptchaToken("");
-    };
-
-    // Lleva los errores del backend (400 por campo / 409 correo duplicado) a cada input
-    const applyServerErrors = (error) => {
-        const data = error.data || {};
-        let mapped = false;
-        SERVER_FIELDS.forEach((field) => {
-            if (data[field]) {
-                setError(field, { type: "validate", message: firstMessage(data[field]) });
-                mapped = true;
-            }
-        });
-        return mapped;
     };
 
     const submitData = async (data) => {
@@ -85,8 +68,9 @@ const RegisterScreen = () => {
         setIsSubmitting(true);
         handlerApp.setLoader(true);
         try {
-            // Solo se envían estos campos: la confirmación de contraseña no viaja y el rol nunca se incluye
-            await api.post("auth/register/",{
+            const res = await api.post(
+                "auth/register",
+                {
                     name: cleanName(data.name),
                     lastname: cleanName(data.lastname),
                     email: data.email.trim().toLowerCase(),
@@ -96,29 +80,16 @@ const RegisterScreen = () => {
                 captchaToken
             );
             handlerApp.setLoader(false);
-            await Swal.fire({
-                icon: "success",
-                title: "Cuenta creada",
-                text: "Tu cuenta de autor fue creada. Ahora inicia sesión con tu correo y contraseña.",
-                confirmButtonText: "Ir al login",
-                allowOutsideClick: false,
-            });
-            nav("/login", { replace: true });
-        } catch (error) {
-            if (error.status === 409) {
-                setError("email", { type: "validate", message: "Este correo ya está registrado." });
-                setSubmitError("Ya existe una cuenta con este correo. Inicia sesión o recupera tu contraseña.");
-            } else if (error.status === 400) {
-                const mapped = applyServerErrors(error);
-                setSubmitError(mapped ? "Revisa los campos marcados." : error.message);
-            } else if (error.status === 429) {
-                setSubmitError("Demasiados intentos de registro. Espera un minuto e inténtalo de nuevo.");
-            } else if (error.status === 503) {
-                setSubmitError(error.message);
+            if (res.success) {
+                await handlerApp.showOk(res.message);
+                nav("/login", { replace: true });
             } else {
-                setSubmitError("No pudimos conectar con el servicio. Inténtalo nuevamente.");
+                setSubmitError(res.message);
+                resetCaptcha();
             }
-            resetCaptcha(); // el token de reCAPTCHA es de un solo uso
+        } catch (error) {
+            setSubmitError(error.message);
+            resetCaptcha();
         } finally {
             setIsSubmitting(false);
             handlerApp.setLoader(false);
